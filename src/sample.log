@@ -1,0 +1,52 @@
+NOTE: Copyright (c) 2016 by SAS Institute Inc., Cary, NC, USA.
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M6 MBCS3170)
+      Licensed to ARGENX VIA OCS CONSULTING_SAS LSAF_SAAS, Site 70265777.
+NOTE: This session is executing on the Linux 3.10.0-957.27.2.el7.x86_64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+
+      SAS/STAT 15.1
+      SAS/IML 15.1
+
+28         /********************************************************************************************************************/
+29         proc scaproc; record "&_SASWS_/.sessions/8/sca_1bde6714-dce6-4d4f-8aab-9af2daed2958.txt" EXPANDMACROS; run;
+WARNING: this is a test
+
+NOTE: PROCEDURE SCAPROC used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+The SAS System
+
+      cpu time            0.00 seconds
+
+
+MPRINT(VBMI):   proc sql undo_policy=none;
+MPRINT(VBMI):   create table _temp as select distinct a.*, b.hei_i as blhei, b.wei_i as blwei, coalesce(bmi_calc,bmi_i) as blbmi from _temp as a left join vs_imputed as b on a.usub
+jid=b.usubjid order
+by _sort;
+NOTE: Table WORK._TEMP created, with 205 rows and 59 columns.
+
+MPRINT(VBMI):   quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+
+      MPRINT(SETENV):   source source2 nofmterr notes spool nodate nonumber MAUTOCOMPLOC NOMAUTOLOCDISPLAY;
+MPRINT(SETENV):   * in case run in batch;
+(SETENV): _SASFILEPATH_ = /clinical/test/gadam-tests/test-0001/biostat/staging/generic_adam/programs/adsl.sas
+(SETENV): path1 = /clinical/test/gadam-tests/test-0001/biostat/staging/generic_adam/programs/adsl.sas
+(SETENV): _sasws_ = /lsafshared/SASWorkspaces/.transient/job_adsl.job-2326a815-2524-425c-a2cb-55a956dc22ae
+(SETENV): runenvironment = repository
+MPRINT(SETENV):   *libname projmeta "&projectsmetapath" access=readonly;
+MPRINT(SETENV):   data gen_setenv(keep=fname ver maxver);
+MPRINT(SETENV):   length fref $8 dirname fname $400;
+MPRINT(SETENV):   direxists = 0;
+MPRINT(SETENV):   found = 0;
+MPRINT(SETENV):   maxver = .;
+MPRINT(SETENV):
+
+ERROR: another test
+=========== a highlighted line
+Notice: this is a custom notice
