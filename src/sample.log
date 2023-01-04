@@ -13,6 +13,7 @@ NOTE: Analytical products:
 28         /********************************************************************************************************************/
 29         proc scaproc; record "&_SASWS_/.sessions/8/sca_1bde6714-dce6-4d4f-8aab-9af2daed2958.txt" EXPANDMACROS; run;
 WARNING: this is a test
+ERROR:  test
 
 NOTE: PROCEDURE SCAPROC used (Total process time):
       real time           0.00 seconds
@@ -46,6 +47,10 @@ MPRINT(SETENV):   direxists = 0;
 MPRINT(SETENV):   found = 0;
 MPRINT(SETENV):   maxver = .;
 MPRINT(SETENV):
+
+NOTE: DATA statement used (Total process time):
+      real time           58:50:11.71
+      cpu time            1:53.39
 
 ERROR: another test
 =========== a highlighted line

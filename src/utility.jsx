@@ -43,11 +43,11 @@ export const xmlToJson = (xml) => {
   return obj;
 };
 
-export const getDir = (url, depth, callback) => {
+export const getDir = async (url, depth, callback) => {
   // Create an XMLHttpRequest object
   const xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
-    if (this.readyState == 4 && this.status == 207) {
+    if (this.readyState === 4 && this.status === 207) {
       callback(this);
     }
   };
