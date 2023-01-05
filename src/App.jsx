@@ -412,8 +412,9 @@ function App() {
     const parts = href.split("?");
     if (parts.length > 1) {
       const subparts = parts[1].split("=");
-      const log = subparts[1];
-      console.log("loading log from URL", log, "href", href);
+      const log =
+        parts.length === 2 ? subparts[1] : subparts[1] + "?" + parts[2];
+      console.log("loading log from URL", log, "href", href, "log", log);
       getLog(log);
       setSelection(log);
     }
