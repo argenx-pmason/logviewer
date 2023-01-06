@@ -1,7 +1,7 @@
 [
   {
     "name": "NOTE:",
-    "startswith": "NOTE: ",
+    "startswith": "NOTE:",
     "prefix": "<span style='color: blue'>",
     "suffix": "</span>",
     "anchor": false,
@@ -10,7 +10,7 @@
   },
   {
     "name": "WARNING:",
-    "startswith": "WARNING: ",
+    "startswith": "WARNING:",
     "prefix": "<span style='color: green'>",
     "suffix": "</span>",
     "anchor": true,
@@ -19,7 +19,7 @@
   },
   {
     "name": "ERROR:",
-    "startswith": "ERROR: ",
+    "startswith": "ERROR:",
     "prefix": "<span style='color: red'>",
     "suffix": "</span>",
     "anchor": true,
