@@ -41,6 +41,13 @@ function App() {
     logRef = createRef(),
     verticalSplit = 3.75,
     getLog = (url) => {
+      // const username = "",
+      //   password = "",
+      //   credentials = btoa(username + ":" + password),
+      //   headers = { headers: { Authorization: `Basic ${credentials}` } };
+      // console.log(headers);
+      // fetch(url, headers)
+      // fetch(url, { credentials: "include" })
       fetch(url).then(function (response) {
         response.text().then(function (text) {
           setLogOriginalText(text);
