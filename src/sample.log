@@ -29,6 +29,22 @@ jid=b.usubjid order
 by _sort;
 NOTE: Table WORK._TEMP created, with 205 rows and 59 columns.
 
+1    data x;
+2      x=upcase("x"));
+                    -
+                    22
+                    200
+ERROR 22-322: Syntax error, expecting one of the following: !, !!, &, *, **, +, -, /, ;, <, <=, <>,
+              =, >, ><, >=, AND, EQ, GE, GT, IN, LE, LT, MAX, MIN, NE, NG, NL, NOT, NOTIN, OR, ^, ^=,
+              |, ||, ~, ~=.
+
+ERROR 200-322: The symbol is not recognized and will be ignored.
+
+
+FATAL ERROR - made up reason
+
+dataset has uninitialized variables
+
 MPRINT(VBMI):   quit;
 NOTE: PROCEDURE SQL used (Total process time):
       real time           0.01 seconds
@@ -47,10 +63,14 @@ MPRINT(SETENV):   direxists = 0;
 MPRINT(SETENV):   found = 0;
 MPRINT(SETENV):   maxver = .;
 MPRINT(SETENV):
-
+(SUBMIT_JOB): 2023-01-10T17:26:42 - Submitted REPOSITORY job:
 NOTE: DATA statement used (Total process time):
       real time           58:50:11.71
       cpu time            1:53.39
+
+WARNING: (VARLIST): Could not open sdtm.refresh:
+         ERROR: Indented test - File SDTM.REFRESH.DATA does not exist.
+MAUTOCOMPLOC:  The autocall macro DSATTR is compiling using the autocall source file
 
 ERROR: another test
 =========== a highlighted line

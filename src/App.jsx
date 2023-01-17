@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createRef } from "react";
-import "./App.css";
+import Select from "react-select";
 import {
   Box,
   Grid,
@@ -10,42 +10,43 @@ import {
   FormControlLabel,
   TextField,
   Checkbox,
-  Paper,
   Button,
   Switch,
-  Divider,
   CircularProgress,
   Tabs,
   Tab,
 } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+
 import { getDir, xmlToJson } from "./utility";
-import Select from "react-select";
+import "./App.css";
+import rules from "./rules.json";
 import sample1 from "./job_adsl.log";
 import sample2 from "./sample.log";
-import Add from "@mui/icons-material/Add";
-import Remove from "@mui/icons-material/Remove";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import DownloadIcon from "@mui/icons-material/Download";
-import ArrowCircleLeftIcon from "@mui/icons-material/ArrowCircleLeft";
-import ArrowCircleRightIcon from "@mui/icons-material/ArrowCircleRight";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-// import listOfLogs from "./logs.json";
-import rules from "./rules.json";
+
+import {
+  Add,
+  Remove,
+  RestartAlt,
+  Download,
+  ArrowCircleLeft,
+  ArrowCircleRight,
+  ArrowUpward,
+  ArrowDownward,
+} from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 
 function App() {
-  const [logText, setLogText] = useState(null),
+  const rowHeight = 22,
+    [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
     logRef = createRef(),
-    verticalSplit = 3.75,
+    verticalSplit = 2.75,
     getLog = (url) => {
       // const username = "",
       //   password = "",
       //   credentials = btoa(username + ":" + password),
       //   headers = { headers: { Authorization: `Basic ${credentials}` } };
-      // console.log(headers);
       // fetch(url, headers)
       // fetch(url, { credentials: "include" })
       fetch(url).then(function (response) {
@@ -74,20 +75,30 @@ function App() {
     incrementCount = (type) => {
       if (!counts.hasOwnProperty(type)) counts[type] = 0;
       counts[type]++;
-      // console.log("counts", counts);
       return counts[type];
     },
     [tabValue, changeTabValue] = useState(0),
     [badgeCountError, setBadgeCountError] = useState(0),
     [badgeCountWarn, setBadgeCountWarn] = useState(0),
     [badgeCountNotice, setBadgeCountNotice] = useState(0),
+    [badgeCountJob, setBadgeCountJob] = useState(0),
+    [badgeCountSerious, setBadgeCountSerious] = useState(0),
+    [badgeCountOther, setBadgeCountOther] = useState(0),
+    [currentLine, setCurrentLine] = useState(1),
     resetCounts = () => {
       setBadgeCountError(0);
       setBadgeCountWarn(0);
       setBadgeCountNotice(0);
+      setBadgeCountSerious(0);
+      setBadgeCountJob(0);
+      setBadgeCountOther(0);
     },
     analyse = (text) => {
       let id = 0;
+      rules.forEach((rule) => {
+        if (rule.ruleType === "regex")
+          rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
+      });
       const lines = text.split("\n"),
         tempLinks = [],
         tempLineNumberToLink = [],
@@ -98,8 +109,12 @@ function App() {
           if (!showMprint && element.startsWith("MPRINT(")) return null;
           let preparedToReturn = element;
           rules.forEach((rule) => {
-            // console.log("rule", rule);
-            if (element.startsWith(rule.startswith)) {
+            if (
+              (rule.ruleType === "startswith" &&
+                element.startsWith(rule.startswith)) ||
+              (rule.ruleType === "regex" &&
+                rule.regularExpression.test(element))
+            ) {
               id++;
               const tag = rule.prefix,
                 prefix = tag.substring(0, tag.length - 1) + ` id='${id}'>`;
@@ -110,6 +125,7 @@ function App() {
                   lineNumber: lineNumber,
                   linkColor: rule.linkColor,
                   type: rule.type,
+                  interesting: rule.interesting,
                 });
               tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
               const count = incrementCount(rule.type);
@@ -120,12 +136,20 @@ function App() {
                 case "WARN":
                   setBadgeCountWarn(count);
                   break;
+                case "SERIOUS":
+                  setBadgeCountSerious(count);
+                  break;
+                case "JOB":
+                  setBadgeCountJob(count);
+                  break;
                 case "NOTICE":
                   setBadgeCountNotice(count);
                   break;
+                case "OTHER":
+                  setBadgeCountOther(count);
+                  break;
                 default:
               }
-              // console.log(prefix);
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
             }
           });
@@ -160,7 +184,10 @@ function App() {
     [waitGetDir, setWaitGetDir] = useState(false),
     [waitSelectLog, setWaitSelectLog] = useState(false),
     [checkError, setCheckError] = useState(true),
-    [checkNotice, setCheckNotice] = useState(true),
+    [checkNotice, setCheckNotice] = useState(false),
+    [checkSerious, setCheckSerious] = useState(true),
+    [checkJob, setCheckJob] = useState(true),
+    [checkOther, setCheckOther] = useState(false),
     changeCheckWarn = (event) => {
       setCheckWarn(event.target.checked);
     },
@@ -169,6 +196,15 @@ function App() {
     },
     changeCheckNotice = (event) => {
       setCheckNotice(event.target.checked);
+    },
+    changeCheckJob = (event) => {
+      setCheckJob(event.target.checked);
+    },
+    changeCheckSerious = (event) => {
+      setCheckSerious(event.target.checked);
+    },
+    changeCheckOther = (event) => {
+      setCheckOther(event.target.checked);
     },
     { href } = window.location,
     [logDirectory, setLogDirectory] = useState(
@@ -239,17 +275,12 @@ function App() {
     ],
     [cpuTime, setCpuTime] = useState(null),
     processXml = (responseXML) => {
-      // console.log("responseXML", responseXML);
       // Here you can use the Data
       let dataXML = responseXML;
-      // console.log(typeof dataXML);
       let dataJSON = xmlToJson(dataXML.responseXML);
-      // console.log("dataJSON:", dataJSON);
       const logs = dataJSON["d:multistatus"]["d:response"].map((record) => {
-        // console.log("record", record);
         let path = record["d:href"]["#text"];
         let props = record["d:propstat"]["d:prop"];
-        // console.log("path", path, "props", props);
         if (props === undefined) return null;
         const name = props["d:displayname"]["#text"] ?? "",
           created = props["d:creationdate"]["#text"],
@@ -268,15 +299,28 @@ function App() {
             locked: locked,
             version: version,
           };
-        // console.log(
-        //   `Path: ${path},  Name: ${name},  Created: ${created},  Last modified: ${modified}, Checked out: ${checkedOut}, Locked: ${locked}, Version: ${version}`
-        // );
         return partOfLog;
       });
       setListOfLogs(
-        logs.filter((log) => log !== null && log.fileType === "log")
+        logs
+          .filter((log) => log !== null && log.fileType === "log")
+          .sort((a, b) => {
+            const x = a.label.toLowerCase(),
+              y = b.label.toLowerCase();
+            if (x < y) {
+              return -1;
+            }
+            if (x > y) {
+              return 1;
+            }
+            return 0;
+          })
       );
-      console.log("logs", logs);
+    },
+    jumpTo = (id) => {
+      const url = window.location.href;
+      window.location.href = "#" + id;
+      window.history.replaceState(null, null, url);
     },
     tempInputs = [],
     tempOutputs = [],
@@ -401,8 +445,6 @@ function App() {
       //     a.seconds < b.seconds ? 1 : -1
       //   );
 
-      // console.log(inputs, outputs);
-      // console.log(sortedRealTime, sortedCpuTime);
       setOutputs(tempOutputs);
       setInputs(tempInputs);
       setRealTime(tempRealTime);
@@ -416,14 +458,49 @@ function App() {
   }, [logOriginalText]);
 
   useEffect(() => {
-    const parts = href.split("?");
-    if (parts.length > 1) {
-      const subparts = parts[1].split("=");
-      const log =
-        parts.length === 2 ? subparts[1] : subparts[1] + "?" + parts[2];
+    const splitQuestionMarks = href.split("?");
+    // if a log was passed in then extract log and logDir
+    if (splitQuestionMarks.length > 1) {
+      const splitEquals = splitQuestionMarks[1].split("=");
+      const log1 =
+          splitQuestionMarks.length > 2
+            ? splitEquals[1] + "?" + splitQuestionMarks[2]
+            : splitEquals[1],
+        logNames =
+          splitQuestionMarks.length > 1
+            ? splitQuestionMarks[1].split("/").pop().split(",")
+            : [""],
+        versionNumbers =
+          splitQuestionMarks.length > 2
+            ? splitQuestionMarks[2].split("=")[1].split(",")
+            : [""],
+        a = splitQuestionMarks[1].split("/");
+      a.pop();
+      const middlePart = a.join("/") + "/" + logNames[0],
+        lastPart = versionNumbers[0] ? "?version=" + versionNumbers[0] : "",
+        log2 = middlePart.substring(4) + lastPart,
+        log = logNames.length > 1 ? log2 : log1;
       console.log("loading log from URL", log, "href", href, "log", log);
+      if (logNames.length > 1) {
+        const tempListOfLogs = logNames.map((logName, i) => {
+          const middlePart = a.join("/") + "/" + logNames[i],
+            lastPart = versionNumbers[i] ? "?version=" + versionNumbers[i] : "",
+            log2 = middlePart.substring(4) + lastPart;
+          return {
+            value: log2,
+            label: logName + " (" + versionNumbers[i] + ")",
+          };
+        });
+        setListOfLogs(tempListOfLogs);
+      }
       getLog(log);
       setSelection(log);
+      // set the directory to that of the log which was passed in
+      const logDirBits = log.split("%3A")[1].split("?")[0].split("/");
+      logDirBits.pop();
+      const tempLogDir = logDirBits.filter((element) => element),
+        logDir = tempLogDir.join("/");
+      setLogDirectory("/" + logDir);
     }
     // eslint-disable-next-line
   }, [href]);
@@ -437,38 +514,42 @@ function App() {
 
   useEffect(() => {
     if (selection === null) return;
-    // console.log("updating log with switch values");
     getLog(selection);
     // eslint-disable-next-line
   }, [showSource, showMprint]);
-  // console.log(leftPanelWidth, rightPanelWidth);
 
   return (
     <Box>
-      <Grid container spacing={2}>
-        <Grid item xs={leftPanelWidth}>
+      <Grid container spacing={1}>
+        <Grid item xs={leftPanelWidth} sx={{ mt: 1 }}>
           <TextField
             id="logDirectory"
             label="Directory containing logs"
             value={logDirectory}
             onChange={(e) => setLogDirectory(e.target.value)}
-            sx={{ width: 600, mt: 2, ml: 2 }}
+            sx={{
+              width: (windowDimension.winWidth * leftPanelWidth) / 12 - 140,
+              mt: 1,
+            }}
           />
           {!waitGetDir && (
-            <Button
-              onClick={() => {
-                setWaitGetDir(true);
-                resetCounts();
-                getWebDav(logDirectory);
-              }}
-              sx={{
-                m: 3,
-                backgroundColor: "lightgray",
-                color: "darkgreen",
-              }}
-            >
-              Read directory
-            </Button>
+            <Tooltip title="Read directory and show a list of logs to select from">
+              <Button
+                onClick={() => {
+                  setWaitGetDir(true);
+                  resetCounts();
+                  getWebDav(logDirectory);
+                }}
+                sx={{
+                  m: 3,
+                  fontSize: 12,
+                  backgroundColor: "lightgray",
+                  color: "darkgreen",
+                }}
+              >
+                Read
+              </Button>
+            </Tooltip>
           )}
           {waitGetDir && <CircularProgress sx={{ ml: 9, mt: 2 }} />}
           {!waitSelectLog && listOfLogs && (
@@ -484,19 +565,34 @@ function App() {
         <Grid item xs={rightPanelWidth}>
           <Typography
             variant="h6"
-            sx={{ fontSize: { fontSize }, color: "green", mt: 3 }}
+            sx={{ fontSize: { fontSize }, color: "black", mt: 1 }}
           >
             {selection}
           </Typography>
-          <Paper sx={{ mt: 2 }}>
+          <Box
+            disableGutters={true}
+            variant={"dense"}
+            sx={{
+              // mt: 2,
+              // display: "flex",
+              // alignItems: "right",
+              // width: "fit-content",
+              // border: (theme) => `1px solid ${theme.palette.divider}`,
+              // borderRadius: 1,
+              bgcolor: "background.paper",
+              color: "text.secondary",
+            }}
+          >
             <Tooltip title="Move center to the left">
               <IconButton
                 onClick={() => {
-                  setLeftPanelWidth(Math.max(leftPanelWidth - 2, 2));
-                  setRightPanelWidth(Math.min(rightPanelWidth + 2, 10));
+                  setLeftPanelWidth(2);
+                  setRightPanelWidth(10);
+                  // setLeftPanelWidth(Math.max(leftPanelWidth - 2, 2));
+                  // setRightPanelWidth(Math.min(rightPanelWidth + 2, 10));
                 }}
               >
-                <ArrowCircleLeftIcon />
+                <ArrowCircleLeft />
               </IconButton>
             </Tooltip>
             <Tooltip title="Reset to middle">
@@ -506,20 +602,21 @@ function App() {
                   setRightPanelWidth(6);
                 }}
               >
-                <RestartAltIcon />
+                <RestartAlt />
               </IconButton>
             </Tooltip>
             <Tooltip title="Move center to the right">
               <IconButton
                 onClick={() => {
-                  setLeftPanelWidth(Math.min(leftPanelWidth + 2, 10));
-                  setRightPanelWidth(Math.max(rightPanelWidth - 2, 2));
+                  setLeftPanelWidth(10);
+                  setRightPanelWidth(2);
+                  // setLeftPanelWidth(Math.min(leftPanelWidth + 2, 10));
+                  // setRightPanelWidth(Math.max(rightPanelWidth - 2, 2));
                 }}
               >
-                <ArrowCircleRightIcon />
+                <ArrowCircleRight />
               </IconButton>
             </Tooltip>
-            Font Size&nbsp;
             <Tooltip title="Smaller">
               <IconButton
                 onClick={() => {
@@ -535,7 +632,7 @@ function App() {
                   setFontSize(12);
                 }}
               >
-                <RestartAltIcon />
+                <RestartAlt />
               </IconButton>
             </Tooltip>
             <Tooltip title="Larger">
@@ -547,40 +644,41 @@ function App() {
                 <Add />
               </IconButton>
             </Tooltip>
-            &nbsp;Download&nbsp;
             <Tooltip title="Download SAS Log">
               <IconButton
                 onClick={() => {
                   openInNewTab(`${selection}`);
                 }}
               >
-                <DownloadIcon />
+                <Download />
               </IconButton>
             </Tooltip>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showSource}
-                  onChange={() => {
-                    setShowSource(!showSource);
-                  }}
-                  name="source"
-                />
-              }
-              label="Source Lines"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showMprint}
-                  onChange={() => {
-                    setShowMprint(!showMprint);
-                  }}
-                  name="mprint"
-                />
-              }
-              label="Mprint Lines"
-            />
+            <Tooltip title="Show Source Lines">
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showSource}
+                    onChange={() => {
+                      setShowSource(!showSource);
+                    }}
+                    name="source"
+                  />
+                }
+              />
+            </Tooltip>
+            <Tooltip title="Show MPrint Lines">
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showMprint}
+                    onChange={() => {
+                      setShowMprint(!showMprint);
+                    }}
+                    name="mprint"
+                  />
+                }
+              />
+            </Tooltip>
             <Tooltip title="Page Down">
               <IconButton
                 onClick={() => {
@@ -588,7 +686,7 @@ function App() {
                   logRef.current.scrollBy(0, clientHeight - 10);
                 }}
               >
-                <ArrowDownwardIcon />
+                <ArrowDownward />
               </IconButton>
             </Tooltip>
             <Tooltip title="Page Up">
@@ -598,12 +696,213 @@ function App() {
                   logRef.current.scrollBy(0, -(clientHeight - 10));
                 }}
               >
-                <ArrowUpwardIcon />
+                <ArrowUpward />
               </IconButton>
             </Tooltip>
-          </Paper>
+            <Tooltip title="Next Interesting thing">
+              <IconButton
+                onClick={() => {
+                  const interesting = links.filter(
+                    (link) => link.interesting && link.lineNumber > currentLine
+                  );
+                  if (interesting.length > 0) {
+                    jumpTo(interesting[0].id);
+                    setCurrentLine(interesting[0].lineNumber);
+                  }
+                }}
+              >
+                <ArrowDownward
+                  sx={{
+                    backgroundColor: "lightblue",
+                    border: 1,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous Interesting thing">
+              <IconButton
+                onClick={() => {
+                  const interesting = links.filter(
+                    (link) => link.interesting && link.lineNumber < currentLine
+                  );
+                  if (interesting.length > 0) {
+                    jumpTo(interesting[0].id);
+                    setCurrentLine(interesting[0].lineNumber);
+                  }
+                }}
+              >
+                <ArrowUpward
+                  sx={{
+                    backgroundColor: "lightblue",
+                    border: 1,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Next Error">
+              <IconButton
+                onClick={() => {
+                  const errors = links.filter(
+                    (link) =>
+                      link.type === "ERROR" && link.lineNumber > currentLine
+                  );
+                  if (errors.length > 0) {
+                    jumpTo(errors[0].id);
+                    setCurrentLine(errors[0].lineNumber);
+                  }
+                }}
+              >
+                <ArrowDownward
+                  sx={{
+                    backgroundColor: "red",
+                    color: "white",
+                    border: 1,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous Error">
+              <IconButton
+                onClick={() => {
+                  const errors = links.filter(
+                    (link) =>
+                      link.type === "ERROR" && link.lineNumber < currentLine
+                  );
+                  if (errors.length > 0) {
+                    jumpTo(errors[0].id);
+                    setCurrentLine(errors[0].lineNumber);
+                  }
+                }}
+              >
+                <ArrowUpward
+                  sx={{
+                    backgroundColor: "red",
+                    color: "white",
+                    border: 1,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Next Warning">
+              <IconButton
+                onClick={() => {
+                  const warnings = links.filter(
+                    (link) =>
+                      link.type === "WARN" && link.lineNumber > currentLine
+                  );
+                  if (warnings.length > 0) {
+                    jumpTo(warnings[0].id);
+                    setCurrentLine(warnings[0].lineNumber);
+                  }
+                }}
+              >
+                <ArrowDownward
+                  sx={{
+                    backgroundColor: "lightgreen",
+                    border: 1,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous Warning">
+              <IconButton
+                onClick={() => {
+                  const warnings = links.filter(
+                    (link) =>
+                      link.type === "WARN" && link.lineNumber < currentLine
+                  );
+                  if (warnings.length > 0) {
+                    jumpTo(warnings[0].id);
+                    setCurrentLine(warnings[0].lineNumber);
+                  }
+                }}
+              >
+                <ArrowUpward
+                  sx={{
+                    backgroundColor: "lightgreen",
+                    border: 1,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Constructed sample from source directory (for testing)">
+              <Button
+                onClick={() => {
+                  resetCounts();
+                  getLog(sample2);
+                  setSelection(sample2);
+                }}
+                sx={{
+                  minWidth: 0,
+                  fontSize: 8,
+                  p: 1,
+                  border: 1,
+                  m: 0.5,
+                  color: "lightgray",
+                }}
+              >
+                1
+              </Button>
+            </Tooltip>
+            <Tooltip title="Log file from source directory (for testing)">
+              <Button
+                onClick={() => {
+                  resetCounts();
+                  getLog(sample1);
+                  setSelection(sample1);
+                }}
+                sx={{
+                  minWidth: 0,
+                  fontSize: 8,
+                  p: 1,
+                  border: 0.5,
+                  m: 1,
+                  color: "lightgray",
+                }}
+              >
+                2
+              </Button>
+            </Tooltip>
+            <Tooltip title="LSAF version of a log from webdav">
+              <Button
+                onClick={() => {
+                  resetCounts();
+                  getLog(
+                    "https://xarprod.ondemand.sas.com/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
+                  );
+                  setSelection(
+                    "https://xarprod.ondemand.sas.com/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
+                  );
+                }}
+                sx={{
+                  minWidth: 0,
+                  fontSize: 8,
+                  p: 1,
+                  border: 0.5,
+                  m: 1,
+                  color: "lightgray",
+                }}
+              >
+                3
+              </Button>
+            </Tooltip>
+          </Box>
         </Grid>
         <Grid item xs={leftPanelWidth}>
+          <FormControlLabel
+            label="Errors"
+            control={
+              <Badge color="info" badgeContent={badgeCountError}>
+                <Checkbox checked={checkError} onChange={changeCheckError} />
+              </Badge>
+            }
+          />
           <FormControlLabel
             sx={{ ml: 1 }}
             label="Warnings"
@@ -614,10 +913,21 @@ function App() {
             }
           />
           <FormControlLabel
-            label="Errors"
+            label="Serious"
             control={
-              <Badge color="info" badgeContent={badgeCountError}>
-                <Checkbox checked={checkError} onChange={changeCheckError} />
+              <Badge color="info" badgeContent={badgeCountSerious}>
+                <Checkbox
+                  checked={checkSerious}
+                  onChange={changeCheckSerious}
+                />
+              </Badge>
+            }
+          />
+          <FormControlLabel
+            label="Job"
+            control={
+              <Badge color="info" badgeContent={badgeCountJob}>
+                <Checkbox checked={checkJob} onChange={changeCheckJob} />
               </Badge>
             }
           />
@@ -626,6 +936,14 @@ function App() {
             control={
               <Badge color="info" badgeContent={badgeCountNotice}>
                 <Checkbox checked={checkNotice} onChange={changeCheckNotice} />
+              </Badge>
+            }
+          />
+          <FormControlLabel
+            label="Other"
+            control={
+              <Badge color="info" badgeContent={badgeCountOther}>
+                <Checkbox checked={checkOther} onChange={changeCheckOther} />
               </Badge>
             }
           />
@@ -649,6 +967,9 @@ function App() {
                 if (!checkWarn && link.type === "WARN") show = false;
                 if (!checkError && link.type === "ERROR") show = false;
                 if (!checkNotice && link.type === "NOTICE") show = false;
+                if (!checkSerious && link.type === "SERIOUS") show = false;
+                if (!checkJob && link.type === "JOB") show = false;
+                if (!checkOther && link.type === "OTHER") show = false;
                 if (show) {
                   return (
                     <React.Fragment key={id}>
@@ -677,7 +998,6 @@ function App() {
           <Tabs
             value={tabValue}
             onChange={(event, newValue) => {
-              // console.log("newValue", newValue);
               changeTabValue(newValue);
             }}
           >
@@ -689,12 +1009,14 @@ function App() {
           {outputs && tabValue === 0 && (
             <DataGrid
               rows={outputs}
+              rowHeight={rowHeight}
               columns={ColDefnOutputs}
               density="compact"
               sx={{
                 height: windowDimension.winHeight / verticalSplit,
                 fontWeight: "fontSize=5",
                 fontSize: "0.7em",
+                padding: 0,
               }}
               onRowClick={(e) => {
                 window.location.hash = e.row.link;
@@ -705,6 +1027,7 @@ function App() {
           {inputs && tabValue === 1 && (
             <DataGrid
               rows={inputs}
+              rowHeight={rowHeight}
               columns={ColDefnInputs}
               density="compact"
               sx={{
@@ -721,6 +1044,7 @@ function App() {
           {inputs && tabValue === 2 && (
             <DataGrid
               rows={realTime}
+              rowHeight={rowHeight}
               columns={ColDefnRealTime}
               density="compact"
               sx={{
@@ -737,6 +1061,7 @@ function App() {
           {inputs && tabValue === 3 && (
             <DataGrid
               rows={cpuTime}
+              rowHeight={rowHeight}
               columns={ColDefnCpuTime}
               density="compact"
               sx={{
@@ -750,48 +1075,6 @@ function App() {
               components={{ Toolbar: GridToolbar }}
             />
           )}
-
-          <Divider sx={{ m: 1 }}>Tests</Divider>
-          <Tooltip title="Constructed sample from source directory (for testing)">
-            <Button
-              onClick={() => {
-                resetCounts();
-                getLog(sample2);
-                setSelection(sample2);
-              }}
-              sx={{ border: 2, m: 1, color: "gray" }}
-            >
-              Test 1
-            </Button>
-          </Tooltip>
-          <Tooltip title="Log file from source directory (for testing)">
-            <Button
-              onClick={() => {
-                resetCounts();
-                getLog(sample1);
-                setSelection(sample1);
-              }}
-              sx={{ border: 2, m: 1, color: "gray" }}
-            >
-              Test 2
-            </Button>
-          </Tooltip>
-          <Tooltip title="LSAF version of a log from webdav">
-            <Button
-              onClick={() => {
-                resetCounts();
-                getLog(
-                  "https://xarprod.ondemand.sas.com/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                );
-                setSelection(
-                  "https://xarprod.ondemand.sas.com/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                );
-              }}
-              sx={{ border: 2, m: 1 }}
-            >
-              Test 3
-            </Button>
-          </Tooltip>
         </Grid>
         <Grid item xs={rightPanelWidth}>
           {logText && (
