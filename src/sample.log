@@ -40,6 +40,7 @@ ERROR 22-322: Syntax error, expecting one of the following: !, !!, &, *, **, +, 
 
 ERROR 200-322: The symbol is not recognized and will be ignored.
 
+NOTE: Table WORK.REPEMETA has been modified, with 15 columns.
 
 FATAL ERROR - made up reason
 

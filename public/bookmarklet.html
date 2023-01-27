@@ -1,0 +1,58 @@
+<html>
+  <a href="https://en.wikipedia.org/wiki/Bookmarklet">What is a bookmarklet?</a>
+  <h1>
+    Drag the link below to your bookmarks or favorites bar in order to use the
+    bookmarklet
+  </h1>
+  <a
+    href="javascript:(function(document) {const
+        iframe=document.getElementById('sasLSAF_iframe'),
+        iWindow = iframe.contentWindow,
+        iDocument = iWindow.document,
+        qs=iDocument.getElementById('HLS_LSAF_REPOSITORY--navLinkInput-inner'),
+        v = qs ? qs.value : null,
+        lastPart = v.split('/').pop(),
+        type=lastPart.split('.').pop(),
+        filelink='https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd'+ encodeURIComponent('%3A')+'//'+v;
+        if (lastPart.split('.').length===1) open('https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file='+v);
+        else if (type==='log') open('https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer/index.html?log='+filelink);
+        else if (['js','job','css','cmd','mnf','html','lst','txt','csv','sas','json','pdf','svg','jpg','png','xlsx'].includes(type)) open('https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file='+filelink);
+        else alert('Please select a file type that is supported. Or let Phil know if you would like other file types supported.');})(document);"
+    >View LSAF File</a
+  >
+  <p>Once that is done you will be able to use it:</p>
+  <li>
+    go to
+    <a href="https://xarprod.ondemand.sas.com/lsaf/resources/lsaf/index.jsp"
+      >LSAF</a
+    >
+  </li>
+  <li>
+    Go to the Repository view (click on Repository icon in the left vertical
+    toolbar)
+  </li>
+  <li>
+    Find a text file you want to look at (currently supports these file types:
+    js, job, css, cmd, mnf, html, lst, txt, csv, sas, json)
+  </li>
+  <li>Click next to it to select (shows a tick)</li>
+  <li>Click on the bookmark, which will open a new tab to show the file</li>
+  <p></p>
+  <hr />
+  <h1>The following bookmarklet opens file viewer on a path from clipboard</h1>
+  <a
+    href="javascript:(function(document) {
+        const
+        qs = navigator.clipboard.readText().then(v =>{
+        const lastPart = v.split(%27/%27).pop(),
+        type=lastPart.split(%27.%27).pop(),
+        filelink=%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%27+ encodeURIComponent(%27%3A%27)+%27//%27+v;
+        if (lastPart.split(%27.%27).length===1) open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+v);
+        else if (type===%27log%27) open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer/index.html?log=%27+filelink);
+        else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);
+        else alert(%27Please select a file type that is supported. Or let Phil know if you would like other file types supported.%27);
+        })})
+        (document);"
+    >View from clipboard</a
+  >
+</html>

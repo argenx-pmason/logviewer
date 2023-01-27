@@ -38,6 +38,8 @@ import {
 
 function App() {
   const rowHeight = 22,
+    urlPrefix = window.location.protocol + "//" + window.location.host,
+    filePrefix = "/lsaf/filedownload/sdd%3A//",
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
     logRef = createRef(),
@@ -164,11 +166,15 @@ function App() {
       const { value } = index;
       // eslint-disable-next-line
       getLog(value);
+      document.title = value.split("/").pop();
       resetCounts();
       setSelectedLog(index);
       setSelection(value);
 
       setWaitSelectLog(false);
+    },
+    handleNewLog = (newLog) => {
+      console.log("newLog", newLog);
     },
     openInNewTab = (url) => {
       const win = window.open(url, "_blank");
@@ -211,7 +217,7 @@ function App() {
       "/general/biostat/jobs/gadam_ongoing_studies/dev/logs/"
     ),
     getWebDav = async (dir) => {
-      const webDavPrefix = "https://xarprod.ondemand.sas.com/lsaf/webdav/repo";
+      const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
       await getDir(webDavPrefix + dir, 1, processXml);
       setWaitGetDir(false);
     },
@@ -290,7 +296,7 @@ function App() {
           version = props["ns1:version"]["#text"],
           fileType = path.split(".").pop(),
           partOfLog = {
-            value: "https://xarprod.ondemand.sas.com" + path,
+            value: urlPrefix + path,
             fileType: fileType,
             label: name,
             created: created,
@@ -326,8 +332,12 @@ function App() {
     tempOutputs = [],
     tempRealTime = [],
     tempCpuTime = [],
+    [program, setProgram] = useState(null),
+    [submitted, setSubmitted] = useState(null),
+    [submitEnd, setSubmitEnd] = useState(null),
     analyzeLog = () => {
-      logOriginalText.split("\n").forEach((line, lineNumber) => {
+      const logArray = logOriginalText.split("\n");
+      logArray.forEach((line, lineNumber) => {
         if (line.startsWith("NOTE: There were ")) {
           const split = line.split(" "),
             obs = split[3],
@@ -436,6 +446,16 @@ function App() {
             link: link,
           });
         }
+        if (line.startsWith(" * Submission Start: ")) {
+          const tempProgram = line.substring(21),
+            tempSubmitted = logArray[lineNumber + 1].substring(3);
+          setProgram(tempProgram);
+          setSubmitted(tempSubmitted);
+        }
+        if (line.startsWith(" * Submission End: ")) {
+          const tempSubmitEnd = logArray[lineNumber + 1].substring(3);
+          setSubmitEnd(tempSubmitEnd);
+        }
       });
 
       // const sortedRealTime = realTime.sort((a, b) =>
@@ -461,11 +481,14 @@ function App() {
     const splitQuestionMarks = href.split("?");
     // if a log was passed in then extract log and logDir
     if (splitQuestionMarks.length > 1) {
-      const splitEquals = splitQuestionMarks[1].split("=");
-      const log1 =
+      const splitEquals = splitQuestionMarks[1].split("="),
+        partialFile = splitEquals[1].startsWith("http")
+          ? splitEquals[1]
+          : urlPrefix + filePrefix + splitEquals[1],
+        log1 =
           splitQuestionMarks.length > 2
-            ? splitEquals[1] + "?" + splitQuestionMarks[2]
-            : splitEquals[1],
+            ? partialFile + "?" + splitQuestionMarks[2]
+            : partialFile,
         logNames =
           splitQuestionMarks.length > 1
             ? splitQuestionMarks[1].split("/").pop().split(",")
@@ -474,8 +497,11 @@ function App() {
           splitQuestionMarks.length > 2
             ? splitQuestionMarks[2].split("=")[1].split(",")
             : [""],
-        a = splitQuestionMarks[1].split("/");
-      a.pop();
+        a = splitQuestionMarks[1].split("/"),
+        logFileName = a.pop();
+      document.title = logFileName;
+      a.pop(); // remove the logFileName so we can work stuff out
+      // console.log("splitEquals", splitEquals, "partialFile", partialFile);
       const middlePart = a.join("/") + "/" + logNames[0],
         lastPart = versionNumbers[0] ? "?version=" + versionNumbers[0] : "",
         log2 = middlePart.substring(4) + lastPart,
@@ -496,8 +522,17 @@ function App() {
       getLog(log);
       setSelection(log);
       // set the directory to that of the log which was passed in
-      const logDirBits = log.split("%3A")[1].split("?")[0].split("/");
+      console.log("href", href, "log", log);
+      const logDirBits = log.includes("%3A")
+        ? log.split("%3A")[1].split("?")[0].split("/")
+        : log.split("?")[0].split("/");
       logDirBits.pop();
+      if (logDirBits[0] === "https:") {
+        logDirBits.shift();
+        logDirBits.shift();
+        logDirBits.shift();
+      }
+      console.log("logDirBits", logDirBits);
       const tempLogDir = logDirBits.filter((element) => element),
         logDir = tempLogDir.join("/");
       setLogDirectory("/" + logDir);
@@ -563,14 +598,24 @@ function App() {
           {waitSelectLog && <CircularProgress sx={{ ml: 9, mt: 2 }} />}
         </Grid>
         <Grid item xs={rightPanelWidth}>
-          <Typography
+          {/* <Typography
             variant="h6"
             sx={{ fontSize: { fontSize }, color: "black", mt: 1 }}
           >
             {selection}
-          </Typography>
+          </Typography> */}
+          <TextField
+            label="Log Name"
+            value={selection}
+            onFocusout={handleNewLog}
+            sx={{
+              width: (windowDimension.winWidth * rightPanelWidth) / 12 - 40,
+              mt: 1,
+              fontSize: { fontSize },
+            }}
+          />
           <Box
-            disableGutters={true}
+            // disableGutters={true}
             variant={"dense"}
             sx={{
               // mt: 2,
@@ -874,10 +919,12 @@ function App() {
                 onClick={() => {
                   resetCounts();
                   getLog(
-                    "https://xarprod.ondemand.sas.com/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
+                    urlPrefix +
+                      "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
                   );
                   setSelection(
-                    "https://xarprod.ondemand.sas.com/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
+                    urlPrefix +
+                      "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
                   );
                 }}
                 sx={{
@@ -893,6 +940,8 @@ function App() {
               </Button>
             </Tooltip>
           </Box>
+          <b>Program:</b> {program}, <b>Submitted:</b> {submitted},{" "}
+          <b>Ended:</b> {submitEnd}
         </Grid>
         <Grid item xs={leftPanelWidth}>
           <FormControlLabel
