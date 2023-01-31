@@ -16,7 +16,9 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+// import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { DataGridPro, GridToolbar } from "@mui/x-data-grid-pro";
+import { LicenseInfo } from "@mui/x-data-grid-pro";
 
 import { getDir, xmlToJson } from "./utility";
 import "./App.css";
@@ -37,6 +39,9 @@ import {
 // import { Routes, Route, useNavigate } from "react-router-dom";
 
 function App() {
+  LicenseInfo.setLicenseKey(
+    "5b931c69b031b808de26d5902e04c36fTz00Njk0NyxFPTE2ODg4MDI3MDM3MjAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
+  );
   const rowHeight = 22,
     urlPrefix = window.location.protocol + "//" + window.location.host,
     filePrefix = "/lsaf/filedownload/sdd%3A//",
@@ -377,11 +382,44 @@ function App() {
             link: link,
           });
         }
+        if (
+          line.startsWith("NOTE: ") &&
+          line.includes("data set was successfully created")
+        ) {
+          const split = line.split(" "),
+            dset = split[1],
+            libname = dset.split(".")[0],
+            dataset = dset.split(".")[1],
+            link = lineNumberToLink.filter(
+              (link) => link.lineNumber === lineNumber
+            )[0].id,
+            prev = logArray[lineNumber - 1],
+            split2 = prev.split(" "),
+            obs = prev.startsWith("NOTE: The import data set has")
+              ? split2[6]
+              : null,
+            vars = prev.startsWith("NOTE: The import data set has")
+              ? split2[9]
+              : null;
+
+          tempOutputs.push({
+            id: lineNumber,
+            libname: libname,
+            dataset: dataset,
+            vars: vars ? Number(vars) : undefined,
+            obs: obs ? Number(obs) : undefined,
+            lineNumber: lineNumber,
+            link: link,
+            type: prev.startsWith("NOTE: The import data set has")
+              ? "Import"
+              : undefined,
+          });
+        }
         if (line.startsWith("NOTE: Table ")) {
           const split = line.split(" "),
             dset = split[2],
-            obs = split[5],
-            vars = split[8],
+            obs = line.includes("been modified") ? null : split[5],
+            vars = line.includes("been modified") ? split[7] : split[8],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
             link = lineNumberToLink.filter(
@@ -393,7 +431,7 @@ function App() {
             libname: libname,
             dataset: dataset,
             vars: Number(vars),
-            obs: Number(obs),
+            obs: obs ? Number(obs) : undefined,
             lineNumber: lineNumber,
             link: link,
           });
@@ -561,6 +599,7 @@ function App() {
             id="logDirectory"
             label="Directory containing logs"
             value={logDirectory}
+            size={"small"}
             onChange={(e) => setLogDirectory(e.target.value)}
             sx={{
               width: (windowDimension.winWidth * leftPanelWidth) / 12 - 140,
@@ -607,11 +646,12 @@ function App() {
           <TextField
             label="Log Name"
             value={selection}
+            size={"small"}
             onFocusout={handleNewLog}
             sx={{
               width: (windowDimension.winWidth * rightPanelWidth) / 12 - 40,
               mt: 1,
-              fontSize: { fontSize },
+              // fontSize: 8,
             }}
           />
           <Box
@@ -1056,7 +1096,7 @@ function App() {
             <Tab label="CPU Time" id={"tab3"} />
           </Tabs>
           {outputs && tabValue === 0 && (
-            <DataGrid
+            <DataGridPro
               rows={outputs}
               rowHeight={rowHeight}
               columns={ColDefnOutputs}
@@ -1074,7 +1114,7 @@ function App() {
             />
           )}
           {inputs && tabValue === 1 && (
-            <DataGrid
+            <DataGridPro
               rows={inputs}
               rowHeight={rowHeight}
               columns={ColDefnInputs}
@@ -1091,7 +1131,7 @@ function App() {
             />
           )}
           {inputs && tabValue === 2 && (
-            <DataGrid
+            <DataGridPro
               rows={realTime}
               rowHeight={rowHeight}
               columns={ColDefnRealTime}
@@ -1108,7 +1148,7 @@ function App() {
             />
           )}
           {inputs && tabValue === 3 && (
-            <DataGrid
+            <DataGridPro
               rows={cpuTime}
               rowHeight={rowHeight}
               columns={ColDefnCpuTime}

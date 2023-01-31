@@ -5,7 +5,8 @@
     bookmarklet
   </h1>
   <a
-    href="javascript:(function(document) {const
+    href="
+        javascript:(function(document) {const
         iframe=document.getElementById('sasLSAF_iframe'),
         iWindow = iframe.contentWindow,
         iDocument = iWindow.document,
@@ -17,7 +18,8 @@
         if (lastPart.split('.').length===1) open('https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file='+v);
         else if (type==='log') open('https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer/index.html?log='+filelink);
         else if (['js','job','css','cmd','mnf','html','lst','txt','csv','sas','json','pdf','svg','jpg','png','xlsx'].includes(type)) open('https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file='+filelink);
-        else alert('Please select a file type that is supported. Or let Phil know if you would like other file types supported.');})(document);"
+        else alert('Please select a file type that is supported. Or let Phil know if you would like other file types supported.');})(document);
+        "
     >View LSAF File</a
   >
   <p>Once that is done you will be able to use it:</p>

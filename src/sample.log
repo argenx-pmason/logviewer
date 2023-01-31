@@ -50,6 +50,124 @@ MPRINT(VBMI):   quit;
 NOTE: PROCEDURE SQL used (Total process time):
       real time           0.01 seconds
       cpu time            0.02 seconds
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA):   option MCOMPILENOTE=NONE;
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   *- Harmonize length of character variables in Data= datasets According to the length found in Ref= datasests (if specified) -*;
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   proc sql noprint;
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   *- identify common variables (with possibly different lengths) -*;
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   select distinct cats(name)||" character("||cats(length)||")", 'x' into :common_vars separated by ", ", :n_common_vars separated
+by " " from (select distinct upcase(LIBNAME) as LIBNAME, upcase(MEMNAME) as MEMNAME, upcase(NAME) as NAME, upcase(TYPE) as TYPE , max( case when (upcase(cats(LIBNAME)||"."||cats(MEMNAME)) in
+("WORK.REPEMETA_DUMMY" "WORK.REPEMETA" "WORK.REPEMETA_SP" )) then LENGTH else . end ) as LENGTH from sashelp.vcolumn where upcase(cats(LIBNAME)||"."||cats(MEMNAME)) in ("WORK.REPEMETA_DUMMY"
+"WORK.REPEMETA_DUMMY" "WORK.REPEMETA" "WORK.REPEMETA_SP" ) group by upcase(name)) group by upcase(name), upcase(type) having sum(upcase(cats(LIBNAME)||"."||cats(MEMNAME))="WORK.REPEMETA_DUMMY" and
+TYPE="CHAR") and upcase(cats(LIBNAME)||"."||cats(MEMNAME)) in ("WORK.REPEMETA_DUMMY" "WORK.REPEMETA" "WORK.REPEMETA_SP" ) ;
+NOTE: The query requires remerging summary statistics back with the original data.
+MAUTOCOMPLOC:  The autocall macro DSATTR is compiling using the autocall source file
+            /lsafshared/SASWorkspaces/.transient/job_adsl.job-2326a815-2524-425c-a2cb-55a956dc22ae/general/biostat/macros/_library/dsattr.sas.
+MAUTOCOMPLOC:  The autocall macro LOWCASE is compiling using the autocall source file /sso/sfw/sas/940/SASFoundation/9.4/sasautos/lowcase.sas.
+
+NOTE: No observations in data set WORK.REPEMETA_DUMMY.
+NOTE: No observations in data set WORK.REPEMETA_DUMMY.
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   *- uniformize variable lengths -*;
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   alter table WORK.REPEMETA_DUMMY modify DATASET character(50), NUM character(50), SAS_PROGRAM character(50), TITLE
+character(400) ;
+NOTE: Table WORK.REPEMETA_DUMMY has been modified, with 4 columns.
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   *- identify common variables (with possibly different lengths) -*;
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   select distinct cats(name)||" character("||cats(length)||")", 'x' into :common_vars separated by ", ", :n_common_vars separated
+by " " from (select distinct upcase(LIBNAME) as LIBNAME, upcase(MEMNAME) as MEMNAME, upcase(NAME) as NAME, upcase(TYPE) as TYPE , max( case when (upcase(cats(LIBNAME)||"."||cats(MEMNAME)) in
+("WORK.REPEMETA_DUMMY" "WORK.REPEMETA" "WORK.REPEMETA_SP" )) then LENGTH else . end ) as LENGTH from sashelp.vcolumn where upcase(cats(LIBNAME)||"."||cats(MEMNAME)) in ("WORK.REPEMETA"
+"WORK.REPEMETA_DUMMY" "WORK.REPEMETA" "WORK.REPEMETA_SP" ) group by upcase(name)) group by upcase(name), upcase(type) having sum(upcase(cats(LIBNAME)||"."||cats(MEMNAME))="WORK.REPEMETA" and
+TYPE="CHAR") and upcase(cats(LIBNAME)||"."||cats(MEMNAME)) in ("WORK.REPEMETA_DUMMY" "WORK.REPEMETA" "WORK.REPEMETA_SP" ) ;
+NOTE: The query requires remerging summary statistics back with the original data.
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   *- uniformize variable lengths -*;
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   alter table WORK.REPEMETA modify ANALYSIS_SET character(6), DATASET character(50), I character(1), J character(1), K
+character(1), L character(1), M character(1), N character(1), NO_ character(23), NUM character(50), O character(1), SAS_PROGRAM character(50), SECTION character(3), TITLE character(400), TYPE
+character(7) ;
+NOTE: Table WORK.REPEMETA has been modified, with 15 columns.
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   *- identify common variables (with possibly different lengths) -*;
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   select distinct cats(name)||" character("||cats(length)||")", 'x' into :common_vars separated by ", ", :n_common_vars separated
+by " " from (select distinct upcase(LIBNAME) as LIBNAME, upcase(MEMNAME) as MEMNAME, upcase(NAME) as NAME, upcase(TYPE) as TYPE , max( case when (upcase(cats(LIBNAME)||"."||cats(MEMNAME)) in
+("WORK.REPEMETA_DUMMY" "WORK.REPEMETA" "WORK.REPEMETA_SP" )) then LENGTH else . end ) as LENGTH from sashelp.vcolumn where upcase(cats(LIBNAME)||"."||cats(MEMNAME)) in ("WORK.REPEMETA_SP"
+"WORK.REPEMETA_DUMMY" "WORK.REPEMETA" "WORK.REPEMETA_SP" ) group by upcase(name)) group by upcase(name), upcase(type) having sum(upcase(cats(LIBNAME)||"."||cats(MEMNAME))="WORK.REPEMETA_SP" and
+TYPE="CHAR") and upcase(cats(LIBNAME)||"."||cats(MEMNAME)) in ("WORK.REPEMETA_DUMMY" "WORK.REPEMETA" "WORK.REPEMETA_SP" ) ;
+NOTE: The query requires remerging summary statistics back with the original data.
+NOTE: No rows were selected.
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.UNI_VLENGTH):   quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.31 seconds
+      cpu time            0.32 seconds
+
+      MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA):   proc sql;
+MAUTOCOMPLOC:  The autocall macro VARLIST is compiling using the autocall source file
+            /lsafshared/SASWorkspaces/.transient/job_adsl.job-2326a815-2524-425c-a2cb-55a956dc22ae/general/biostat/macros/_library/varlist.sas.
+
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA):   create view repemeta.vrepemeta as select distinct
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):   case when cats(b.sas_program) ^= ' ' then cats(b.Section) else cats(a.Section) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   section
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):  , case when cats(b.sas_program) ^= ' ' then cats(b.Type) else cats(a.Type) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   type
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):  , case when cats(b.sas_program) ^= ' ' then cats(b.Num) else cats(a.Num) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   num
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):  , case when cats(b.sas_program) ^= ' ' then cats(b.No_) else cats(a.No_) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   no_
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):  , case when cats(b.sas_program) ^= ' ' then cats(b.Analysis_Set) else cats(a.Analysis_Set) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   analysis_set
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):  , case when cats(b.sas_program) ^= ' ' then cats(b.SAS_Program) else cats(a.SAS_Program) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   sas_program
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):  , case when cats(b.sas_program) ^= ' ' then cats(b.Dataset) else cats(a.Dataset) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   dataset
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):  , case when cats(b.sas_program) ^= ' ' then cats(b.tabno) else cats(a.tabno) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   tabno
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):  , case when cats(b.sas_program) ^= ' ' then cats(b.outputfilename) else cats(a.outputfilename) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   outputfilename
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):   , case when cmiss(b.sas_program, a.sas_program) = 0 then left(" "||b.Title) else left(" "||a.Title) end as
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST.LOWCASE):   title
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA.VARLIST):   length=400
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA):   from repemeta.repemeta as a left join repemeta.repemeta_resolved as b on lowcase(cats(a.sas_program)) = lowcase(cats(b.sas_program)) and
+lowcase(cats(a.tabno)) = lowcase(cats(b.tabno_o)) and (LOWCASE(cats(a.type)) = LOWCASE(cats(b.type))) and ( (LOWCASE(cats(a.dataset)) = LOWCASE(cats(b.dataset))) or (LOWCASE(cats(a.type)) not in
+('dataset', ' ')) ) order by type, num ;
+NOTE: SQL view REPEMETA.VREPEMETA has been defined.
+MPRINT(SETENV.SETENV02.INI.READREPEVENTMETA.REFRESHMETA):   quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.40 seconds
+      cpu time            0.40 seconds
+
+
+      MPRINT(VSTUDIES):   proc sql noprint;
+MPRINT(VSTUDIES):   create table pooldm as select distinct usubjid, coalesce(rficdtc, rfstdtc, rfxstdtc, '9999') as stdtc,
+MPRINT(VARLIST):   STUDYID, ARMCD, ACTARMCD
+MPRINT(VSTUDIES):   from sdtm.dm;
+NOTE: Table WORK.POOLDM created, with 205 rows and 5 columns.
+
+MPRINT(VSTUDIES):   quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.09 seconds
+
+MPRINT(VSTUDIES):   proc sql noprint;
+MPRINT(VSTUDIES):   create table WORK._A_2 (drop=_sort) as select distinct a.
+MPRINT(VARLIST):  * , b.studies , b.armcds , b.armcdas , b.nstudies , b.cumstud , b.cumarmcd , b.cumarmca , b.studyseq , b.dm_modte
+MPRINT(VSTUDIES):   from _temp as a left join subjects_studies as b on a.studyid=b.studyid and a.usubjid=b.usubjid order by _sort;
+NOTE: Table WORK._A_2 created, with 205 rows and 42 columns.
+
+MPRINT(VSTUDIES):   quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.28 seconds
+      cpu time            0.27 seconds
+
+
+MPRINT(VADSLTRT):   filename adamspec "/lsafshared/SASWorkspaces/.transient/job_adsl.job-2326a815-2524-425c-a2cb-55a956dc22ae/general/biostat/gadam/metadata/argx-adam1.2.xlsx";
+MPRINT(VADSLTRT):   proc import out=_across_studies datafile=adamspec dbms=xlsx replace;
+MPRINT(VADSLTRT):   RXLX;
+MPRINT(VADSLTRT):   range="ADSL$A2:";
+MPRINT(VADSLTRT):   getnames=yes;
+MPRINT(VADSLTRT):   run;
+
+NOTE: One or more variables were converted because the data type is not supported by the V9 engine. For more details, run with options MSGLEVEL=I.
+NOTE: The import data set has 163 observations and 15 variables.
+NOTE: WORK._ACROSS_STUDIES data set was successfully created.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.05 seconds
+
+      cpu time            0.06 seconds
 
       MPRINT(SETENV):   source source2 nofmterr notes spool nodate nonumber MAUTOCOMPLOC NOMAUTOLOCDISPLAY;
 MPRINT(SETENV):   * in case run in batch;
