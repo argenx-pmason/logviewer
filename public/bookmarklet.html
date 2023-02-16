@@ -1,10 +1,16 @@
 <html>
+  <head>
+    <meta charset="utf-8">
+    <title>LSAF Bookmarklets</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>👽</text></svg>">
+   </head>
   <a href="https://en.wikipedia.org/wiki/Bookmarklet">What is a bookmarklet?</a>
   <h1>
     Drag the link below to your bookmarks or favorites bar in order to use the
     bookmarklet
   </h1>
   <a
+    alt="View LSAF file"
     href="
 javascript:(function(document) {const iframe=document.getElementById('sasLSAF_iframe'),
 iWindow = iframe.contentWindow,
@@ -13,14 +19,15 @@ qs=iDocument.getElementById('HLS_LSAF_REPOSITORY--navLinkInput-inner'),
 v = qs ? qs.value : null,
 lastPart = v.split(%27/%27).pop(),
 type=lastPart.split(%27.%27).pop(),
-filelink=%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%27+ encodeURIComponent(%27%3A%27)+%27//%27+v;
-if (lastPart==='documents') open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/dashstudy/index.html?file=%27+v+'/meta/dashstudy.json');
-else if (lastPart.split(%27.%27).length===1) open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+v);
-else if (type===%27log%27) open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer/index.html?log=%27+filelink);
-else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);
-else alert(%27Please select a file type that is supported. Or let Phil know if you would like other file types supported.%27);})(document);
-        "
-    >View LSAF File</a
+{ href, protocol, host } = window.location,
+urlPrefix = protocol + %27//%27 + host,
+filelink=urlPrefix+%27/lsaf/filedownload/sdd%27+ encodeURIComponent(%27%3A%27)+%27//%27+v;
+console.log(urlPrefix,filelink);
+if (lastPart==='documents') open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/dashstudy/index.html?file=%27+v+'/meta/dashstudy.json');
+else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+v);
+else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer/index.html?log=%27+filelink);
+else open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
+        " >🔍</a
   >
   <p>Once that is done you will be able to use it:</p>
   <li>
@@ -43,18 +50,70 @@ else alert(%27Please select a file type that is supported. Or let Phil know if y
   <hr />
   <h1>The following bookmarklet opens file viewer on a path from clipboard</h1>
   <a
+    alt="View from Clipboard"
     href="javascript:(function(document) {
-        const
-        qs = navigator.clipboard.readText().then(v =>{
-        const lastPart = v.split(%27/%27).pop(),
-        type=lastPart.split(%27.%27).pop(),
-        filelink=%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%27+ encodeURIComponent(%27%3A%27)+%27//%27+v;
-        if (lastPart.split(%27.%27).length===1) open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+v);
-        else if (type===%27log%27) open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer/index.html?log=%27+filelink);
-        else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(%27https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);
-        else alert(%27Please select a file type that is supported. Or let Phil know if you would like other file types supported.%27);
-        })})
-        (document);"
-    >View from clipboard</a
-  >
+const qs = navigator.clipboard.readText().then(v =>{
+const lastPart = v.split(%27/%27).pop(),
+type=lastPart.split(%27.%27).pop(),
+{ href, protocol, host } = window.location,
+urlPrefix = protocol + %27//%27 + host,
+filelink=urlPrefix+%27/lsaf/filedownload/sdd%27+ encodeURIComponent(%27%3A%27)+%27//%27+v;
+if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+v);
+else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer/index.html?log=%27+filelink);
+else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);
+else alert(%27Please select a file type that is supported. Or let Phil know if you would like other file types supported.%27);
+})}) (document);"
+    >📋</a
+    <p></p>
+    <hr />
+    <h3>Technology used in our Dashboards and Viewers</h3>
+    <p>If you are interested in what we use to build things, or want to learn how to do so yourself then here are links to get you started.</p>
+    <ul><a href="https://code.visualstudio.com/">Visual Studio Code</a> - the editor user to develop and test our apps.</ul>
+    <ul><a href="https://reactjs.org/"">React</a> - JavaScript library for building User Interfaces</ul>
+    <ul><a href="https://www.npmjs.com/">npm</a> - collection of JavaScript libraries for building things</ul>
+    <ul><a href="https://mui.com/material-ui/">Material-UI</a> components from Google</ul>
+    <ul><a href="https://mui.com/x/react-data-grid/"">Data Grid</a> - part of Material-UI</ul>
+    <ul><a href="https://www.highcharts.com/demo">Highcharts</a> for graphs & maps</ul>
+    <h3>Notes</h3>
+    <ul>
+      <li>Hit ctrl + shift + j in Chrome. That should open the JavaScript console.
+          This is useful if you are having problems with a web page and want to check if there are any errors. </li>
+    </ul>
+    <hr/>
+    <h2>Experimental</h2>
+    <li>Don't use these experimental bookmarklets as they are not ready for general use.</li>
+<a href="
+    javascript:void(window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q='+prompt ('Search SharePoint:')));
+">Search SharePoint</a>
+
+<a href="
+javascript:(function(document) {
+const iframe=document.getElementById('sasLSAF_iframe'),
+iWindow = iframe.contentWindow,
+iDocument = iWindow.document,
+repoButton=iDocument.getElementById('sasLSAF--sasLSAF_appContainer_lfn_3_icn'),
+searchButton=iDocument.getElementById('HLS_LSAF_REPOSITORY--searchButton');
+repoButton.click();
+console.log('repoButton',repoButton,'searchButton',searchButton);
+searchButton.style.border='3px solid red';
+searchButton.click();
+})(document);
+">Test1</a>
+
+<a href="
+    javascript:(function() {
+      var targetUrl = 'https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q=';
+      new Promise (
+          (setQuery) => {var input = window.prompt('Search SharePoint:'); if (input) setQuery(input);}
+      )
+      .then (
+          (query) => window.open(targetUrl + query)
+      );
+  })();
+})(document);
+">Test2</a>
+
+
+
+
 </html>

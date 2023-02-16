@@ -32,7 +32,7 @@
   {
     "ruleType": "startswith",
     "startswith": "MPRINT(",
-    "prefix": "<span style='color: lightgray'>",
+    "prefix": "<span style='color: darkgray'>",
     "suffix": "</span>",
     "anchor": false,
     "linkColor": "blue",

@@ -22,6 +22,7 @@ import { LicenseInfo } from "@mui/x-data-grid-pro";
 
 import { getDir, xmlToJson } from "./utility";
 import "./App.css";
+// rules are kept on LSAF in /general/biostat/tools/common/metadata/rules.json
 import rules from "./rules.json";
 import sample1 from "./job_adsl.log";
 import sample2 from "./sample.log";
@@ -35,6 +36,7 @@ import {
   ArrowCircleRight,
   ArrowUpward,
   ArrowDownward,
+  SquareFoot,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 
@@ -113,7 +115,13 @@ function App() {
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
           if (/The SAS System/.test(element)) return null;
           if (!showSource && /^(\d+ )/.test(element)) return null;
-          if (!showMprint && element.startsWith("MPRINT(")) return null;
+          if (
+            !showMprint &&
+            (element.startsWith("MPRINT(") ||
+              element.startsWith("MLOGIC(") ||
+              element.startsWith("SYMBOLGEN: "))
+          )
+            return null;
           let preparedToReturn = element;
           rules.forEach((rule) => {
             if (
@@ -751,7 +759,7 @@ function App() {
                 }
               />
             </Tooltip>
-            <Tooltip title="Show MPrint Lines">
+            <Tooltip title="Show Mprint/Mlogic/Symbolgen Lines">
               <FormControlLabel
                 control={
                   <Switch
@@ -914,6 +922,18 @@ function App() {
                     borderRadius: 3,
                   }}
                 />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="View rules used to parse logs">
+              <IconButton
+                onClick={() => {
+                  window.open(
+                    "https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd:/general/biostat/tools/fileviewer/index.html?file=https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer/rules.json",
+                    "_blank"
+                  );
+                }}
+              >
+                <SquareFoot />
               </IconButton>
             </Tooltip>
             <Tooltip title="Constructed sample from source directory (for testing)">
@@ -1101,6 +1121,7 @@ function App() {
               rowHeight={rowHeight}
               columns={ColDefnOutputs}
               density="compact"
+              hideFooter={true}
               sx={{
                 height: windowDimension.winHeight / verticalSplit,
                 fontWeight: "fontSize=5",
@@ -1119,6 +1140,7 @@ function App() {
               rowHeight={rowHeight}
               columns={ColDefnInputs}
               density="compact"
+              hideFooter={true}
               sx={{
                 height: windowDimension.winHeight / verticalSplit,
                 fontWeight: "fontSize=5",
@@ -1136,6 +1158,7 @@ function App() {
               rowHeight={rowHeight}
               columns={ColDefnRealTime}
               density="compact"
+              hideFooter={true}
               sx={{
                 height: windowDimension.winHeight / verticalSplit,
                 fontWeight: "fontSize=5",
@@ -1153,6 +1176,7 @@ function App() {
               rowHeight={rowHeight}
               columns={ColDefnCpuTime}
               density="compact"
+              hideFooter={true}
               sx={{
                 height: windowDimension.winHeight / verticalSplit,
                 fontWeight: "fontSize=5",
