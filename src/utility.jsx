@@ -65,3 +65,5 @@ export const getDir = async (url, depth, callback) => {
     "  </d:propfind>";
   xhttp.send(xmlData);
 };
+
+export const updateJsonFile = (content) => {};
