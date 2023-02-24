@@ -37,6 +37,7 @@ import {
   ArrowUpward,
   ArrowDownward,
   SquareFoot,
+  FileDownloadDone,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 
@@ -47,6 +48,7 @@ function App() {
   const rowHeight = 22,
     urlPrefix = window.location.protocol + "//" + window.location.host,
     filePrefix = "/lsaf/filedownload/sdd%3A//",
+    webDavPrefix = urlPrefix + "/lsaf/webdav/repo",
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
     logRef = createRef(),
@@ -102,6 +104,28 @@ function App() {
       setBadgeCountJob(0);
       setBadgeCountOther(0);
     },
+    selectStyles = {
+      control: (baseStyles, state) => ({
+        ...baseStyles,
+        fontSize: "12px",
+        marginLeft: 3,
+        background: "#e6ffff",
+        // borderColor: state.isFocused ? "green" : "red",
+        border: state.isFocused ? "1px solid #009999" : "2px solid #00ffff",
+        // "&:hover": {
+        //   border: "1px solid #ff8b67",
+        //   boxShadow: "0px 0px 6px #ff8b67",
+        // },
+      }),
+      option: (baseStyles, state) => ({
+        ...baseStyles,
+        fontSize: "12px",
+      }),
+      // container: (baseStyles, state) => ({
+      //   ...baseStyles,
+      //   border: "2px solid #ff8b67",
+      // }),
+    },
     analyse = (text) => {
       let id = 0;
       rules.forEach((rule) => {
@@ -112,6 +136,7 @@ function App() {
         tempLinks = [],
         tempLineNumberToLink = [],
         html = lines.map((element, lineNumber) => {
+          let matchFound = false;
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
           if (/The SAS System/.test(element)) return null;
           if (!showSource && /^(\d+ )/.test(element)) return null;
@@ -125,12 +150,14 @@ function App() {
           let preparedToReturn = element;
           rules.forEach((rule) => {
             if (
-              (rule.ruleType === "startswith" &&
+              !matchFound &&
+              ((rule.ruleType === "startswith" &&
                 element.startsWith(rule.startswith)) ||
-              (rule.ruleType === "regex" &&
-                rule.regularExpression.test(element))
+                (rule.ruleType === "regex" &&
+                  rule.regularExpression.test(element)))
             ) {
               id++;
+              matchFound = true; // set this showing we have matched a rule for this line, so we dont want to match any other rules for this line
               const tag = rule.prefix,
                 prefix = tag.substring(0, tag.length - 1) + ` id='${id}'>`;
               if (rule.anchor)
@@ -187,7 +214,11 @@ function App() {
       setWaitSelectLog(false);
     },
     handleNewLog = (newLog) => {
-      console.log("newLog", newLog);
+      console.log("newLog", selection);
+      resetCounts();
+      if (selection.substring(0, 1) === "/") getLog(webDavPrefix + selection);
+      else getLog(selection);
+      document.title = selection.split("/").pop();
     },
     openInNewTab = (url) => {
       const win = window.open(url, "_blank");
@@ -195,7 +226,7 @@ function App() {
     },
     [showSource, setShowSource] = useState(true),
     [showMprint, setShowMprint] = useState(true),
-    [selection, setSelection] = useState(null),
+    [selection, setSelection] = useState(""),
     [selectedLog, setSelectedLog] = useState(null),
     [links, setLinks] = useState(null),
     [lineNumberToLink, setLineNumberToLink] = useState(null),
@@ -230,7 +261,7 @@ function App() {
       "/general/biostat/jobs/gadam_ongoing_studies/dev/logs/"
     ),
     getWebDav = async (dir) => {
-      const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
+      // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
       await getDir(webDavPrefix + dir, 1, processXml);
       setWaitGetDir(false);
     },
@@ -603,17 +634,21 @@ function App() {
     <Box>
       <Grid container spacing={1}>
         <Grid item xs={leftPanelWidth} sx={{ mt: 1 }}>
-          <TextField
-            id="logDirectory"
-            label="Directory containing logs"
-            value={logDirectory}
-            size={"small"}
-            onChange={(e) => setLogDirectory(e.target.value)}
-            sx={{
-              width: (windowDimension.winWidth * leftPanelWidth) / 12 - 140,
-              mt: 1,
-            }}
-          />
+          {logDirectory && (
+            <TextField
+              id="logDirectory"
+              label="Directory containing logs"
+              value={logDirectory}
+              size={"small"}
+              onChange={(e) => setLogDirectory(e.target.value)}
+              inputProps={{ style: { fontSize: 14 } }}
+              sx={{
+                width: (windowDimension.winWidth * leftPanelWidth) / 12 - 140,
+                mt: 1,
+                ml: 1,
+              }}
+            />
+          )}
           {!waitGetDir && (
             <Tooltip title="Read directory and show a list of logs to select from">
               <Button
@@ -623,7 +658,7 @@ function App() {
                   getWebDav(logDirectory);
                 }}
                 sx={{
-                  m: 3,
+                  m: 2,
                   fontSize: 12,
                   backgroundColor: "lightgray",
                   color: "darkgreen",
@@ -640,6 +675,7 @@ function App() {
               options={listOfLogs}
               value={selectedLog}
               onChange={selectLog}
+              styles={selectStyles}
             />
           )}
           {waitSelectLog && <CircularProgress sx={{ ml: 9, mt: 2 }} />}
@@ -651,17 +687,26 @@ function App() {
           >
             {selection}
           </Typography> */}
-          <TextField
-            label="Log Name"
-            value={selection}
-            size={"small"}
-            onFocusout={handleNewLog}
-            sx={{
-              width: (windowDimension.winWidth * rightPanelWidth) / 12 - 40,
-              mt: 1,
-              // fontSize: 8,
-            }}
-          />
+          <Box>
+            <TextField
+              label="Log Name"
+              value={selection}
+              size={"small"}
+              inputProps={{ style: { fontSize: 14 } }}
+              onChange={(event) => {
+                setSelection(event.target.value);
+              }}
+              sx={{
+                width: (windowDimension.winWidth * rightPanelWidth) / 12 - 70,
+                mt: 1,
+              }}
+            />
+            <Tooltip title="Load log - either starting with http or /">
+              <IconButton onClick={handleNewLog} sx={{ mt: 1, color: "green" }}>
+                <FileDownloadDone />
+              </IconButton>
+            </Tooltip>
+          </Box>
           <Box
             // disableGutters={true}
             variant={"dense"}

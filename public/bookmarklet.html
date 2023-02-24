@@ -48,7 +48,7 @@ else open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewe
   <li>Click on the bookmark, which will open a new tab to show the file</li>
   <p></p>
   <hr />
-  <h1>The following bookmarklet opens file viewer on a path from clipboard</h1>
+  <h2>The following bookmarklet opens file viewer on a path from clipboard</h2>
   <a
     alt="View from Clipboard"
     href="javascript:(function(document) {
@@ -66,7 +66,13 @@ else alert(%27Please select a file type that is supported. Or let Phil know if y
     >📋</a
     <p></p>
     <hr />
-    <h3>Technology used in our Dashboards and Viewers</h3>
+    <h2>Prompt the user and search SharePoint for something</h2>
+    <a href="
+    javascript:void(window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q='+prompt ('Search SharePoint:')));
+">🤓</a>
+<p></p>
+<hr />
+<h3>Technology used in our Dashboards and Viewers</h3>
     <p>If you are interested in what we use to build things, or want to learn how to do so yourself then here are links to get you started.</p>
     <ul><a href="https://code.visualstudio.com/">Visual Studio Code</a> - the editor user to develop and test our apps.</ul>
     <ul><a href="https://reactjs.org/"">React</a> - JavaScript library for building User Interfaces</ul>
@@ -81,12 +87,8 @@ else alert(%27Please select a file type that is supported. Or let Phil know if y
     </ul>
     <hr/>
     <h2>Experimental</h2>
-    <li>Don't use these experimental bookmarklets as they are not ready for general use.</li>
-<a href="
-    javascript:void(window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q='+prompt ('Search SharePoint:')));
-">Search SharePoint</a>
-
-<a href="
+    <b>Don't use these experimental bookmarklets as they are not ready for general use.</b>
+    <li><a href="
 javascript:(function(document) {
 const iframe=document.getElementById('sasLSAF_iframe'),
 iWindow = iframe.contentWindow,
@@ -99,21 +101,18 @@ searchButton.style.border='3px solid red';
 searchButton.click();
 })(document);
 ">Test1</a>
-
-<a href="
-    javascript:(function() {
-      var targetUrl = 'https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q=';
-      new Promise (
-          (setQuery) => {var input = window.prompt('Search SharePoint:'); if (input) setQuery(input);}
-      )
-      .then (
-          (query) => window.open(targetUrl + query)
-      );
-  })();
+    </li>
+    <li><a href="
+javascript:(function() {
+  var targetUrl = 'https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q=';
+  new Promise (
+      (setQuery) => {var input = window.prompt('Search SharePoint:'); if (input) setQuery(input);}
+  )
+  .then (
+      (query) => window.open(targetUrl + query)
+  );
+})();
 })(document);
 ">Test2</a>
-
-
-
-
+    </li>
 </html>
