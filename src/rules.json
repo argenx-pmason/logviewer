@@ -448,5 +448,29 @@
     "linkColor": "magenta",
     "type": "JOB",
     "interesting": false
+  },
+  {
+    "description": "Look for paths to a file or directory starting with /clinical. Then create a link to fileviewer.",
+    "ruleType": "regex",
+    "regex": "\\/clinical[\\/\\w+|\\-|.]*",
+    "prefix": "<a href='https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd:/general/biostat/tools/fileviewer/index.html?file={{matched}}' target='_blank'>",
+    "suffix": "{{matched}}</a>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": "FILE",
+    "interesting": false,
+    "substitute": true
+  },
+  {
+    "description": "Look for paths to a file or directory starting with /general. Then create a link to fileviewer.",
+    "ruleType": "regex",
+    "regex": "\\/general[\\/\\w+|\\-|.]*",
+    "prefix": "<a href='https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd:/general/biostat/tools/fileviewer/index.html?file={{matched}}' target='_blank'>",
+    "suffix": "{{matched}}</a>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": "FILE",
+    "interesting": false,
+    "substitute": true
   }
 ]

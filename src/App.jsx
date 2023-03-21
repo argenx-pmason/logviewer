@@ -193,6 +193,36 @@ function App() {
                 default:
               }
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
+              // handle link creation, where we have a regex and want to make something using the matching text
+              if (
+                rule.ruleType === "regex" &&
+                rule.substitute &&
+                rule.regularExpression.test(element)
+              ) {
+                const matches = element.match(rule.regularExpression);
+                // console.log("matches", matches);
+                // console.log("preparedToReturn", preparedToReturn);
+                matches.forEach((match) => {
+                  //TODO: if match ends in . then remove it when making link
+                  const a = rule.prefix.replace("{{matched}}", match),
+                    b = rule.suffix.replace("{{matched}}", match);
+                  preparedToReturn = element.replace(match, a + b);
+                  if (match.startsWith("/general/biostat")) {
+                    // console.log(
+                    //   "lineNumber",
+                    //   lineNumber,
+                    //   "match",
+                    //   match,
+                    //   "rule",
+                    //   rule
+                    // );
+                    // console.log("a", a);
+                    // console.log("b", b);
+                    // console.log("element", element);
+                    // console.log("preparedToReturn", preparedToReturn);
+                  }
+                });
+              }
             }
           });
           setLineNumberToLink(tempLineNumberToLink);
