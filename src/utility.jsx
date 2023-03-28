@@ -66,4 +66,61 @@ export const getDir = async (url, depth, callback) => {
   xhttp.send(xmlData);
 };
 
+export const getVersions = async (url, callback) => {
+  const versions = [],
+    getVersionFields = (item) => {
+      let href = item?.["D:href"]?.["#text"];
+      let props =
+        item?.["D:propstat"]?.["D:prop"] ??
+        item?.["D:propstat"]?.[0]?.["D:prop"];
+      console.log(props);
+      let created = props?.["D:creationdate"]?.["#text"] ?? "";
+      let modified = props?.["D:getlastmodified"]?.["#text"] ?? "";
+      let creator = props?.["D:creator-displayname"]?.["#text"] ?? "";
+      let length = props?.["D:getcontentlength"]?.["#text"] ?? "";
+      let versionName = props?.["D:version-name"]?.["#text"] ?? "";
+      //let comment = props?.["D:comment"]?.["#text"] ?? "";
+      //let info = `Version name: ${versionName}, Creator: ${creator}, Size: ${length}, Created: ${created}` +
+      //         `,  Last modified: ${modified}, Comment: ${comment},  Href: ${href}` ;
+      let info =
+        `Version name: ${versionName}, Creator: ${creator}, Size: ${length}, Created: ${created}` +
+        `, Last modified: ${modified},  Href: ${href}`;
+      versions.push(info);
+      console.log(info);
+    };
+
+  // Create an XMLHttpRequest object
+  console.log("Called: getVersion(" + url + ")");
+  const xhttp = new XMLHttpRequest();
+
+  // Define a callback function to deal with the reponse
+  xhttp.onload = function () {
+    // Here you can use the Data
+    let dataXML = this.responseXML;
+    let dataJSON = xmlToJson(dataXML);
+    // pre.innerText += "\nVersions:";
+    console.log("Versions: dataJSON:");
+    console.log(dataJSON);
+    let resp = dataJSON?.["D:multistatus"]?.["D:response"];
+    console.log(resp);
+    if (Array.isArray(resp)) {
+      resp.forEach(getVersionFields);
+    } else {
+      getVersionFields(resp);
+    }
+    callback(versions);
+  };
+
+  // Send a request
+  xhttp.open("REPORT", url, false);
+  xhttp.setRequestHeader("Content-Type", "text/xml");
+  let data =
+    "<?xml version='1.0' encoding='utf-8' ?>" +
+    "<D:version-tree xmlns:D='DAV:'> <D:prop> " +
+    "<D:version-name/> <D:creator-displayname/> <D:successor-set/>" +
+    //"<D:comment />" +
+    "</D:prop></D:version-tree>";
+  xhttp.send(data);
+};
+
 export const updateJsonFile = (content) => {};

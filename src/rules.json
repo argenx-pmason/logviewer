@@ -80,6 +80,66 @@
     "interesting": false
   },
   {
+    "ruleType": "startswith",
+    "startswith": "      user cpu time ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      system cpu time ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      memory ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      OS Memory ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      Timestamp ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      Step Count ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
     "ruleType": "regex",
     "regex": "(?:^\\s*FATAL)",
     "prefix": "<span style='color: red'>",
@@ -466,6 +526,18 @@
     "ruleType": "regex",
     "regex": "\\/general[\\/\\w+|\\-|.]*",
     "prefix": "<a href='https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd:/general/biostat/tools/fileviewer/index.html?file={{matched}}' target='_blank'>",
+    "suffix": "{{matched}}</a>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": "FILE",
+    "interesting": false,
+    "substitute": true
+  },
+  {
+    "description": "Look for paths to a file or directory starting with /general. Then create a link to fileviewer.",
+    "ruleType": "regex",
+    "regex": "http[s]?\\:[\\/\\w+|\\-|.]*",
+    "prefix": "<a href='{{matched}}' target='_blank'>",
     "suffix": "{{matched}}</a>",
     "anchor": false,
     "linkColor": "blue",

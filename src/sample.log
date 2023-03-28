@@ -11,6 +11,8 @@ NOTE: Analytical products:
       SAS/STAT 15.1
       SAS/IML 15.1
 
+Here is a web site - https://regex101.com/
+
 28         /********************************************************************************************************************/
 29         proc scaproc; record "&_SASWS_/.sessions/8/sca_1bde6714-dce6-4d4f-8aab-9af2daed2958.txt" EXPANDMACROS; run;
 WARNING: this is a test
@@ -195,3 +197,105 @@ MAUTOCOMPLOC:  The autocall macro DSATTR is compiling using the autocall source 
 ERROR: another test
 =========== a highlighted line
 Notice: this is a custom notice
+
+NOTE: Copyright (c) 2016 by SAS Institute Inc., Cary, NC, USA.
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M7)
+      Licensed to ARGENX VIA OCS_ANALYTICS PRO MDB_SUPP1, Site 70225139.
+NOTE: This session is executing on the X64_10PRO  platform.
+
+
+
+NOTE: Analytical products:
+
+      SAS/STAT 15.2
+
+NOTE: Additional host information:
+
+ X64_10PRO WIN 10.0.19041  Workstation
+
+NOTE: SAS initialization used:
+      real time           1.91 seconds
+      cpu time            1.06 seconds
+
+
+NOTE: AUTOEXEC processing beginning; file is C:\Users\pmason\autoexec.sas.
+
+json exists
+
+NOTE: The infile "lsafSync.json" is:
+      Filename=C:\Users\pmason\lsafSync.json,
+      RECFM=V,LRECL=32767,File Size (bytes)=170,
+      Last Modified=19 March 2023 21:48:54,
+      Create Time=14 October 2022 10:48:30
+
+json date=19/03/2023
+NOTE: 1 record was read from the infile "lsafSync.json".
+      The minimum record length was 170.
+      The maximum record length was 170.
+NOTE: DATA statement used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.00 seconds
+
+
+needUpdate = 1
+
+NOTE: DATA statement used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.09 seconds
+
+
+Autoexec used from C:\Users\pmason
+
+    SAS (r) Proprietary Software Release 9.4  TS1M7
+
+ SASAUTOS=('C:\Program Files\SASHome\SASFoundation\9.4\core\sasmacro'
+'C:\ProgramFiles\SASHome\SASFoundation\9.4\aacomp\sasmacro' 'C:\ProgramFiles\SASHome\SASFoundation\9.4\accelmva\sasmacro'
+'C:\ProgramFiles\SASHome\SASFoundation\9.4\dmscore\sasmacro' 'C:\ProgramFiles\SASHome\SASFoundation\9.4\graph\sasmacro'
+'C:\ProgramFiles\SASHome\SASFoundation\9.4\hps\sasmacro' 'C:\ProgramFiles\SASHome\SASFoundation\9.4\mlearning\sasmacro'
+'C:\ProgramFiles\SASHome\SASFoundation\9.4\stat\sasmacro' 'C:\LSAF\files\general\biostat\macros\_library'
+'C:\lsaf\files\general\biostat\tools\Lsaf-API-setup\lsaf-sas-macro-2.6.1\sasmacros' 'C:\lsaf\sasjscore')
+                   Specifies the location of one or more autocall libraries.
+NOTE: PROCEDURE OPTIONS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.00 seconds
+
+
+('C:\Program Files\SASHome\SASFoundation\9.4\core\sasmacro' 'C:\Program Files\SASHome\SASFoundation\9.4\aacomp\sasmacro'
+'C:\Program Files\SASHome\SASFoundation\9.4\accelmva\sasmacro' 'C:\Program Files\SASHome\SASFoundation\9.4\dmscore\sasmacro'
+'C:\Program Files\SASHome\SASFoundation\9.4\graph\sasmacro' 'C:\Program Files\SASHome\SASFoundation\9.4\hps\sasmacro'
+'C:\Program Files\SASHome\SASFoundation\9.4\mlearning\sasmacro' 'C:\Program Files\SASHome\SASFoundation\9.4\stat\sasmacro'
+'C:\lsaf\files\general\biostat\macros\_library'
+'C:\lsaf\files\general\biostat\tools\Lsaf-API-setup\lsaf-sas-macro-2.6.1\sasmacros')
+
+NOTE: AUTOEXEC processing completed.
+
+1    options mlogic symbolgen;
+2    %macro test ;
+3    %let x=1 ;
+4    %if &x=1 %then %put ok;
+5    %mend test;
+6    %test
+MLOGIC(TEST):  Beginning execution.
+MLOGIC(TEST):  %LET (variable name is X)
+SYMBOLGEN:  Macro variable X resolves to 1
+MLOGIC(TEST):  %IF condition &x=1 is TRUE
+MLOGIC(TEST):  %PUT ok
+ok
+MLOGIC(TEST):  Ending execution.
+
+7    options fullstimer;
+8    proc print data=sashelp.class ;
+NOTE: Writing HTML Body file: sashtml.htm
+9    run;
+
+NOTE: There were 19 observations read from the data set SASHELP.CLASS.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.48 seconds
+      user cpu time       0.11 seconds
+      system cpu time     0.09 seconds
+      memory              7211.28k
+      OS Memory           17900.00k
+      Timestamp           27/03/2023 04:36:42 AM
+      Step Count                        4  Switch Count  0
+
+

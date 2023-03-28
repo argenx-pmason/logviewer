@@ -17,10 +17,10 @@ import {
   Tab,
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { DataGridPro, GridToolbar } from "@mui/x-data-grid-pro";
+import { DataGridPro } from "@mui/x-data-grid-pro";
 import { LicenseInfo } from "@mui/x-data-grid-pro";
 
-import { getDir, xmlToJson } from "./utility";
+import { getDir, getVersions, xmlToJson } from "./utility";
 import "./App.css";
 // rules are kept on LSAF in /general/biostat/tools/common/metadata/rules.json
 import rules from "./rules.json";
@@ -38,6 +38,8 @@ import {
   ArrowDownward,
   SquareFoot,
   FileDownloadDone,
+  Compress,
+  Expand,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 
@@ -46,13 +48,17 @@ function App() {
     "5b931c69b031b808de26d5902e04c36fTz00Njk0NyxFPTE2ODg4MDI3MDM3MjAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
   );
   const rowHeight = 22,
+    increment = 0.25,
+    [verticalSplit, setVerticalSplit] = useState(3),
     urlPrefix = window.location.protocol + "//" + window.location.host,
     filePrefix = "/lsaf/filedownload/sdd%3A//",
     webDavPrefix = urlPrefix + "/lsaf/webdav/repo",
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
     logRef = createRef(),
-    verticalSplit = 2.75,
+    localFileRef = createRef(),
+    iconPadding = 0.1,
+    // [showFileSelector, setShowFileSelector] = useState(false),
     getLog = (url) => {
       // const username = "",
       //   password = "",
@@ -83,6 +89,7 @@ function App() {
       });
     },
     counts = {},
+    [selectedLocalFile, setSelectedLocalFile] = useState(""),
     incrementCount = (type) => {
       if (!counts.hasOwnProperty(type)) counts[type] = 0;
       counts[type]++;
@@ -109,7 +116,7 @@ function App() {
         ...baseStyles,
         fontSize: "12px",
         marginLeft: 3,
-        background: "#e6ffff",
+        background: "#eaf3d8",
         // borderColor: state.isFocused ? "green" : "red",
         border: state.isFocused ? "1px solid #009999" : "2px solid #00ffff",
         // "&:hover": {
@@ -141,7 +148,7 @@ function App() {
           if (/The SAS System/.test(element)) return null;
           if (!showSource && /^(\d+ )/.test(element)) return null;
           if (
-            !showMprint &&
+            !showMacroLines &&
             (element.startsWith("MPRINT(") ||
               element.startsWith("MLOGIC(") ||
               element.startsWith("SYMBOLGEN: "))
@@ -255,7 +262,7 @@ function App() {
       win.focus();
     },
     [showSource, setShowSource] = useState(true),
-    [showMprint, setShowMprint] = useState(true),
+    [showMacroLines, setshowMacroLines] = useState(true),
     [selection, setSelection] = useState(""),
     [selectedLog, setSelectedLog] = useState(null),
     [links, setLinks] = useState(null),
@@ -287,12 +294,19 @@ function App() {
       setCheckOther(event.target.checked);
     },
     { href } = window.location,
+    mode = href.startsWith("http://localhost") ? "local" : "remote",
+    server = href.split("//")[1].split("/")[0],
     [logDirectory, setLogDirectory] = useState(
       "/general/biostat/jobs/gadam_ongoing_studies/dev/logs/"
     ),
     getWebDav = async (dir) => {
       // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
       await getDir(webDavPrefix + dir, 1, processXml);
+      setWaitGetDir(false);
+    },
+    getLogVersions = async (dir) => {
+      // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
+      await getVersions(webDavPrefix + dir, processXml);
       setWaitGetDir(false);
     },
     ColDefnOutputs = [
@@ -354,6 +368,26 @@ function App() {
       },
     ],
     [cpuTime, setCpuTime] = useState(null),
+    ColDefnMprint = [
+      { field: "id", headerName: "ID", width: 90, hide: true },
+      { field: "show", headerName: "Show", width: 50 },
+      { field: "name", headerName: "Macro name", width: 400, flex: 1 },
+      { field: "lines", headerName: "Lines", width: 50 },
+    ],
+    [mprint, setMprint] = useState(null),
+    ColDefnMlogic = [
+      { field: "id", headerName: "ID", width: 90, hide: true },
+      { field: "name", headerName: "Macro name", width: 400, flex: 1 },
+      { field: "lines", headerName: "Lines", width: 50 },
+    ],
+    [mlogic, setMlogic] = useState(null),
+    ColDefnSymbolgen = [
+      { field: "id", headerName: "ID", width: 90, hide: true },
+      { field: "name", headerName: "Macro variable name", width: 400, flex: 1 },
+      { field: "lines", headerName: "Lines", width: 50 },
+    ],
+    [symbolgen, setSymbolgen] = useState(null),
+    [selectionModel, setSelectionModel] = React.useState([]),
     processXml = (responseXML) => {
       // Here you can use the Data
       let dataXML = responseXML;
@@ -372,7 +406,7 @@ function App() {
           partOfLog = {
             value: urlPrefix + path,
             fileType: fileType,
-            label: name,
+            label: name + " [" + modified.trim() + "]",
             created: created,
             modified: modified,
             checkedOut: checkedOut,
@@ -381,6 +415,7 @@ function App() {
           };
         return partOfLog;
       });
+      // console.log(logs);
       setListOfLogs(
         logs
           .filter((log) => log !== null && log.fileType === "log")
@@ -410,7 +445,10 @@ function App() {
     [submitted, setSubmitted] = useState(null),
     [submitEnd, setSubmitEnd] = useState(null),
     analyzeLog = () => {
-      const logArray = logOriginalText.split("\n");
+      const logArray = logOriginalText.split("\n"),
+        tempMprint = {},
+        tempMlogic = {},
+        tempSymbolgen = {};
       logArray.forEach((line, lineNumber) => {
         if (line.startsWith("NOTE: There were ")) {
           const split = line.split(" "),
@@ -530,9 +568,59 @@ function App() {
           });
         }
         if (line.startsWith("      cpu time")) {
+          // console.log(line.split(" "));
           const split = line.split(" "),
             time = split[19],
             units = split[20],
+            hms = time.split(":"),
+            countColons = hms.length - 1,
+            seconds =
+              countColons === 2
+                ? +hms[0] * 60 * 60 + +hms[1] * 60 + +hms[2]
+                : countColons === 1
+                ? +hms[0] * 60 + +hms[1]
+                : Number.parseFloat(time),
+            link = lineNumberToLink.filter(
+              (link) => link.lineNumber === lineNumber
+            )[0].id;
+          tempCpuTime.push({
+            id: lineNumber,
+            time: time,
+            units: units,
+            seconds: seconds,
+            lineNumber: lineNumber,
+            link: link,
+          });
+        }
+        if (line.startsWith("      user cpu time")) {
+          const split = line.split(" "),
+            time = split[15],
+            units = split[16],
+            hms = time.split(":"),
+            countColons = hms.length - 1,
+            seconds =
+              countColons === 2
+                ? +hms[0] * 60 * 60 + +hms[1] * 60 + +hms[2]
+                : countColons === 1
+                ? +hms[0] * 60 + +hms[1]
+                : Number.parseFloat(time),
+            link = lineNumberToLink.filter(
+              (link) => link.lineNumber === lineNumber
+            )[0].id;
+          tempCpuTime.push({
+            id: lineNumber,
+            time: time,
+            units: units,
+            seconds: seconds,
+            lineNumber: lineNumber,
+            link: link,
+          });
+        }
+        if (line.startsWith("      system cpu time ")) {
+          // console.log(line.split(" "), lineNumberToLink);
+          const split = line.split(" "),
+            time = split[13],
+            units = split[14],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -563,8 +651,47 @@ function App() {
           const tempSubmitEnd = logArray[lineNumber + 1].substring(3);
           setSubmitEnd(tempSubmitEnd);
         }
+        if (line.startsWith("MPRINT(")) {
+          const tempMacroName = line.substring(7).split(")")[0];
+          if (!(tempMacroName in tempMprint)) tempMprint[tempMacroName] = 0;
+          tempMprint[tempMacroName]++;
+        }
+        if (line.startsWith("MLOGIC(")) {
+          const tempMacroName = line.substring(7).split(")")[0];
+          if (!(tempMacroName in tempMlogic)) tempMlogic[tempMacroName] = 0;
+          tempMlogic[tempMacroName]++;
+        }
+        if (line.startsWith("SYMBOLGEN:")) {
+          const tempMacroVarName = line.split(" ")[4];
+          if (!(tempMacroVarName in tempSymbolgen))
+            tempSymbolgen[tempMacroVarName] = 0;
+          tempSymbolgen[tempMacroVarName]++;
+        }
       });
-
+      let tempMprint0 = [],
+        tempMlogic0 = [],
+        tempSymbolgen0 = [],
+        id = 0;
+      for (const name in tempMprint) {
+        id++;
+        tempMprint0.push({
+          id: id,
+          show: true,
+          name: name,
+          lines: tempMprint[name],
+        });
+      }
+      // console.log("tempMprint", tempMprint, tempMprint0);
+      for (const name in tempMlogic) {
+        id++;
+        tempMlogic0.push({ id: id, name: name, lines: tempMlogic[name] });
+      }
+      // console.log("tempMlogic", tempMlogic, tempMlogic0);
+      for (const name in tempSymbolgen) {
+        id++;
+        tempSymbolgen0.push({ id: id, name: name, lines: tempSymbolgen[name] });
+      }
+      // console.log("tempSymbolgen", tempSymbolgen, tempSymbolgen0);
       // const sortedRealTime = realTime.sort((a, b) =>
       //     a.seconds < b.seconds ? 1 : -1
       //   ),
@@ -576,6 +703,9 @@ function App() {
       setInputs(tempInputs);
       setRealTime(tempRealTime);
       setCpuTime(tempCpuTime);
+      setMprint(tempMprint0);
+      setMlogic(tempMlogic0);
+      setSymbolgen(tempSymbolgen0);
     };
 
   useEffect(() => {
@@ -655,16 +785,20 @@ function App() {
   }, [windowDimension]);
 
   useEffect(() => {
+    if (!localFileRef && mode === "local") return;
+  });
+
+  useEffect(() => {
     if (selection === null) return;
     getLog(selection);
     // eslint-disable-next-line
-  }, [showSource, showMprint]);
+  }, [showSource, showMacroLines]);
 
   return (
     <Box>
       <Grid container spacing={1}>
         <Grid item xs={leftPanelWidth} sx={{ mt: 1 }}>
-          {logDirectory && (
+          {logDirectory && mode === "remote" ? (
             <TextField
               id="logDirectory"
               label="Directory containing logs"
@@ -678,14 +812,18 @@ function App() {
                 ml: 1,
               }}
             />
-          )}
-          {!waitGetDir && (
+          ) : null}
+          {!waitGetDir && mode !== "local" ? (
             <Tooltip title="Read directory and show a list of logs to select from">
               <Button
                 onClick={() => {
-                  setWaitGetDir(true);
-                  resetCounts();
-                  getWebDav(logDirectory);
+                  if (mode === "local") {
+                    localFileRef.current.click();
+                  } else {
+                    setWaitGetDir(true);
+                    resetCounts();
+                    getWebDav(logDirectory);
+                  }
                 }}
                 sx={{
                   m: 2,
@@ -697,9 +835,9 @@ function App() {
                 Read
               </Button>
             </Tooltip>
-          )}
-          {waitGetDir && <CircularProgress sx={{ ml: 9, mt: 2 }} />}
-          {!waitSelectLog && listOfLogs && (
+          ) : null}
+          {waitGetDir ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
+          {!waitSelectLog && listOfLogs ? (
             <Select
               placeholder="Choose a log"
               options={listOfLogs}
@@ -707,8 +845,19 @@ function App() {
               onChange={selectLog}
               styles={selectStyles}
             />
-          )}
-          {waitSelectLog && <CircularProgress sx={{ ml: 9, mt: 2 }} />}
+          ) : null}
+          {mode === "local" ? (
+            <TextField
+              type="file"
+              ref={localFileRef}
+              value={selectedLocalFile}
+              onChange={(e) => {
+                console.log(e, e.target.files, e.target.files[0]);
+                setSelectedLocalFile(e.target.current);
+              }}
+            />
+          ) : null}
+          {waitSelectLog ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
         </Grid>
         <Grid item xs={rightPanelWidth}>
           {/* <Typography
@@ -717,7 +866,13 @@ function App() {
           >
             {selection}
           </Typography> */}
-          <Box>
+          <Box
+            variant={"dense"}
+            sx={{
+              bgcolor: "background.paper",
+              color: "text.secondary",
+            }}
+          >
             <TextField
               label="Log Name"
               value={selection}
@@ -727,13 +882,30 @@ function App() {
                 setSelection(event.target.value);
               }}
               sx={{
-                width: (windowDimension.winWidth * rightPanelWidth) / 12 - 70,
+                width: (windowDimension.winWidth * rightPanelWidth) / 12 - 100,
                 mt: 1,
               }}
             />
             <Tooltip title="Load log - either starting with http or /">
-              <IconButton onClick={handleNewLog} sx={{ mt: 1, color: "green" }}>
-                <FileDownloadDone />
+              <IconButton
+                size="small"
+                onClick={handleNewLog}
+                sx={{ mt: 1, color: "green" }}
+              >
+                <FileDownloadDone fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Get a list of versions to choose from (not yet working)">
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setWaitGetDir(true);
+                  resetCounts();
+                  getLogVersions(logDirectory);
+                }}
+                sx={{ mt: 1, color: "green" }}
+              >
+                <Download fontSize="small" />
               </IconButton>
             </Tooltip>
           </Box>
@@ -747,12 +919,15 @@ function App() {
               // width: "fit-content",
               // border: (theme) => `1px solid ${theme.palette.divider}`,
               // borderRadius: 1,
+              // padding: iconPadding,
               bgcolor: "background.paper",
               color: "text.secondary",
             }}
           >
             <Tooltip title="Move center to the left">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   setLeftPanelWidth(2);
                   setRightPanelWidth(10);
@@ -760,21 +935,25 @@ function App() {
                   // setRightPanelWidth(Math.min(rightPanelWidth + 2, 10));
                 }}
               >
-                <ArrowCircleLeft />
+                <ArrowCircleLeft fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Reset to middle">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   setLeftPanelWidth(6);
                   setRightPanelWidth(6);
                 }}
               >
-                <RestartAlt />
+                <RestartAlt fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Move center to the right">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   setLeftPanelWidth(10);
                   setRightPanelWidth(2);
@@ -782,47 +961,56 @@ function App() {
                   // setRightPanelWidth(Math.max(rightPanelWidth - 2, 2));
                 }}
               >
-                <ArrowCircleRight />
+                <ArrowCircleRight fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Smaller">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   setFontSize(fontSize - 1);
                 }}
               >
-                <Remove />
+                <Remove fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Reset to 12">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   setFontSize(12);
                 }}
               >
-                <RestartAlt />
+                <RestartAlt fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Larger">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   setFontSize(fontSize + 1);
                 }}
               >
-                <Add />
+                <Add fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Download SAS Log">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   openInNewTab(`${selection}`);
                 }}
               >
-                <Download />
+                <Download fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Show Source Lines">
               <FormControlLabel
+                sx={{ marginRight: iconPadding + 0.5 }}
                 control={
                   <Switch
                     checked={showSource}
@@ -830,45 +1018,54 @@ function App() {
                       setShowSource(!showSource);
                     }}
                     name="source"
+                    size="small"
                   />
                 }
               />
             </Tooltip>
             <Tooltip title="Show Mprint/Mlogic/Symbolgen Lines">
               <FormControlLabel
+                sx={{ marginRight: iconPadding }}
                 control={
                   <Switch
-                    checked={showMprint}
+                    checked={showMacroLines}
                     onChange={() => {
-                      setShowMprint(!showMprint);
+                      setshowMacroLines(!showMacroLines);
                     }}
                     name="mprint"
+                    size="small"
                   />
                 }
               />
             </Tooltip>
             <Tooltip title="Page Down">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   const clientHeight = logRef.current.clientHeight;
-                  logRef.current.scrollBy(0, clientHeight - 10);
+                  logRef.current.scrollBy(0, clientHeight - 20);
                 }}
               >
-                <ArrowDownward />
+                <ArrowDownward fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Page Up">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   const clientHeight = logRef.current.clientHeight;
                   logRef.current.scrollBy(0, -(clientHeight - 10));
                 }}
               >
-                <ArrowUpward />
+                <ArrowUpward fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Next Interesting thing">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   const interesting = links.filter(
                     (link) => link.interesting && link.lineNumber > currentLine
@@ -880,7 +1077,9 @@ function App() {
                 }}
               >
                 <ArrowDownward
+                  fontSize="small"
                   sx={{
+                    padding: iconPadding,
                     backgroundColor: "lightblue",
                     border: 1,
                     borderRadius: 3,
@@ -890,6 +1089,8 @@ function App() {
             </Tooltip>
             <Tooltip title="Previous Interesting thing">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   const interesting = links.filter(
                     (link) => link.interesting && link.lineNumber < currentLine
@@ -901,7 +1102,9 @@ function App() {
                 }}
               >
                 <ArrowUpward
+                  fontSize="small"
                   sx={{
+                    padding: iconPadding,
                     backgroundColor: "lightblue",
                     border: 1,
                     borderRadius: 3,
@@ -911,6 +1114,8 @@ function App() {
             </Tooltip>
             <Tooltip title="Next Error">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   const errors = links.filter(
                     (link) =>
@@ -923,7 +1128,9 @@ function App() {
                 }}
               >
                 <ArrowDownward
+                  fontSize="small"
                   sx={{
+                    padding: iconPadding,
                     backgroundColor: "red",
                     color: "white",
                     border: 1,
@@ -934,6 +1141,8 @@ function App() {
             </Tooltip>
             <Tooltip title="Previous Error">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   const errors = links.filter(
                     (link) =>
@@ -946,7 +1155,9 @@ function App() {
                 }}
               >
                 <ArrowUpward
+                  fontSize="small"
                   sx={{
+                    padding: iconPadding,
                     backgroundColor: "red",
                     color: "white",
                     border: 1,
@@ -957,6 +1168,8 @@ function App() {
             </Tooltip>
             <Tooltip title="Next Warning">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   const warnings = links.filter(
                     (link) =>
@@ -969,7 +1182,9 @@ function App() {
                 }}
               >
                 <ArrowDownward
+                  fontSize="small"
                   sx={{
+                    padding: iconPadding,
                     backgroundColor: "lightgreen",
                     border: 1,
                     borderRadius: 3,
@@ -979,6 +1194,8 @@ function App() {
             </Tooltip>
             <Tooltip title="Previous Warning">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   const warnings = links.filter(
                     (link) =>
@@ -991,7 +1208,9 @@ function App() {
                 }}
               >
                 <ArrowUpward
+                  fontSize="small"
                   sx={{
+                    padding: iconPadding,
                     backgroundColor: "lightgreen",
                     border: 1,
                     borderRadius: 3,
@@ -1001,79 +1220,115 @@ function App() {
             </Tooltip>
             <Tooltip title="View rules used to parse logs">
               <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
                   window.open(
-                    "https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd:/general/biostat/tools/fileviewer/index.html?file=https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer/rules.json",
+                    `https://${server}/lsaf/filedownload/sdd:/general/biostat/tools/fileviewer/index.html?file=https://${server}/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer/rules.json`,
                     "_blank"
                   );
                 }}
               >
-                <SquareFoot />
+                <SquareFoot fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Constructed sample from source directory (for testing)">
-              <Button
+            <Tooltip title={`Compress by ${increment}`}>
+              <IconButton
+                size="small"
                 onClick={() => {
-                  resetCounts();
-                  getLog(sample2);
-                  setSelection(sample2);
+                  setVerticalSplit(verticalSplit + increment);
                 }}
-                sx={{
-                  minWidth: 0,
-                  fontSize: 8,
-                  p: 1,
-                  border: 1,
-                  m: 0.5,
-                  color: "lightgray",
-                }}
+                // sx={{
+                //   backgroundColor: buttonBackground,
+                //   color: "yellow",
+                // }}
               >
-                1
-              </Button>
+                <Compress fontSize="small" />
+              </IconButton>
             </Tooltip>
-            <Tooltip title="Log file from source directory (for testing)">
-              <Button
+            <Tooltip title={`Expand by ${increment}`}>
+              <IconButton
+                size="small"
                 onClick={() => {
-                  resetCounts();
-                  getLog(sample1);
-                  setSelection(sample1);
+                  setVerticalSplit(verticalSplit - increment);
                 }}
-                sx={{
-                  minWidth: 0,
-                  fontSize: 8,
-                  p: 1,
-                  border: 0.5,
-                  m: 1,
-                  color: "lightgray",
-                }}
+                // sx={{
+                //   backgroundColor: buttonBackground,
+                //   color: "yellow",
+                // }}
               >
-                2
-              </Button>
+                <Expand fontSize="small" />
+              </IconButton>
             </Tooltip>
-            <Tooltip title="LSAF version of a log from webdav">
-              <Button
-                onClick={() => {
-                  resetCounts();
-                  getLog(
-                    urlPrefix +
-                      "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                  );
-                  setSelection(
-                    urlPrefix +
-                      "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                  );
-                }}
-                sx={{
-                  minWidth: 0,
-                  fontSize: 8,
-                  p: 1,
-                  border: 0.5,
-                  m: 1,
-                  color: "lightgray",
-                }}
-              >
-                3
-              </Button>
-            </Tooltip>
+            {mode === "local" ? (
+              <Tooltip title="Constructed sample from source directory (for testing)">
+                <Button
+                  onClick={() => {
+                    resetCounts();
+                    getLog(sample2);
+                    setSelection(sample2);
+                  }}
+                  sx={{
+                    minWidth: 0,
+                    fontSize: 8,
+                    p: 1,
+                    border: 1,
+                    m: 0.5,
+                    color: "lightgray",
+                  }}
+                >
+                  1
+                </Button>
+              </Tooltip>
+            ) : null}
+            {mode === "local" ? (
+              <Tooltip title="Log file from source directory (for testing)">
+                <Button
+                  onClick={() => {
+                    resetCounts();
+                    getLog(sample1);
+                    setSelection(sample1);
+                  }}
+                  sx={{
+                    minWidth: 0,
+                    fontSize: 8,
+                    p: 1,
+                    border: 0.5,
+                    m: 1,
+                    color: "lightgray",
+                  }}
+                >
+                  2
+                </Button>
+              </Tooltip>
+            ) : null}
+            {mode === "local" ? (
+              <Tooltip title="LSAF version of a log from webdav">
+                <Button
+                  onClick={() => {
+                    resetCounts();
+                    getLog(
+                      urlPrefix +
+                        "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
+                    );
+                    setSelection(
+                      urlPrefix +
+                        "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
+                    );
+                  }}
+                  sx={{
+                    minWidth: 0,
+                    fontSize: 8,
+                    p: 1,
+                    border: 0.5,
+                    m: 1,
+                    color: "lightgray",
+                  }}
+                >
+                  3
+                </Button>
+              </Tooltip>
+            ) : null}
           </Box>
           <b>Program:</b> {program}, <b>Submitted:</b> {submitted},{" "}
           <b>Ended:</b> {submitEnd}
@@ -1184,11 +1439,28 @@ function App() {
             onChange={(event, newValue) => {
               changeTabValue(newValue);
             }}
+            variant="scrollable"
+            scrollButtons="auto"
           >
-            <Tab label="Outputs" id={"tab0"} />
-            <Tab label="Inputs" id={"tab1"} />
-            <Tab label="Real Time" id={"tab2"} />
-            <Tab label="CPU Time" id={"tab3"} />
+            <Tab
+              label="Outputs"
+              id={"tab0"}
+              sx={{
+                fontSize: 12,
+              }}
+            />
+            <Tab label="Inputs" id={"tab1"} sx={{ fontSize: 12 }} />
+            <Tab label="Real Time" id={"tab2"} sx={{ fontSize: 12 }} />
+            <Tab label="CPU Time" id={"tab3"} sx={{ fontSize: 12 }} />
+            <Tab
+              label="MPRINT"
+              id={"tab4"}
+              sx={{
+                fontSize: 12,
+              }}
+            />
+            <Tab label="MLOGIC" id={"tab5"} sx={{ fontSize: 12 }} />
+            <Tab label="SYMBOLGEN" id={"tab6"} sx={{ fontSize: 12 }} />
           </Tabs>
           {outputs && tabValue === 0 && (
             <DataGridPro
@@ -1201,12 +1473,12 @@ function App() {
                 height: windowDimension.winHeight / verticalSplit,
                 fontWeight: "fontSize=5",
                 fontSize: "0.7em",
-                padding: 0,
+                padding: iconPadding,
               }}
               onRowClick={(e) => {
                 window.location.hash = e.row.link;
               }}
-              components={{ Toolbar: GridToolbar }}
+              // components={{ Toolbar: GridToolbar }}
             />
           )}
           {inputs && tabValue === 1 && (
@@ -1224,7 +1496,7 @@ function App() {
               onRowClick={(e) => {
                 window.location.hash = e.row.link;
               }}
-              components={{ Toolbar: GridToolbar }}
+              // components={{ Toolbar: GridToolbar }}
             />
           )}
           {inputs && tabValue === 2 && (
@@ -1242,7 +1514,7 @@ function App() {
               onRowClick={(e) => {
                 window.location.hash = e.row.link;
               }}
-              components={{ Toolbar: GridToolbar }}
+              // components={{ Toolbar: GridToolbar }}
             />
           )}
           {inputs && tabValue === 3 && (
@@ -1260,7 +1532,69 @@ function App() {
               onRowClick={(e) => {
                 window.location.hash = e.row.link;
               }}
-              components={{ Toolbar: GridToolbar }}
+              // components={{ Toolbar: GridToolbar }}
+            />
+          )}
+          {inputs && tabValue === 4 && (
+            <DataGridPro
+              checkboxSelection
+              onSelectionModelChange={(newSelectionModel) => {
+                setSelectionModel(newSelectionModel);
+              }}
+              selectionModel={selectionModel}
+              rows={mprint}
+              rowHeight={rowHeight}
+              columns={ColDefnMprint}
+              density="compact"
+              hideFooter={true}
+              sx={{
+                height: windowDimension.winHeight / verticalSplit,
+                fontWeight: "fontSize=5",
+                fontSize: "0.7em",
+                "& .MuiSvgIcon-root": {
+                  width: "0.6em",
+                },
+              }}
+              onRowClick={(e) => {
+                window.location.hash = e.row.link;
+              }}
+              // components={{ Toolbar: GridToolbar }}
+            />
+          )}
+          {inputs && tabValue === 5 && (
+            <DataGridPro
+              rows={mlogic}
+              rowHeight={rowHeight}
+              columns={ColDefnMlogic}
+              density="compact"
+              hideFooter={true}
+              sx={{
+                height: windowDimension.winHeight / verticalSplit,
+                fontWeight: "fontSize=5",
+                fontSize: "0.7em",
+              }}
+              onRowClick={(e) => {
+                window.location.hash = e.row.link;
+              }}
+              // components={{ Toolbar: GridToolbar }}
+            />
+          )}
+          {inputs && tabValue === 6 && (
+            <DataGridPro
+              rows={symbolgen}
+              rowHeight={rowHeight}
+              columns={ColDefnSymbolgen}
+              density="compact"
+              hideFooter={true}
+              sx={{
+                height: windowDimension.winHeight / verticalSplit,
+                fontWeight: "fontSize=5",
+                fontSize: "0.7em",
+              }}
+              onRowClick={(e) => {
+                window.location.hash = e.row.link;
+              }}
+              // components={{ Toolbar: GridToolbar }}
             />
           )}
         </Grid>
@@ -1272,7 +1606,7 @@ function App() {
                 border: 2,
                 fontSize: fontSize,
                 fontFamily: "courier",
-                maxHeight: windowDimension.winHeight - 150,
+                maxHeight: windowDimension.winHeight - 38 * verticalSplit,
                 maxWidth:
                   (windowDimension.winWidth / 12) * rightPanelWidth - 100,
                 overflow: "auto",
