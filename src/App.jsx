@@ -103,6 +103,7 @@ function App() {
     [badgeCountSerious, setBadgeCountSerious] = useState(0),
     [badgeCountOther, setBadgeCountOther] = useState(0),
     [currentLine, setCurrentLine] = useState(1),
+    [macrosSelected, setMacrosSelected] = useState(null),
     resetCounts = () => {
       setBadgeCountError(0);
       setBadgeCountWarn(0);
@@ -117,8 +118,8 @@ function App() {
         fontSize: "12px",
         marginLeft: 3,
         background: "#eaf3d8",
+        border: state.isFocused ? "1px solid #0000ff" : "2px solid #00ffff",
         // borderColor: state.isFocused ? "green" : "red",
-        border: state.isFocused ? "1px solid #009999" : "2px solid #00ffff",
         // "&:hover": {
         //   border: "1px solid #ff8b67",
         //   boxShadow: "0px 0px 6px #ff8b67",
@@ -135,6 +136,7 @@ function App() {
     },
     analyse = (text) => {
       let id = 0;
+
       rules.forEach((rule) => {
         if (rule.ruleType === "regex")
           rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
@@ -147,11 +149,21 @@ function App() {
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
           if (/The SAS System/.test(element)) return null;
           if (!showSource && /^(\d+ )/.test(element)) return null;
+          // mprint
+          if (element.startsWith("MPRINT(")) {
+            if (!showMacroLines) return null;
+            else {
+              const tempMacroName = element.split("(")[1].split(")")[0];
+              // console.log("tempMacroName", tempMacroName);
+              if (macrosSelected && !macrosSelected.includes(tempMacroName)) {
+                // console.log("skipping: ", tempMacroName);
+                return null;
+              }
+            }
+          }
           if (
             !showMacroLines &&
-            (element.startsWith("MPRINT(") ||
-              element.startsWith("MLOGIC(") ||
-              element.startsWith("SYMBOLGEN: "))
+            (element.startsWith("MLOGIC(") || element.startsWith("SYMBOLGEN: "))
           )
             return null;
           let preparedToReturn = element;
@@ -370,7 +382,7 @@ function App() {
     [cpuTime, setCpuTime] = useState(null),
     ColDefnMprint = [
       { field: "id", headerName: "ID", width: 90, hide: true },
-      { field: "show", headerName: "Show", width: 50 },
+      { field: "show", headerName: "Show", width: 50, hide: true },
       { field: "name", headerName: "Macro name", width: 400, flex: 1 },
       { field: "lines", headerName: "Lines", width: 50 },
     ],
@@ -704,6 +716,12 @@ function App() {
       setRealTime(tempRealTime);
       setCpuTime(tempCpuTime);
       setMprint(tempMprint0);
+      const tempSelectionModel = Object.keys(tempMprint0).map((i, id) => {
+        const n = id + 1;
+        return n;
+      });
+      // console.log("tempSelectionModel", tempSelectionModel);
+      setSelectionModel(tempSelectionModel);
       setMlogic(tempMlogic0);
       setSymbolgen(tempSymbolgen0);
     };
@@ -759,7 +777,7 @@ function App() {
       getLog(log);
       setSelection(log);
       // set the directory to that of the log which was passed in
-      console.log("href", href, "log", log);
+      // console.log("href", href, "log", log);
       const logDirBits = log.includes("%3A")
         ? log.split("%3A")[1].split("?")[0].split("/")
         : log.split("?")[0].split("/");
@@ -769,9 +787,20 @@ function App() {
         logDirBits.shift();
         logDirBits.shift();
       }
-      console.log("logDirBits", logDirBits);
+      // console.log("logDirBits", logDirBits);
       const tempLogDir = logDirBits.filter((element) => element),
-        logDir = tempLogDir.join("/");
+        logDir0 = tempLogDir.join("/"),
+        logDir = logDir0.startsWith("lsaf/webdav/")
+          ? logDir0.substring(17)
+          : logDir0;
+      // console.log(
+      //   "tempLogDir",
+      //   tempLogDir,
+      //   "logDir",
+      //   logDir,
+      //   "logDir0",
+      //   logDir0
+      // );
       setLogDirectory("/" + logDir);
     }
     // eslint-disable-next-line
@@ -790,9 +819,22 @@ function App() {
 
   useEffect(() => {
     if (selection === null) return;
+    const tempMacrosSelected = [];
+    selectionModel.forEach((item) => {
+      tempMacrosSelected.push(mprint[item - 1].name);
+    });
+    // console.log("mprint", mprint, "tempMacrosSelected", tempMacrosSelected);
+    setMacrosSelected(tempMacrosSelected);
+    // eslint-disable-next-line
+  }, [showSource, showMacroLines, selectionModel]);
+
+  useEffect(() => {
+    if (macrosSelected === null) return;
     getLog(selection);
     // eslint-disable-next-line
-  }, [showSource, showMacroLines]);
+  }, [macrosSelected]);
+
+  // console.log("selectionModel", selectionModel);
 
   return (
     <Box>
@@ -929,10 +971,10 @@ function App() {
                 size="small"
                 sx={{ padding: iconPadding }}
                 onClick={() => {
-                  setLeftPanelWidth(2);
-                  setRightPanelWidth(10);
-                  // setLeftPanelWidth(Math.max(leftPanelWidth - 2, 2));
-                  // setRightPanelWidth(Math.min(rightPanelWidth + 2, 10));
+                  // setLeftPanelWidth(2);
+                  // setRightPanelWidth(10);
+                  setLeftPanelWidth(Math.max(leftPanelWidth - 3, 0));
+                  setRightPanelWidth(Math.min(rightPanelWidth + 3, 12));
                 }}
               >
                 <ArrowCircleLeft fontSize="small" />
@@ -955,10 +997,10 @@ function App() {
                 size="small"
                 sx={{ padding: iconPadding }}
                 onClick={() => {
-                  setLeftPanelWidth(10);
-                  setRightPanelWidth(2);
-                  // setLeftPanelWidth(Math.min(leftPanelWidth + 2, 10));
-                  // setRightPanelWidth(Math.max(rightPanelWidth - 2, 2));
+                  // setLeftPanelWidth(10);
+                  // setRightPanelWidth(2);
+                  setLeftPanelWidth(Math.min(leftPanelWidth + 3, 12));
+                  setRightPanelWidth(Math.max(rightPanelWidth - 3, 0));
                 }}
               >
                 <ArrowCircleRight fontSize="small" />
