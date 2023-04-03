@@ -340,6 +340,14 @@ function App() {
       { field: "obs", headerName: "# obs", width: 90 },
     ],
     [inputs, setInputs] = useState(null),
+    ColDefnFiles = [
+      { field: "id", headerName: "ID", width: 90, hide: true },
+      { field: "lineNumber", headerName: "Line", width: 90 },
+      { field: "link", headerName: "link", width: 90, hide: true },
+      { field: "file", headerName: "File", width: 240, flex: 1 },
+      { field: "size", headerName: "Size", width: 120 },
+    ],
+    [files, setFiles] = useState(null),
     ColDefnRealTime = [
       { field: "id", headerName: "ID", width: 90, hide: true },
       { field: "lineNumber", headerName: "Line", width: 90 },
@@ -450,6 +458,7 @@ function App() {
       window.history.replaceState(null, null, url);
     },
     tempInputs = [],
+    tempFiles = [],
     tempOutputs = [],
     tempRealTime = [],
     tempCpuTime = [],
@@ -462,6 +471,7 @@ function App() {
         tempMlogic = {},
         tempSymbolgen = {};
       logArray.forEach((line, lineNumber) => {
+        // get input datasets
         if (line.startsWith("NOTE: There were ")) {
           const split = line.split(" "),
             obs = split[3],
@@ -480,6 +490,51 @@ function App() {
             link: link,
           });
         }
+        // detect filename for infile or file
+        if (
+          line.startsWith("NOTE: The infile ") ||
+          line.startsWith("NOTE: The file ")
+        ) {
+          const long = logArray
+              .filter(
+                (item, lineNum) =>
+                  lineNum >= lineNumber && lineNum <= lineNumber + 14
+              )
+              .map((e) => e.trim())
+              .join(""),
+            from0 = long.indexOf("Filename=") + 9,
+            to0 = long.indexOf(","),
+            tempFile = long.substring(from0, to0),
+            from1 = long.indexOf("File Size") + 10,
+            to1 = Math.max(
+              long.substring(from1).indexOf("\n"),
+              long.substring(from1).indexOf(",")
+            ),
+            size = to1 ? long.substring(from1, to1 + from1) : "",
+            link = lineNumberToLink.filter(
+              (link) => link.lineNumber === lineNumber
+            )[0].id;
+          tempFiles.push({
+            id: lineNumber,
+            type: "In",
+            file: tempFile,
+            size: size,
+            lineNumber: lineNumber,
+            link: link,
+          });
+          console.log(
+            "long",
+            long,
+            "tempFiles",
+            tempFiles,
+            "from1",
+            from1,
+            "to1",
+            to1
+          );
+        }
+
+        // get output datasets
         if (line.startsWith("NOTE: The data set ")) {
           const split = line.split(" "),
             dset = split[4],
@@ -713,6 +768,7 @@ function App() {
 
       setOutputs(tempOutputs);
       setInputs(tempInputs);
+      setFiles(tempFiles);
       setRealTime(tempRealTime);
       setCpuTime(tempCpuTime);
       setMprint(tempMprint0);
@@ -1492,17 +1548,18 @@ function App() {
               }}
             />
             <Tab label="Inputs" id={"tab1"} sx={{ fontSize: 12 }} />
-            <Tab label="Real Time" id={"tab2"} sx={{ fontSize: 12 }} />
-            <Tab label="CPU Time" id={"tab3"} sx={{ fontSize: 12 }} />
+            <Tab label="Files" id={"tab2"} sx={{ fontSize: 12 }} />
+            <Tab label="Real Time" id={"tab3"} sx={{ fontSize: 12 }} />
+            <Tab label="CPU Time" id={"tab4"} sx={{ fontSize: 12 }} />
             <Tab
               label="MPRINT"
-              id={"tab4"}
+              id={"tab5"}
               sx={{
                 fontSize: 12,
               }}
             />
-            <Tab label="MLOGIC" id={"tab5"} sx={{ fontSize: 12 }} />
-            <Tab label="SYMBOLGEN" id={"tab6"} sx={{ fontSize: 12 }} />
+            <Tab label="MLOGIC" id={"tab6"} sx={{ fontSize: 12 }} />
+            <Tab label="SYMBOLGEN" id={"tab7"} sx={{ fontSize: 12 }} />
           </Tabs>
           {outputs && tabValue === 0 && (
             <DataGridPro
@@ -1543,6 +1600,24 @@ function App() {
           )}
           {inputs && tabValue === 2 && (
             <DataGridPro
+              rows={files}
+              rowHeight={rowHeight}
+              columns={ColDefnFiles}
+              density="compact"
+              hideFooter={true}
+              sx={{
+                height: windowDimension.winHeight / verticalSplit,
+                fontWeight: "fontSize=5",
+                fontSize: "0.7em",
+              }}
+              onRowClick={(e) => {
+                window.location.hash = e.row.link;
+              }}
+              // components={{ Toolbar: GridToolbar }}
+            />
+          )}
+          {inputs && tabValue === 3 && (
+            <DataGridPro
               rows={realTime}
               rowHeight={rowHeight}
               columns={ColDefnRealTime}
@@ -1559,7 +1634,7 @@ function App() {
               // components={{ Toolbar: GridToolbar }}
             />
           )}
-          {inputs && tabValue === 3 && (
+          {inputs && tabValue === 4 && (
             <DataGridPro
               rows={cpuTime}
               rowHeight={rowHeight}
@@ -1577,7 +1652,7 @@ function App() {
               // components={{ Toolbar: GridToolbar }}
             />
           )}
-          {inputs && tabValue === 4 && (
+          {inputs && tabValue === 5 && (
             <DataGridPro
               checkboxSelection
               onSelectionModelChange={(newSelectionModel) => {
@@ -1603,7 +1678,7 @@ function App() {
               // components={{ Toolbar: GridToolbar }}
             />
           )}
-          {inputs && tabValue === 5 && (
+          {inputs && tabValue === 6 && (
             <DataGridPro
               rows={mlogic}
               rowHeight={rowHeight}
@@ -1621,7 +1696,7 @@ function App() {
               // components={{ Toolbar: GridToolbar }}
             />
           )}
-          {inputs && tabValue === 6 && (
+          {inputs && tabValue === 7 && (
             <DataGridPro
               rows={symbolgen}
               rowHeight={rowHeight}
@@ -1650,7 +1725,7 @@ function App() {
                 fontFamily: "courier",
                 maxHeight: windowDimension.winHeight - 38 * verticalSplit,
                 maxWidth:
-                  (windowDimension.winWidth / 12) * rightPanelWidth - 100,
+                  (windowDimension.winWidth / 12) * rightPanelWidth - 25,
                 overflow: "auto",
               }}
               ref={logRef}

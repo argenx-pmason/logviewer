@@ -244,6 +244,18 @@ NOTE: DATA statement used (Total process time):
       cpu time            0.09 seconds
 
 
+NOTE: The infile
+      "/lsafshared/SASWorkspaces/.transient/dashboard2.job-9a43b025-0442-420d-86e4-19ca2579b2be/general/biostat/jobs/dashboard/dev/j
+      obs/dashboard2.job" is:
+
+      Filename=/lsafshared/SASWorkspaces/.transient/dashboard2.job-9a43b025-0442-420d-86e4-19ca2579b2be/general/biostat/jobs/dashboa
+      rd/dev/jobs/dashboard2.job,
+      Owner Name=webtrust,Group Name=webtrust,
+      Access Permission=-rw-rw-rw-,
+      Last Modified=17May2022:12:33:26,
+      File Size (bytes)=1116
+
+
 Autoexec used from C:\Users\pmason
 
     SAS (r) Proprietary Software Release 9.4  TS1M7
