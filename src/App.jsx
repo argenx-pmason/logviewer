@@ -69,7 +69,7 @@ function App() {
       fetch(url).then(function (response) {
         response.text().then(function (text) {
           setLogOriginalText(text);
-          const newText = analyse(text);
+          const newText = analyse(text); // make the log text with links and lookup for line to link
           setLogText(newText);
         });
       });
@@ -145,6 +145,7 @@ function App() {
         tempLinks = [],
         tempLineNumberToLink = [],
         html = lines.map((element, lineNumber) => {
+          // const lineNumber = ln + 1; // so the first line will be line 1, not line 0
           let matchFound = false;
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
           if (/The SAS System/.test(element)) return null;
@@ -154,9 +155,7 @@ function App() {
             if (!showMacroLines) return null;
             else {
               const tempMacroName = element.split("(")[1].split(")")[0];
-              // console.log("tempMacroName", tempMacroName);
               if (macrosSelected && !macrosSelected.includes(tempMacroName)) {
-                // console.log("skipping: ", tempMacroName);
                 return null;
               }
             }
@@ -167,6 +166,7 @@ function App() {
           )
             return null;
           let preparedToReturn = element;
+          // make sure we have rules that handle all the things we might want to link to, so that there will be a link to be used
           rules.forEach((rule) => {
             if (
               !matchFound &&
@@ -219,35 +219,22 @@ function App() {
                 rule.regularExpression.test(element)
               ) {
                 const matches = element.match(rule.regularExpression);
-                // console.log("matches", matches);
-                // console.log("preparedToReturn", preparedToReturn);
                 matches.forEach((match) => {
                   //TODO: if match ends in . then remove it when making link
                   const a = rule.prefix.replace("{{matched}}", match),
                     b = rule.suffix.replace("{{matched}}", match);
                   preparedToReturn = element.replace(match, a + b);
                   if (match.startsWith("/general/biostat")) {
-                    // console.log(
-                    //   "lineNumber",
-                    //   lineNumber,
-                    //   "match",
-                    //   match,
-                    //   "rule",
-                    //   rule
-                    // );
-                    // console.log("a", a);
-                    // console.log("b", b);
-                    // console.log("element", element);
-                    // console.log("preparedToReturn", preparedToReturn);
+                    //TODO - add some code to put in auto links
                   }
                 });
               }
             }
           });
-          setLineNumberToLink(tempLineNumberToLink);
           setLinks(tempLinks);
           return preparedToReturn;
         });
+      setLineNumberToLink(tempLineNumberToLink);
       return html.filter((element) => element != null).join("<br>");
     },
     selectLog = (index) => {
@@ -263,7 +250,6 @@ function App() {
       setWaitSelectLog(false);
     },
     handleNewLog = (newLog) => {
-      console.log("newLog", selection);
       resetCounts();
       if (selection.substring(0, 1) === "/") getLog(webDavPrefix + selection);
       else getLog(selection);
@@ -435,7 +421,6 @@ function App() {
           };
         return partOfLog;
       });
-      // console.log(logs);
       setListOfLogs(
         logs
           .filter((log) => log !== null && log.fileType === "log")
@@ -471,7 +456,7 @@ function App() {
         tempMlogic = {},
         tempSymbolgen = {};
       logArray.forEach((line, lineNumber) => {
-        // get input datasets
+        // Inputs
         if (line.startsWith("NOTE: There were ")) {
           const split = line.split(" "),
             obs = split[3],
@@ -522,19 +507,8 @@ function App() {
             lineNumber: lineNumber,
             link: link,
           });
-          console.log(
-            "long",
-            long,
-            "tempFiles",
-            tempFiles,
-            "from1",
-            from1,
-            "to1",
-            to1
-          );
         }
-
-        // get output datasets
+        // Outputs
         if (line.startsWith("NOTE: The data set ")) {
           const split = line.split(" "),
             dset = split[4],
@@ -545,7 +519,6 @@ function App() {
             link = lineNumberToLink.filter(
               (link) => link.lineNumber === lineNumber
             )[0].id;
-
           tempOutputs.push({
             id: lineNumber,
             libname: libname,
@@ -575,7 +548,6 @@ function App() {
             vars = prev.startsWith("NOTE: The import data set has")
               ? split2[9]
               : null;
-
           tempOutputs.push({
             id: lineNumber,
             libname: libname,
@@ -610,6 +582,7 @@ function App() {
             link: link,
           });
         }
+        // Stats
         if (line.startsWith("      real time")) {
           const split = line.split(" "),
             time = split[18],
@@ -635,7 +608,6 @@ function App() {
           });
         }
         if (line.startsWith("      cpu time")) {
-          // console.log(line.split(" "));
           const split = line.split(" "),
             time = split[19],
             units = split[20],
@@ -684,7 +656,6 @@ function App() {
           });
         }
         if (line.startsWith("      system cpu time ")) {
-          // console.log(line.split(" "), lineNumberToLink);
           const split = line.split(" "),
             time = split[13],
             units = split[14],
@@ -708,6 +679,7 @@ function App() {
             link: link,
           });
         }
+        // Submission info - specific to argenx
         if (line.startsWith(" * Submission Start: ")) {
           const tempProgram = line.substring(21),
             tempSubmitted = logArray[lineNumber + 1].substring(3);
@@ -718,6 +690,7 @@ function App() {
           const tempSubmitEnd = logArray[lineNumber + 1].substring(3);
           setSubmitEnd(tempSubmitEnd);
         }
+        // Macro lines
         if (line.startsWith("MPRINT(")) {
           const tempMacroName = line.substring(7).split(")")[0];
           if (!(tempMacroName in tempMprint)) tempMprint[tempMacroName] = 0;
@@ -748,24 +721,20 @@ function App() {
           lines: tempMprint[name],
         });
       }
-      // console.log("tempMprint", tempMprint, tempMprint0);
       for (const name in tempMlogic) {
         id++;
         tempMlogic0.push({ id: id, name: name, lines: tempMlogic[name] });
       }
-      // console.log("tempMlogic", tempMlogic, tempMlogic0);
       for (const name in tempSymbolgen) {
         id++;
         tempSymbolgen0.push({ id: id, name: name, lines: tempSymbolgen[name] });
       }
-      // console.log("tempSymbolgen", tempSymbolgen, tempSymbolgen0);
       // const sortedRealTime = realTime.sort((a, b) =>
       //     a.seconds < b.seconds ? 1 : -1
       //   ),
       //   sortedCpuTime = cpuTime.sort((a, b) =>
       //     a.seconds < b.seconds ? 1 : -1
       //   );
-
       setOutputs(tempOutputs);
       setInputs(tempInputs);
       setFiles(tempFiles);
@@ -776,17 +745,16 @@ function App() {
         const n = id + 1;
         return n;
       });
-      // console.log("tempSelectionModel", tempSelectionModel);
       setSelectionModel(tempSelectionModel);
       setMlogic(tempMlogic0);
       setSymbolgen(tempSymbolgen0);
     };
 
   useEffect(() => {
-    if (!logOriginalText) return;
+    if (!logText) return;
     analyzeLog();
     // eslint-disable-next-line
-  }, [logOriginalText]);
+  }, [logText]); // logText changes when it has been analyzed and all links and lookups prepared
 
   useEffect(() => {
     const splitQuestionMarks = href.split("?");
@@ -812,7 +780,6 @@ function App() {
         logFileName = a.pop();
       document.title = logFileName;
       a.pop(); // remove the logFileName so we can work stuff out
-      // console.log("splitEquals", splitEquals, "partialFile", partialFile);
       const middlePart = a.join("/") + "/" + logNames[0],
         lastPart = versionNumbers[0] ? "?version=" + versionNumbers[0] : "",
         log2 = middlePart.substring(4) + lastPart,
@@ -833,7 +800,6 @@ function App() {
       getLog(log);
       setSelection(log);
       // set the directory to that of the log which was passed in
-      // console.log("href", href, "log", log);
       const logDirBits = log.includes("%3A")
         ? log.split("%3A")[1].split("?")[0].split("/")
         : log.split("?")[0].split("/");
@@ -843,20 +809,11 @@ function App() {
         logDirBits.shift();
         logDirBits.shift();
       }
-      // console.log("logDirBits", logDirBits);
       const tempLogDir = logDirBits.filter((element) => element),
         logDir0 = tempLogDir.join("/"),
         logDir = logDir0.startsWith("lsaf/webdav/")
           ? logDir0.substring(17)
           : logDir0;
-      // console.log(
-      //   "tempLogDir",
-      //   tempLogDir,
-      //   "logDir",
-      //   logDir,
-      //   "logDir0",
-      //   logDir0
-      // );
       setLogDirectory("/" + logDir);
     }
     // eslint-disable-next-line
@@ -879,7 +836,6 @@ function App() {
     selectionModel.forEach((item) => {
       tempMacrosSelected.push(mprint[item - 1].name);
     });
-    // console.log("mprint", mprint, "tempMacrosSelected", tempMacrosSelected);
     setMacrosSelected(tempMacrosSelected);
     // eslint-disable-next-line
   }, [showSource, showMacroLines, selectionModel]);
@@ -889,8 +845,6 @@ function App() {
     getLog(selection);
     // eslint-disable-next-line
   }, [macrosSelected]);
-
-  // console.log("selectionModel", selectionModel);
 
   return (
     <Box>
@@ -950,7 +904,6 @@ function App() {
               ref={localFileRef}
               value={selectedLocalFile}
               onChange={(e) => {
-                console.log(e, e.target.files, e.target.files[0]);
                 setSelectedLocalFile(e.target.current);
               }}
             />
