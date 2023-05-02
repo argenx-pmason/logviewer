@@ -59,6 +59,9 @@ function App() {
     localFileRef = createRef(),
     iconPadding = 0.1,
     // [showFileSelector, setShowFileSelector] = useState(false),
+    [lastUrl, setLastUrl] = useState(null),
+    [lastShowSource, setLastShowSource] = useState(null),
+    [lastShowMacroLines, setLastShowMacroLines] = useState(null),
     getLog = (url) => {
       // const username = "",
       //   password = "",
@@ -66,7 +69,17 @@ function App() {
       //   headers = { headers: { Authorization: `Basic ${credentials}` } };
       // fetch(url, headers)
       // fetch(url, { credentials: "include" })
+      if (
+        url === lastUrl &&
+        showSource === lastShowSource &&
+        showMacroLines === lastShowMacroLines
+      )
+        return; // optimise process to avoid loading the same thing multiple times
+      console.log("getLog ", url);
       fetch(url).then(function (response) {
+        setLastUrl(url);
+        setLastShowMacroLines(showMacroLines);
+        setLastShowSource(showSource);
         response.text().then(function (text) {
           setLogOriginalText(text);
           const newText = analyse(text); // make the log text with links and lookup for line to link
@@ -136,7 +149,6 @@ function App() {
     },
     analyse = (text) => {
       let id = 0;
-
       rules.forEach((rule) => {
         if (rule.ruleType === "regex")
           rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
