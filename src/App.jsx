@@ -62,6 +62,7 @@ function App() {
     [lastUrl, setLastUrl] = useState(null),
     [lastShowSource, setLastShowSource] = useState(null),
     [lastShowMacroLines, setLastShowMacroLines] = useState(null),
+    [nLines, setNLines] = useState(null),
     getLog = (url) => {
       // const username = "",
       //   password = "",
@@ -246,6 +247,7 @@ function App() {
           setLinks(tempLinks);
           return preparedToReturn;
         });
+      setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
       setLineNumberToLink(tempLineNumberToLink);
       return html.filter((element) => element != null).join("<br>");
     },
@@ -1394,7 +1396,7 @@ function App() {
             ) : null}
           </Box>
           <b>Program:</b> {program}, <b>Submitted:</b> {submitted},{" "}
-          <b>Ended:</b> {submitEnd}
+          <b>Ended:</b> {submitEnd}, <b>Lines:</b> {nLines}
         </Grid>
         <Grid item xs={leftPanelWidth}>
           <FormControlLabel
