@@ -62,6 +62,7 @@ function App() {
     [lastUrl, setLastUrl] = useState(null),
     [lastShowSource, setLastShowSource] = useState(null),
     [lastShowMacroLines, setLastShowMacroLines] = useState(null),
+    [uniqueTypes, setUniqueTypes] = useState(null),
     [nLines, setNLines] = useState(null),
     getLog = (url) => {
       // const username = "",
@@ -110,21 +111,42 @@ function App() {
       return counts[type];
     },
     [tabValue, changeTabValue] = useState(0),
-    [badgeCountError, setBadgeCountError] = useState(0),
-    [badgeCountWarn, setBadgeCountWarn] = useState(0),
-    [badgeCountNotice, setBadgeCountNotice] = useState(0),
-    [badgeCountJob, setBadgeCountJob] = useState(0),
-    [badgeCountSerious, setBadgeCountSerious] = useState(0),
-    [badgeCountOther, setBadgeCountOther] = useState(0),
+    [badgeCount, setBadgeCount] = useState({}),
+    [check, setCheck] = useState({}),
+    changeCheck = (type) => {
+      if (check.hasOwnProperty(type)) {
+        const newCheck = { ...check };
+        newCheck[type] = !newCheck[type];
+        setCheck(newCheck);
+      } else {
+        const newCheck = { ...check };
+        newCheck[type] = true;
+        setCheck(newCheck);
+      }
+    },
+    // [badgeCountError, setBadgeCountError] = useState(0),
+    // [badgeCountWarn, setBadgeCountWarn] = useState(0),
+    // [badgeCountNotice, setBadgeCountNotice] = useState(0),
+    // [badgeCountJob, setBadgeCountJob] = useState(0),
+    // [badgeCountSerious, setBadgeCountSerious] = useState(0),
+    // [badgeCountOther, setBadgeCountOther] = useState(0),
     [currentLine, setCurrentLine] = useState(1),
     [macrosSelected, setMacrosSelected] = useState(null),
     resetCounts = () => {
-      setBadgeCountError(0);
-      setBadgeCountWarn(0);
-      setBadgeCountNotice(0);
-      setBadgeCountSerious(0);
-      setBadgeCountJob(0);
-      setBadgeCountOther(0);
+      console.log("resetCounts");
+      // setBadgeCountError(0);
+      // setBadgeCountWarn(0);
+      // setBadgeCountNotice(0);
+      // setBadgeCountSerious(0);
+      // setBadgeCountJob(0);
+      // setBadgeCountOther(0);
+      // TODO: generalise the reset
+      const tempBadgeCount = {};
+      uniqueTypes.forEach((type) => {
+        console.log(type);
+        tempBadgeCount[type] = 0;
+      });
+      setBadgeCount(tempBadgeCount);
     },
     selectStyles = {
       control: (baseStyles, state) => ({
@@ -150,10 +172,7 @@ function App() {
     },
     analyse = (text) => {
       let id = 0;
-      rules.forEach((rule) => {
-        if (rule.ruleType === "regex")
-          rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
-      });
+
       const lines = text.split("\n"),
         tempLinks = [],
         tempLineNumberToLink = [],
@@ -202,28 +221,28 @@ function App() {
                   interesting: rule.interesting,
                 });
               tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
-              const count = incrementCount(rule.type);
-              switch (rule.type) {
-                case "ERROR":
-                  setBadgeCountError(count);
-                  break;
-                case "WARN":
-                  setBadgeCountWarn(count);
-                  break;
-                case "SERIOUS":
-                  setBadgeCountSerious(count);
-                  break;
-                case "JOB":
-                  setBadgeCountJob(count);
-                  break;
-                case "NOTICE":
-                  setBadgeCountNotice(count);
-                  break;
-                case "OTHER":
-                  setBadgeCountOther(count);
-                  break;
-                default:
-              }
+              incrementCount(rule.type);
+              // switch (rule.type) {
+              //   case "ERROR":
+              //     setBadgeCountError(count);
+              //     break;
+              //   case "WARN":
+              //     setBadgeCountWarn(count);
+              //     break;
+              //   case "SERIOUS":
+              //     setBadgeCountSerious(count);
+              //     break;
+              //   case "JOB":
+              //     setBadgeCountJob(count);
+              //     break;
+              //   case "NOTICE":
+              //     setBadgeCountNotice(count);
+              //     break;
+              //   case "OTHER":
+              //     setBadgeCountOther(count);
+              //     break;
+              //   default:
+              // }
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
               // handle link creation, where we have a regex and want to make something using the matching text
               if (
@@ -247,6 +266,13 @@ function App() {
           setLinks(tempLinks);
           return preparedToReturn;
         });
+      // console.log(counts);
+      const tempBadgeCount = {};
+      uniqueTypes.forEach((type) => {
+        if (counts.hasOwnProperty(type)) tempBadgeCount[type] = counts[type];
+      });
+      setBadgeCount(tempBadgeCount);
+
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
       setLineNumberToLink(tempLineNumberToLink);
       return html.filter((element) => element != null).join("<br>");
@@ -254,13 +280,22 @@ function App() {
     selectLog = (index) => {
       setWaitSelectLog(true);
       const { value } = index;
-      // eslint-disable-next-line
-      getLog(value);
-      document.title = value.split("/").pop();
-      resetCounts();
-      setSelectedLog(index);
-      setSelection(value);
-
+      if (mode !== "local") {
+        // eslint-disable-next-line
+        getLog(value);
+        document.title = value.split("/").pop();
+        resetCounts();
+        setSelectedLog(index);
+        setSelection(value);
+      } else {
+        // handle selecting a local file
+        // console.log(index);
+        // document.title = value.split("/").pop();
+        // resetCounts();
+        setSelectedLocalFile(value);
+        setSelectedLog(index);
+        // setSelection(value);
+      }
       setWaitSelectLog(false);
     },
     handleNewLog = (newLog) => {
@@ -279,32 +314,32 @@ function App() {
     [selectedLog, setSelectedLog] = useState(null),
     [links, setLinks] = useState(null),
     [lineNumberToLink, setLineNumberToLink] = useState(null),
-    [checkWarn, setCheckWarn] = useState(true),
     [waitGetDir, setWaitGetDir] = useState(false),
     [waitSelectLog, setWaitSelectLog] = useState(false),
-    [checkError, setCheckError] = useState(true),
-    [checkNotice, setCheckNotice] = useState(false),
-    [checkSerious, setCheckSerious] = useState(true),
-    [checkJob, setCheckJob] = useState(true),
-    [checkOther, setCheckOther] = useState(false),
-    changeCheckWarn = (event) => {
-      setCheckWarn(event.target.checked);
-    },
-    changeCheckError = (event) => {
-      setCheckError(event.target.checked);
-    },
-    changeCheckNotice = (event) => {
-      setCheckNotice(event.target.checked);
-    },
-    changeCheckJob = (event) => {
-      setCheckJob(event.target.checked);
-    },
-    changeCheckSerious = (event) => {
-      setCheckSerious(event.target.checked);
-    },
-    changeCheckOther = (event) => {
-      setCheckOther(event.target.checked);
-    },
+    // [checkWarn, setCheckWarn] = useState(true),
+    // [checkError, setCheckError] = useState(true),
+    // [checkNotice, setCheckNotice] = useState(false),
+    // [checkSerious, setCheckSerious] = useState(true),
+    // [checkJob, setCheckJob] = useState(true),
+    // [checkOther, setCheckOther] = useState(false),
+    // changeCheckWarn = (event) => {
+    //   setCheckWarn(event.target.checked);
+    // },
+    // changeCheckError = (event) => {
+    //   setCheckError(event.target.checked);
+    // },
+    // changeCheckNotice = (event) => {
+    //   setCheckNotice(event.target.checked);
+    // },
+    // changeCheckJob = (event) => {
+    //   setCheckJob(event.target.checked);
+    // },
+    // changeCheckSerious = (event) => {
+    //   setCheckSerious(event.target.checked);
+    // },
+    // changeCheckOther = (event) => {
+    //   setCheckOther(event.target.checked);
+    // },
     { href } = window.location,
     mode = href.startsWith("http://localhost") ? "local" : "remote",
     server = href.split("//")[1].split("/")[0],
@@ -764,6 +799,31 @@ function App() {
       setSymbolgen(tempSymbolgen0);
     };
 
+  // run once on page load
+  useEffect(() => {
+    rules.forEach((rule) => {
+      if (rule.ruleType === "regex")
+        rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
+    });
+    const rulesToProcess = rules.filter(
+      (item) => item.type !== null && item.anchor
+    );
+    setUniqueTypes([...new Set(rulesToProcess.map((item) => item.type))]);
+  }, []);
+
+  // when uniqueTypes changes, run this to update associated data structures
+  useEffect(() => {
+    if (!uniqueTypes) return;
+    const tempBadgeCount = {},
+      tempCheck = {};
+    uniqueTypes.forEach((type) => {
+      tempBadgeCount[type] = 0;
+      tempCheck[type] = true;
+    });
+    setBadgeCount(tempBadgeCount);
+    setCheck(tempCheck);
+  }, [uniqueTypes]);
+
   useEffect(() => {
     if (!logText) return;
     analyzeLog();
@@ -840,9 +900,75 @@ function App() {
     };
   }, [windowDimension]);
 
+  // for local mode - get the list of logs by reading directory
   useEffect(() => {
-    if (!localFileRef && mode === "local") return;
-  });
+    const dir = encodeURIComponent(
+        "/Users/philipmason/Documents/GitHub/logviewer/tests"
+      ),
+      url = "http://localhost:3001/dir/" + dir;
+    fetch(url).then(function (response) {
+      response.text().then(function (text) {
+        const files = JSON.parse(text);
+        setListOfLogs(
+          files
+            .filter((log) => {
+              // console.log(log, log.endsWith(".log"));
+              return log !== null && log.endsWith(".log");
+            })
+            .map((log) => {
+              return { value: log, label: log };
+            })
+            .sort((a, b) => {
+              const x = a.label.toLowerCase(),
+                y = b.label.toLowerCase();
+              if (x < y) {
+                return -1;
+              }
+              if (x > y) {
+                return 1;
+              }
+              return 0;
+            })
+        );
+      });
+    });
+  }, []);
+
+  // for local mode - get the log file
+  useEffect(() => {
+    // const dir = encodeURIComponent(
+    //     "/Users/philipmason/Documents/GitHub/logviewer/src"
+    //   ),
+    //   file = "sample.log",
+    //   url = "http://localhost:3001/getfile/" + dir + "/" + file;
+    if (selectedLocalFile === "") return;
+    const file = selectedLocalFile.split("/").pop(),
+      dir = encodeURIComponent(
+        "/Users/philipmason/Documents/GitHub/logviewer/tests"
+      ),
+      url = "http://localhost:3001/getfile/" + dir + "/" + file;
+    // console.log(
+    //   "selectedLocalFile",
+    //   selectedLocalFile,
+    //   "\nfile",
+    //   file,
+    //   "\ndir",
+    //   dir,
+    //   "\nfile",
+    //   file,
+    //   "\nurl",
+    //   url
+    // );
+    fetch(url).then(function (response) {
+      response.text().then(function (text) {
+        console.log("number of characters", text.length);
+        setLogOriginalText(text);
+        const newText = analyse(text); // make the log text with links and lookup for line to link
+        setLogText(newText);
+      });
+    });
+    // eslint-disable-next-line
+  }, [selectedLocalFile]);
 
   useEffect(() => {
     if (selection === null) return;
@@ -912,25 +1038,9 @@ function App() {
               styles={selectStyles}
             />
           ) : null}
-          {mode === "local" ? (
-            <TextField
-              type="file"
-              ref={localFileRef}
-              value={selectedLocalFile}
-              onChange={(e) => {
-                setSelectedLocalFile(e.target.current);
-              }}
-            />
-          ) : null}
           {waitSelectLog ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
         </Grid>
         <Grid item xs={rightPanelWidth}>
-          {/* <Typography
-            variant="h6"
-            sx={{ fontSize: { fontSize }, color: "black", mt: 1 }}
-          >
-            {selection}
-          </Typography> */}
           <Box
             variant={"dense"}
             sx={{
@@ -1399,7 +1509,35 @@ function App() {
           <b>Ended:</b> {submitEnd}, <b>Lines:</b> {nLines}
         </Grid>
         <Grid item xs={leftPanelWidth}>
-          <FormControlLabel
+          {uniqueTypes &&
+            // uniqueTypes.length === badgeCount.length &&
+            uniqueTypes.map((t) => {
+              // console.log(
+              //   t,
+              // badgeCount,
+              // badgeCount[t]
+              //   check,
+              //   uniqueTypes.length,
+              //   Object.keys(badgeCount).length
+              // );
+              if (uniqueTypes.length > Object.keys(badgeCount).length)
+                return (
+                  <FormControlLabel
+                    key={t}
+                    label={t}
+                    control={
+                      <Badge color="info" badgeContent={badgeCount[t]}>
+                        <Checkbox
+                          checked={check[t]}
+                          onChange={() => changeCheck(t)}
+                        />
+                      </Badge>
+                    }
+                  />
+                );
+              else return null;
+            })}
+          {/* <FormControlLabel
             label="Errors"
             control={
               <Badge color="info" badgeContent={badgeCountError}>
@@ -1450,7 +1588,7 @@ function App() {
                 <Checkbox checked={checkOther} onChange={changeCheckOther} />
               </Badge>
             }
-          />
+          /> */}
           <p />
           <Box
             placeholder="Empty"
@@ -1468,12 +1606,15 @@ function App() {
               links.map((link, id) => {
                 // should we show a link?
                 let show = true;
-                if (!checkWarn && link.type === "WARN") show = false;
-                if (!checkError && link.type === "ERROR") show = false;
-                if (!checkNotice && link.type === "NOTICE") show = false;
-                if (!checkSerious && link.type === "SERIOUS") show = false;
-                if (!checkJob && link.type === "JOB") show = false;
-                if (!checkOther && link.type === "OTHER") show = false;
+                // if (!checkWarn && link.type === "WARN") show = false;
+                // if (!checkError && link.type === "ERROR") show = false;
+                // if (!checkNotice && link.type === "NOTICE") show = false;
+                // if (!checkSerious && link.type === "SERIOUS") show = false;
+                // if (!checkJob && link.type === "JOB") show = false;
+                // if (!checkOther && link.type === "OTHER") show = false;
+                uniqueTypes.forEach((t) => {
+                  if (!check[t] && link.type === t) show = false;
+                });
                 if (show) {
                   return (
                     <React.Fragment key={id}>
