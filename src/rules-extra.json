@@ -1,0 +1,12 @@
+{
+    "description": "LSAF Return Codes",
+    "ruleType": "regex",
+    "regex": ".\\*\\s+_lsafRC_=",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "blue",
+    "type": "LSAF",
+    "interesting": false,
+    "substitute": false
+  },

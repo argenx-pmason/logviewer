@@ -11,7 +11,7 @@
   },
   {
     "ruleType": "regex",
-    "regex": "(?:^WARNING:|^WARNING\\s)(?!.*PRODUCT WITH WHICH|.*PRODUCT WITH WHICH|.*IS ASSOCIATED WILL EXPIRE|.*MPRINT|.*MLOGIC|.*SYMBOLGEN|.*IS ASSOCIATED IS SCHEDULED TO EXPIRE|.*YOUR SYSTEM IS SCHEDULED TO EXPIRE)",
+    "regex": "(?:^WARNING:)(?!.*PRODUCT WITH WHICH|.*PRODUCT WITH WHICH|.*IS ASSOCIATED WILL EXPIRE|.*MPRINT|.*MLOGIC|.*SYMBOLGEN|.*IS ASSOCIATED IS SCHEDULED TO EXPIRE|.*YOUR SYSTEM IS SCHEDULED TO EXPIRE)",
     "prefix": "<a href='https://communities.sas.com/t5/forums/searchpage/tab/message?q={{line}}' target='_blank' style='color:green'>",
     "suffix": "{{line}}</a>",
     "anchor": true,
@@ -237,7 +237,7 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
@@ -254,10 +254,10 @@
   {
     "ruleType": "regex",
     "regex": "W\\.D format was too small",
-    "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
@@ -277,7 +277,7 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
@@ -287,17 +287,17 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
   {
     "ruleType": "regex",
     "regex": "was not found or could not be loaded",
-    "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
@@ -327,7 +327,7 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
@@ -337,17 +337,17 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
   {
     "ruleType": "regex",
     "regex": "variables have conflicting attributes",
-    "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
@@ -384,10 +384,10 @@
   {
     "ruleType": "regex",
     "regex": "unequal",
-    "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
@@ -414,20 +414,20 @@
   {
     "ruleType": "regex",
     "regex": "Division by zero detected",
-    "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
   {
     "ruleType": "regex",
     "regex": "Mathematical operation could not be performed",
-    "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
@@ -447,7 +447,7 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "orange",
     "type": "OTHER",
     "interesting": true
   },
@@ -554,7 +554,7 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "purple",
+    "linkColor": "blue",
     "type": "OTHER",
     "interesting": false,
     "substitute": false

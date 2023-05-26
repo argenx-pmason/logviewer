@@ -3,7 +3,6 @@ import Select from "react-select";
 import {
   Box,
   Grid,
-  Typography,
   Badge,
   Tooltip,
   IconButton,
@@ -15,6 +14,7 @@ import {
   CircularProgress,
   Tabs,
   Tab,
+  Modal,
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -24,9 +24,6 @@ import { getDir, getVersions, xmlToJson } from "./utility";
 import "./App.css";
 // rules are kept on LSAF in /general/biostat/tools/common/metadata/rules.json
 import rules from "./rules.json";
-import sample1 from "./job_adsl.log";
-import sample2 from "./sample.log";
-
 import {
   Add,
   Remove,
@@ -38,10 +35,14 @@ import {
   ArrowDownward,
   SquareFoot,
   FileDownloadDone,
+  BarChart,
+  Close,
   Compress,
   Expand,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
+// import Mermaid from "react-mermaid";
+import Mermaid from "./Mermaid";
 
 function App() {
   LicenseInfo.setLicenseKey(
@@ -49,6 +50,9 @@ function App() {
   );
   const rowHeight = 22,
     increment = 0.25,
+    [chart, setChart] = useState(`flowchart TD
+    Start --> Stop`),
+    [openModal, setOpenModal] = useState(false),
     [verticalSplit, setVerticalSplit] = useState(3),
     urlPrefix = window.location.protocol + "//" + window.location.host,
     filePrefix = "/lsaf/filedownload/sdd%3A//",
@@ -64,6 +68,7 @@ function App() {
     [lastShowMacroLines, setLastShowMacroLines] = useState(null),
     [uniqueTypes, setUniqueTypes] = useState(null),
     [nLines, setNLines] = useState(null),
+    [localUrl, setLocalUrl] = useState(null),
     getLog = (url) => {
       // const username = "",
       //   password = "",
@@ -77,17 +82,33 @@ function App() {
         showMacroLines === lastShowMacroLines
       )
         return; // optimise process to avoid loading the same thing multiple times
-      console.log("getLog ", url);
-      fetch(url).then(function (response) {
-        setLastUrl(url);
+      if (mode === "local") {
         setLastShowMacroLines(showMacroLines);
         setLastShowSource(showSource);
-        response.text().then(function (text) {
-          setLogOriginalText(text);
-          const newText = analyse(text); // make the log text with links and lookup for line to link
-          setLogText(newText);
+        fetch(localUrl).then(function (response) {
+          // console.log(response);
+          if (response.type !== "basic") {
+            response.text().then(function (text) {
+              console.log("number of characters", text.length);
+              setLogOriginalText(text);
+              const newText = analyse(text); // make the log text with links and lookup for line to link
+              setLogText(newText);
+            });
+          }
         });
-      });
+      } else {
+        console.log("getLog ", url);
+        fetch(url).then(function (response) {
+          setLastUrl(url);
+          setLastShowMacroLines(showMacroLines);
+          setLastShowSource(showSource);
+          response.text().then(function (text) {
+            setLogOriginalText(text);
+            const newText = analyse(text); // make the log text with links and lookup for line to link
+            setLogText(newText);
+          });
+        });
+      }
     },
     [listOfLogs, setListOfLogs] = useState(null),
     [fontSize, setFontSize] = useState(12),
@@ -102,6 +123,17 @@ function App() {
         winWidth: window.innerWidth,
         winHeight: window.innerHeight,
       });
+    },
+    modalStyle = {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: windowDimension.winWidth * 0.9,
+      bgcolor: "background.paper",
+      border: "2px solid #000",
+      boxShadow: 24,
+      p: 4,
     },
     counts = {},
     [selectedLocalFile, setSelectedLocalFile] = useState(""),
@@ -153,7 +185,7 @@ function App() {
         ...baseStyles,
         fontSize: "12px",
         marginLeft: 3,
-        background: "#eaf3d8",
+        background: "#c5e1c5",
         border: state.isFocused ? "1px solid #0000ff" : "2px solid #00ffff",
         // borderColor: state.isFocused ? "green" : "red",
         // "&:hover": {
@@ -244,6 +276,14 @@ function App() {
               //   default:
               // }
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
+              // if (rule.linkColor === "red")
+              //   console.log(
+              //     rule,
+              //     rule.ruleType,
+              //     rule.substitute,
+              //     rule.regularExpression?.test(element),
+              //     element
+              //   );
               // handle link creation, where we have a regex and want to make something using the matching text
               if (
                 rule.ruleType === "regex" &&
@@ -251,13 +291,25 @@ function App() {
                 rule.regularExpression.test(element)
               ) {
                 const matches = element.match(rule.regularExpression);
+                // console.log(matches);
                 matches.forEach((match) => {
-                  //TODO: if match ends in . then remove it when making link
-                  const a = rule.prefix.replace("{{matched}}", match),
-                    b = rule.suffix.replace("{{matched}}", match);
-                  preparedToReturn = element.replace(match, a + b);
-                  if (match.startsWith("/general/biostat")) {
-                    //TODO - add some code to put in auto links
+                  preparedToReturn = element;
+                  if (rule.prefix.includes("{{matched}}")) {
+                    //TODO: if match ends in . then remove it when making link
+                    const a = rule.prefix.replace("{{matched}}", match),
+                      b = rule.suffix.replace("{{matched}}", match);
+                    // console.log(match, a, b);
+                    preparedToReturn = element.replace(match, a + b);
+                  }
+                  if (rule.prefix.includes("{{line}}")) {
+                    // console.log("line", element);
+                    const c = rule.prefix.replace(
+                        "{{line}}",
+                        encodeURI(element)
+                      ),
+                      d = rule.suffix.replace("{{line}}", element);
+                    // console.log(match, a, b);
+                    preparedToReturn = "<span id=" + id + "></span>" + c + d;
                   }
                 });
               }
@@ -797,6 +849,82 @@ function App() {
       setSelectionModel(tempSelectionModel);
       setMlogic(tempMlogic0);
       setSymbolgen(tempSymbolgen0);
+      makeDiagram(tempInputs, tempOutputs, tempRealTime);
+    },
+    makeDiagram = (inputs, outputs, real) => {
+      // console.log("inputs", inputs, "outputs", outputs, "real", real);
+      let step = 0;
+      const all = inputs
+        .map((item) => {
+          return {
+            type: "input",
+            ...item,
+          };
+        })
+        .concat(
+          outputs.map((item) => {
+            return {
+              type: "output",
+              ...item,
+            };
+          })
+        )
+        .concat(
+          real.map((item) => {
+            return {
+              type: "real",
+              ...item,
+            };
+          })
+        )
+        .sort((a, b) => (a.lineNumber < b.lineNumber ? -1 : 1))
+        .map((item, id) => {
+          if (item.type === "real") step++;
+          return { step: item.type === "real" ? step - 1 : step, ...item };
+        });
+      console.log("all", all);
+      const inputRows = all.filter((item) => item.type === "input"),
+        outputRows = all.filter((item) => item.type === "output"),
+        realRows = all.filter((item) => item.type === "real");
+      const mappings = inputRows.map((i) => {
+        const outputsForInputs = outputRows
+          .filter((o) => o.step === i.step)
+          .map((o) => o.libname + "." + o.dataset);
+        return {
+          i: i.libname + "." + i.dataset,
+          outputsForInputs: outputsForInputs,
+        };
+      });
+      let dot = [];
+      // add dot commands for outputs that have no inputs
+      outputRows.forEach((o) => {
+        const inputsForOutputs = inputRows.filter((i) => o.step === i.step);
+        if (inputsForOutputs.length === 0)
+          dot.push(
+            o.libname +
+              "." +
+              o.dataset +
+              "[[" +
+              o.libname +
+              "." +
+              o.dataset +
+              "]]"
+          );
+      });
+      // add dot commands for inputs
+      mappings.forEach((item) => {
+        if (item.outputsForInputs.length === 0)
+          dot.push(item.i + "([" + item.i + "])");
+        else {
+          item.outputsForInputs.forEach((o) => {
+            dot.push(item.i + "([" + item.i + "]) --> " + o + "[[" + o + "]]");
+          });
+        }
+      });
+      /*       console.log("dot", dot, "mappings", mappings); */
+      const mermaid = `flowchart TD\n${dot.join("\n")}`;
+      console.log("mermaid", mermaid);
+      setChart(`flowchart TD\n${dot.join("\n")}`);
     };
 
   // run once on page load
@@ -906,6 +1034,7 @@ function App() {
         "/Users/philipmason/Documents/GitHub/logviewer/tests"
       ),
       url = "http://localhost:3001/dir/" + dir;
+    setLogDirectory(decodeURIComponent(dir));
     fetch(url).then(function (response) {
       response.text().then(function (text) {
         const files = JSON.parse(text);
@@ -947,6 +1076,7 @@ function App() {
         "/Users/philipmason/Documents/GitHub/logviewer/tests"
       ),
       url = "http://localhost:3001/getfile/" + dir + "/" + file;
+    setLocalUrl(url);
     // console.log(
     //   "selectedLocalFile",
     //   selectedLocalFile,
@@ -990,7 +1120,7 @@ function App() {
     <Box>
       <Grid container spacing={1}>
         <Grid item xs={leftPanelWidth} sx={{ mt: 1 }}>
-          {logDirectory && mode === "remote" ? (
+          {logDirectory ? (
             <TextField
               id="logDirectory"
               label="Directory containing logs"
@@ -1393,6 +1523,11 @@ function App() {
                 />
               </IconButton>
             </Tooltip>
+            <Tooltip title="Show Chart">
+              <IconButton size="small" onClick={() => setOpenModal(true)}>
+                <BarChart fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="View rules used to parse logs">
               <IconButton
                 size="small"
@@ -1435,61 +1570,12 @@ function App() {
                 <Expand fontSize="small" />
               </IconButton>
             </Tooltip>
+
             {mode === "local" ? (
-              <Tooltip title="Constructed sample from source directory (for testing)">
+              <Tooltip title="Test email">
                 <Button
                   onClick={() => {
-                    resetCounts();
-                    getLog(sample2);
-                    setSelection(sample2);
-                  }}
-                  sx={{
-                    minWidth: 0,
-                    fontSize: 8,
-                    p: 1,
-                    border: 1,
-                    m: 0.5,
-                    color: "lightgray",
-                  }}
-                >
-                  1
-                </Button>
-              </Tooltip>
-            ) : null}
-            {mode === "local" ? (
-              <Tooltip title="Log file from source directory (for testing)">
-                <Button
-                  onClick={() => {
-                    resetCounts();
-                    getLog(sample1);
-                    setSelection(sample1);
-                  }}
-                  sx={{
-                    minWidth: 0,
-                    fontSize: 8,
-                    p: 1,
-                    border: 0.5,
-                    m: 1,
-                    color: "lightgray",
-                  }}
-                >
-                  2
-                </Button>
-              </Tooltip>
-            ) : null}
-            {mode === "local" ? (
-              <Tooltip title="LSAF version of a log from webdav">
-                <Button
-                  onClick={() => {
-                    resetCounts();
-                    getLog(
-                      urlPrefix +
-                        "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                    );
-                    setSelection(
-                      urlPrefix +
-                        "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                    );
+                    console.log("email");
                   }}
                   sx={{
                     minWidth: 0,
@@ -1848,7 +1934,35 @@ function App() {
               ></pre>
             </Box>
           )}
-          {!logText && <Typography>Log will be displayed here.</Typography>}
+          {!logText && (
+            <Box sx={{ m: 10, fontSize: 20, color: "red" }}>
+              Log will be displayed here.
+            </Box>
+          )}
+          <Modal
+            open={openModal}
+            onClose={() => setOpenModal(false)}
+            style={{ backdropFilter: "blur(5px" }}
+          >
+            <Box style={modalStyle}>
+              <Tooltip title={`Close Modal`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setOpenModal(false);
+                  }}
+                  sx={{
+                    backgroundColor: "gray",
+                    color: "red",
+                    float: "right",
+                  }}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Mermaid chart={chart} />
+            </Box>
+          </Modal>
         </Grid>
       </Grid>
     </Box>
