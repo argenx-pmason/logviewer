@@ -3294,16 +3294,3 @@ NOTE: The data set XLS.subset_detail has 0 observations and 7 variables.
 NOTE: DATA statement used (Total process time):
       real time           0.01 seconds
       cpu time            0.01 seconds
-
-
-
-NOTE: There were 7 observations read from the data set
-      WORK.SL_OUT_GROUP_SUBSET_INFO.
-NOTE: The data set XLS.group_subset_info has 7 observations and 2 variables.
-NOTE: DATA statement used (Total process time):
-      real time           0.01 seconds
-      cpu time            0.00 seconds
-
-
-NOTE: Libref XLS has been deassigned.
-

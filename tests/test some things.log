@@ -1,0 +1,14 @@
+
+WARNING:(SCAN_CUR_LOG): Could not identify SAS Log, aborting.
+WARNING: Could not identify SAS Log, aborting.     
+
+NOTE: There were 27 observations read from the data set SDTM3.DM.
+       WHERE armcd not = 'SCRNFAIL';
+ NOTE: The data set WORK.DM has 27 observations and 24 variables.
+ NOTE: DATA statement used (Total process time):
+
+
+NOTE: There were 1 observations read from the data set WORK.LSAFGETPROPERTIES.
+      WHERE name='version';
+NOTE: DATA statement used (Total process time):
+  

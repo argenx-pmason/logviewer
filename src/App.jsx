@@ -14,7 +14,10 @@ import {
   CircularProgress,
   Tabs,
   Tab,
-  Modal,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Chip,
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -39,6 +42,8 @@ import {
   Close,
   Compress,
   Expand,
+  ZoomIn,
+  ZoomOut,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 // import Mermaid from "react-mermaid";
@@ -69,6 +74,8 @@ function App() {
     [uniqueTypes, setUniqueTypes] = useState(null),
     [nLines, setNLines] = useState(null),
     [localUrl, setLocalUrl] = useState(null),
+    [scale, setScale] = useState(1),
+    [mermaidInfo, setMermaidInfo] = useState({ characters: null, lines: null }),
     getLog = (url) => {
       // const username = "",
       //   password = "",
@@ -89,7 +96,9 @@ function App() {
           // console.log(response);
           if (response.type !== "basic") {
             response.text().then(function (text) {
-              console.log("number of characters", text.length);
+              console.log(
+                `${text.length} characters read from file ${localUrl}`
+              );
               setLogOriginalText(text);
               const newText = analyse(text); // make the log text with links and lookup for line to link
               setLogText(newText);
@@ -123,17 +132,6 @@ function App() {
         winWidth: window.innerWidth,
         winHeight: window.innerHeight,
       });
-    },
-    modalStyle = {
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      width: windowDimension.winWidth * 0.9,
-      bgcolor: "background.paper",
-      border: "2px solid #000",
-      boxShadow: 24,
-      p: 4,
     },
     counts = {},
     [selectedLocalFile, setSelectedLocalFile] = useState(""),
@@ -209,6 +207,7 @@ function App() {
         tempLinks = [],
         tempLineNumberToLink = [],
         html = lines.map((element, lineNumber) => {
+          // if (lineNumber === 0) console.log(lines);
           // const lineNumber = ln + 1; // so the first line will be line 1, not line 0
           let matchFound = false;
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
@@ -368,6 +367,7 @@ function App() {
     [lineNumberToLink, setLineNumberToLink] = useState(null),
     [waitGetDir, setWaitGetDir] = useState(false),
     [waitSelectLog, setWaitSelectLog] = useState(false),
+    [useMaxWidth] = useState(false),
     // [checkWarn, setCheckWarn] = useState(true),
     // [checkError, setCheckError] = useState(true),
     // [checkNotice, setCheckNotice] = useState(false),
@@ -556,6 +556,7 @@ function App() {
         tempMprint = {},
         tempMlogic = {},
         tempSymbolgen = {};
+      // console.log("logArray", logArray);
       logArray.forEach((line, lineNumber) => {
         // Inputs
         if (line.startsWith("NOTE: There were ")) {
@@ -882,14 +883,23 @@ function App() {
           if (item.type === "real") step++;
           return { step: item.type === "real" ? step - 1 : step, ...item };
         });
-      console.log("all", all);
       const inputRows = all.filter((item) => item.type === "input"),
         outputRows = all.filter((item) => item.type === "output"),
         realRows = all.filter((item) => item.type === "real");
+      // console.log(
+      //   "realRows",
+      //   realRows,
+      //   "inputRows",
+      //   inputRows,
+      //   "outputRows",
+      //   outputRows
+      // );
       const mappings = inputRows.map((i) => {
         const outputsForInputs = outputRows
           .filter((o) => o.step === i.step)
-          .map((o) => o.libname + "." + o.dataset);
+          .map((o) => {
+            return { table: o.libname + "." + o.dataset, step: o.step };
+          });
         return {
           i: i.libname + "." + i.dataset,
           outputsForInputs: outputsForInputs,
@@ -913,18 +923,35 @@ function App() {
       });
       // add dot commands for inputs
       mappings.forEach((item) => {
+        // console.log(item);
         if (item.outputsForInputs.length === 0)
           dot.push(item.i + "([" + item.i + "])");
         else {
-          item.outputsForInputs.forEach((o) => {
-            dot.push(item.i + "([" + item.i + "]) --> " + o + "[[" + o + "]]");
+          item.outputsForInputs.forEach((o, oIndex) => {
+            const stepInfo = realRows.filter((r) => r.step === o.step);
+            // console.log(stepInfo, o, oIndex);
+            const seconds =
+              stepInfo.length > 0 ? " |" + stepInfo[0].seconds + "| " : null;
+            dot.push(
+              item.i +
+                "([" +
+                item.i +
+                "]) -->" +
+                seconds +
+                o.table +
+                "[[" +
+                o.table +
+                "]]"
+            );
           });
         }
       });
       /*       console.log("dot", dot, "mappings", mappings); */
-      const mermaid = `flowchart TD\n${dot.join("\n")}`;
+      const uniqueDot = [...new Set(dot)],
+        mermaid = `flowchart TB\n${uniqueDot.join("\n")}`;
       console.log("mermaid", mermaid);
-      setChart(`flowchart TD\n${dot.join("\n")}`);
+      setChart(mermaid);
+      setMermaidInfo({ characters: mermaid.length, lines: uniqueDot.length });
     };
 
   // run once on page load
@@ -1091,7 +1118,7 @@ function App() {
     // );
     fetch(url).then(function (response) {
       response.text().then(function (text) {
-        console.log("number of characters", text.length);
+        console.log(`${text.length} characters were read from file ${url}`);
         setLogOriginalText(text);
         const newText = analyse(text); // make the log text with links and lookup for line to link
         setLogText(newText);
@@ -1939,20 +1966,74 @@ function App() {
               Log will be displayed here.
             </Box>
           )}
-          <Modal
+          <Dialog
             open={openModal}
             onClose={() => setOpenModal(false)}
+            scroll={"paper"}
+            fullScreen
             style={{ backdropFilter: "blur(5px" }}
           >
-            <Box style={modalStyle}>
-              <Tooltip title={`Close Modal`}>
+            <DialogTitle>
+              <Tooltip title={`Zoom out`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setScale(scale > 0.25 ? scale - 0.25 : 0.125);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "blue",
+                    float: "left",
+                  }}
+                >
+                  <ZoomOut fontSize="small" />
+                </IconButton>
+              </Tooltip>{" "}
+              <Tooltip title={`Reset`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setScale(1);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "blue",
+                    float: "left",
+                  }}
+                >
+                  <RestartAlt fontSize="small" />
+                </IconButton>
+              </Tooltip>{" "}
+              <Tooltip title={`Zoom out`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setScale(scale + 0.5);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "blue",
+                    float: "left",
+                  }}
+                >
+                  <ZoomIn fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Button
+                onClick={() => {
+                  setOpenModal(false);
+                }}
+              >
+                Close
+              </Button>
+              <Tooltip title={`Close Dialog`}>
                 <IconButton
                   size="small"
                   onClick={() => {
                     setOpenModal(false);
                   }}
                   sx={{
-                    backgroundColor: "gray",
+                    backgroundColor: "white",
                     color: "red",
                     float: "right",
                   }}
@@ -1960,9 +2041,37 @@ function App() {
                   <Close fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <Mermaid chart={chart} />
-            </Box>
-          </Modal>
+              {mermaidInfo.lines && (
+                <Chip
+                  label={mermaidInfo.lines.toLocaleString() + " lines"}
+                  sx={{
+                    fontSize: 12,
+                    float: "right",
+                  }}
+                />
+              )}
+              {mermaidInfo.characters && (
+                <Chip
+                  label={
+                    mermaidInfo.characters.toLocaleString() + " characters"
+                  }
+                  sx={{
+                    fontSize: 12,
+                    float: "right",
+                  }}
+                />
+              )}
+            </DialogTitle>
+            <DialogContent
+              sx={{
+                transform: `scale(${scale})`,
+                transformOrigin: "0% 0% 0px;",
+                width: Math.round(windowDimension.winWidth / scale),
+              }}
+            >
+              <Mermaid chart={chart} useMaxWidth={useMaxWidth} />
+            </DialogContent>
+          </Dialog>
         </Grid>
       </Grid>
     </Box>

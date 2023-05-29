@@ -3,8 +3,13 @@ import mermaid from "mermaid";
 
 mermaid.initialize({
   startOnLoad: true,
-  theme: "default",
+  theme: "forest",
   securityLevel: "loose",
+  logLevel: 4,
+  maxTextSize: 500000,
+  flowchart: {
+    useMaxWidth: false,
+  },
   themeCSS: `
     g.classGroup rect {
       fill: #282a36;
@@ -58,6 +63,7 @@ export default class Mermaid extends React.Component {
     mermaid.contentLoaded();
   }
   render() {
+    // console.log("this.props", this.props);
     return <div className="mermaid">{this.props.chart}</div>;
   }
 }
