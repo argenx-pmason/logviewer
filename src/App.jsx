@@ -18,6 +18,8 @@ import {
   DialogContent,
   DialogTitle,
   Chip,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -26,7 +28,7 @@ import { LicenseInfo } from "@mui/x-data-grid-pro";
 import { getDir, getVersions, xmlToJson } from "./utility";
 import "./App.css";
 // rules are kept on LSAF in /general/biostat/tools/common/metadata/rules.json
-import rules from "./rules.json";
+import defaultRules from "./rules.json";
 import {
   Add,
   Remove,
@@ -76,6 +78,8 @@ function App() {
     [localUrl, setLocalUrl] = useState(null),
     [scale, setScale] = useState(1),
     [mermaidInfo, setMermaidInfo] = useState({ characters: null, lines: null }),
+    [rules, setRules] = useState(defaultRules),
+    [anchorEl, setAnchorEl] = useState(null),
     getLog = (url) => {
       // const username = "",
       //   password = "",
@@ -202,12 +206,11 @@ function App() {
     },
     analyse = (text) => {
       let id = 0;
-
+      // console.log("rules", rules);
       const lines = text.split("\n"),
         tempLinks = [],
         tempLineNumberToLink = [],
         html = lines.map((element, lineNumber) => {
-          // if (lineNumber === 0) console.log(lines);
           // const lineNumber = ln + 1; // so the first line will be line 1, not line 0
           let matchFound = false;
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
@@ -290,24 +293,20 @@ function App() {
                 rule.regularExpression.test(element)
               ) {
                 const matches = element.match(rule.regularExpression);
-                // console.log(matches);
                 matches.forEach((match) => {
                   preparedToReturn = element;
                   if (rule.prefix.includes("{{matched}}")) {
                     //TODO: if match ends in . then remove it when making link
                     const a = rule.prefix.replace("{{matched}}", match),
                       b = rule.suffix.replace("{{matched}}", match);
-                    // console.log(match, a, b);
                     preparedToReturn = element.replace(match, a + b);
                   }
                   if (rule.prefix.includes("{{line}}")) {
-                    // console.log("line", element);
                     const c = rule.prefix.replace(
                         "{{line}}",
                         encodeURI(element)
                       ),
                       d = rule.suffix.replace("{{line}}", element);
-                    // console.log(match, a, b);
                     preparedToReturn = "<span id=" + id + "></span>" + c + d;
                   }
                 });
@@ -317,7 +316,6 @@ function App() {
           setLinks(tempLinks);
           return preparedToReturn;
         });
-      // console.log(counts);
       const tempBadgeCount = {};
       uniqueTypes.forEach((type) => {
         if (counts.hasOwnProperty(type)) tempBadgeCount[type] = counts[type];
@@ -394,7 +392,32 @@ function App() {
     // },
     { href } = window.location,
     mode = href.startsWith("http://localhost") ? "local" : "remote",
-    server = href.split("//")[1].split("/")[0],
+    // server = href.split("//")[1].split("/")[0],
+    [rulesDirectory, setRulesDirectory] = useState(
+      "/Users/philipmason/Documents/GitHub/logviewer/src"
+    ),
+    [listOfRules, setListOfRules] = useState([]),
+    [openRulesMenu, setOpenRulesMenu] = useState(false),
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Ftests/a.log
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Fsrc%2Flogs.json
+    handleCloseRulesMenu = (item) => {
+      console.log(item);
+      const url =
+        "http://localhost:3001/getfile/" +
+        encodeURIComponent(rulesDirectory) +
+        "/" +
+        item;
+      fetch(url).then(function (response) {
+        response.text().then(function (text) {
+          const tempRules = JSON.parse(text);
+          console.log(
+            `${tempRules.length} rules were read from rules file: ${url}`
+          );
+          setRules(tempRules);
+        });
+      });
+      setOpenRulesMenu(false);
+    },
     [logDirectory, setLogDirectory] = useState(
       "/general/biostat/jobs/gadam_ongoing_studies/dev/logs/"
     ),
@@ -853,7 +876,6 @@ function App() {
       makeDiagram(tempInputs, tempOutputs, tempRealTime);
     },
     makeDiagram = (inputs, outputs, real) => {
-      // console.log("inputs", inputs, "outputs", outputs, "real", real);
       let step = 0;
       const all = inputs
         .map((item) => {
@@ -886,14 +908,6 @@ function App() {
       const inputRows = all.filter((item) => item.type === "input"),
         outputRows = all.filter((item) => item.type === "output"),
         realRows = all.filter((item) => item.type === "real");
-      // console.log(
-      //   "realRows",
-      //   realRows,
-      //   "inputRows",
-      //   inputRows,
-      //   "outputRows",
-      //   outputRows
-      // );
       const mappings = inputRows.map((i) => {
         const outputsForInputs = outputRows
           .filter((o) => o.step === i.step)
@@ -923,13 +937,11 @@ function App() {
       });
       // add dot commands for inputs
       mappings.forEach((item) => {
-        // console.log(item);
         if (item.outputsForInputs.length === 0)
           dot.push(item.i + "([" + item.i + "])");
         else {
           item.outputsForInputs.forEach((o, oIndex) => {
             const stepInfo = realRows.filter((r) => r.step === o.step);
-            // console.log(stepInfo, o, oIndex);
             const seconds =
               stepInfo.length > 0 ? " |" + stepInfo[0].seconds + "| " : null;
             dot.push(
@@ -946,10 +958,8 @@ function App() {
           });
         }
       });
-      /*       console.log("dot", dot, "mappings", mappings); */
       const uniqueDot = [...new Set(dot)],
         mermaid = `flowchart TB\n${uniqueDot.join("\n")}`;
-      console.log("mermaid", mermaid);
       setChart(mermaid);
       setMermaidInfo({ characters: mermaid.length, lines: uniqueDot.length });
     };
@@ -964,7 +974,7 @@ function App() {
       (item) => item.type !== null && item.anchor
     );
     setUniqueTypes([...new Set(rulesToProcess.map((item) => item.type))]);
-  }, []);
+  }, [rules]);
 
   // when uniqueTypes changes, run this to update associated data structures
   useEffect(() => {
@@ -1068,7 +1078,6 @@ function App() {
         setListOfLogs(
           files
             .filter((log) => {
-              // console.log(log, log.endsWith(".log"));
               return log !== null && log.endsWith(".log");
             })
             .map((log) => {
@@ -1088,6 +1097,39 @@ function App() {
         );
       });
     });
+  }, []);
+
+  // for local mode - get the list of rules by reading directory
+  useEffect(() => {
+    const dir = encodeURIComponent(rulesDirectory),
+      url = "http://localhost:3001/dir/" + dir;
+    setRulesDirectory(decodeURIComponent(dir));
+    fetch(url).then(function (response) {
+      response.text().then(function (text) {
+        const files = JSON.parse(text);
+        setListOfRules(
+          files
+            .filter((ruleFile) => {
+              return ruleFile !== null && ruleFile.endsWith(".json");
+            })
+            .map((ruleFile) => {
+              return { value: ruleFile, label: ruleFile };
+            })
+            .sort((a, b) => {
+              const x = a.label.toLowerCase(),
+                y = b.label.toLowerCase();
+              if (x < y) {
+                return -1;
+              }
+              if (x > y) {
+                return 1;
+              }
+              return 0;
+            })
+        );
+      });
+    });
+    // eslint-disable-next-line
   }, []);
 
   // for local mode - get the log file
@@ -1125,7 +1167,7 @@ function App() {
       });
     });
     // eslint-disable-next-line
-  }, [selectedLocalFile]);
+  }, [selectedLocalFile, rules]);
 
   useEffect(() => {
     if (selection === null) return;
@@ -1555,20 +1597,34 @@ function App() {
                 <BarChart fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="View rules used to parse logs">
+            <Tooltip title="Choose rules used to parse logs">
               <IconButton
                 size="small"
                 sx={{ padding: iconPadding }}
-                onClick={() => {
-                  window.open(
-                    `https://${server}/lsaf/filedownload/sdd:/general/biostat/tools/fileviewer/index.html?file=https://${server}/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer/rules.json`,
-                    "_blank"
-                  );
+                onClick={(e) => {
+                  setAnchorEl(e.currentTarget);
+                  setOpenRulesMenu(true);
                 }}
               >
                 <SquareFoot fontSize="small" />
               </IconButton>
             </Tooltip>
+            <Menu
+              open={openRulesMenu}
+              onClose={handleCloseRulesMenu}
+              anchorEl={anchorEl}
+            >
+              {listOfRules &&
+                listOfRules.length > 0 &&
+                listOfRules.map((rule, id) => (
+                  <MenuItem
+                    key={id}
+                    onClick={(e) => handleCloseRulesMenu(rule.value)}
+                  >
+                    {rule.label}
+                  </MenuItem>
+                ))}
+            </Menu>
             <Tooltip title={`Compress by ${increment}`}>
               <IconButton
                 size="small"
@@ -1626,14 +1682,17 @@ function App() {
             // uniqueTypes.length === badgeCount.length &&
             uniqueTypes.map((t) => {
               // console.log(
+              //   "t",
               //   t,
-              // badgeCount,
-              // badgeCount[t]
-              //   check,
+              //   // badgeCount,
+              //   "badgeCount[t]",
+              //   badgeCount[t],
+              //   "uniqueTypes.length",
               //   uniqueTypes.length,
+              //   "Object.keys(badgeCount).length",
               //   Object.keys(badgeCount).length
               // );
-              if (uniqueTypes.length > Object.keys(badgeCount).length)
+              if (uniqueTypes.length >= Object.keys(badgeCount).length)
                 return (
                   <FormControlLabel
                     key={t}
@@ -1944,7 +2003,7 @@ function App() {
                 border: 2,
                 fontSize: fontSize,
                 fontFamily: "courier",
-                maxHeight: windowDimension.winHeight - 38 * verticalSplit,
+                maxHeight: windowDimension.winHeight - 50 * verticalSplit,
                 maxWidth:
                   (windowDimension.winWidth / 12) * rightPanelWidth - 25,
                 overflow: "auto",

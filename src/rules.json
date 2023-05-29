@@ -1,13 +1,14 @@
 [
   {
-    "ruleType": "startswith",
-    "startswith": "NOTE:",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": "NOTE",
-    "interesting": false
+    "ruleType": "regex",
+    "regex": "(?:^ERROR:|^\\s*ERROR\\s+)(?!.*\\*\\*\\* PROBLEM: LINE|.*WITHOUT ERROR|.*MPRINT|.*MLOGIC|.*SYMBOLGEN)",
+    "prefix": "<a href='https://communities.sas.com/t5/forums/searchpage/tab/message?q={{line}}' target='_blank' style='color:red'>",
+    "suffix": "{{line}}</a>",
+    "anchor": true,
+    "linkColor": "red",
+    "type": "ERROR",
+    "interesting": true,
+    "substitute": true
   },
   {
     "ruleType": "regex",
@@ -21,15 +22,14 @@
     "substitute": true
   },
   {
-    "ruleType": "regex",
-    "regex": "(?:^ERROR:|^\\s*ERROR\\s+)(?!.*\\*\\*\\* PROBLEM: LINE|.*WITHOUT ERROR|.*MPRINT|.*MLOGIC|.*SYMBOLGEN)",
-    "prefix": "<a href='https://communities.sas.com/t5/forums/searchpage/tab/message?q={{line}}' target='_blank' style='color:red'>",
-    "suffix": "{{line}}</a>",
-    "anchor": true,
-    "linkColor": "red",
-    "type": "ERROR",
-    "interesting": true,
-    "substitute": true
+    "ruleType": "startswith",
+    "startswith": "NOTE:",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": "NOTE",
+    "interesting": false
   },
   {
     "ruleType": "startswith",
