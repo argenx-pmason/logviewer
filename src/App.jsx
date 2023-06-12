@@ -20,6 +20,7 @@ import {
   Chip,
   Menu,
   MenuItem,
+  Snackbar,
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -46,6 +47,7 @@ import {
   Expand,
   ZoomIn,
   ZoomOut,
+  Colorize,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 // import Mermaid from "react-mermaid";
@@ -203,6 +205,29 @@ function App() {
       //   ...baseStyles,
       //   border: "2px solid #ff8b67",
       // }),
+    },
+    [popUpMessage, setPopUpMessage] = useState(null),
+    [openPopUp, setOpenPopUp] = useState(false),
+    extractSasCode = (text) => {
+      if (!logOriginalText) return;
+      let lastLineNumber = null;
+      const sasCode = logOriginalText
+        .split("\n")
+        .filter((element) => /^(\d+ )/.test(element))
+        .map((line) => {
+          const lineNumber = line.split(" ")[0],
+            content = line.replace(/\d+\s+[\\+|\\!]?([^\n]*)/, "$1"),
+            actual = lineNumber.Number;
+          if (!lastLineNumber || actual > lastLineNumber) {
+            lastLineNumber = actual;
+            return content;
+          } else return null;
+        })
+        .filter((element) => element != null);
+
+      navigator.clipboard.writeText(sasCode.join("\n"));
+      setPopUpMessage("SAS code copied to clipboard");
+      setOpenPopUp(true);
     },
     analyse = (text) => {
       let id = 0;
@@ -1609,6 +1634,23 @@ function App() {
                 <SquareFoot fontSize="small" />
               </IconButton>
             </Tooltip>
+            <Tooltip title="Extract SAS code (if possible)">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  extractSasCode();
+                }}
+              >
+                <Colorize fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Snackbar
+              open={openPopUp}
+              onClose={() => setOpenPopUp(false)}
+              autoHideDuration={3000}
+              message={popUpMessage}
+            />
             <Menu
               open={openRulesMenu}
               onClose={handleCloseRulesMenu}
@@ -1700,8 +1742,9 @@ function App() {
                     control={
                       <Badge color="info" badgeContent={badgeCount[t]}>
                         <Checkbox
-                          checked={check[t]}
+                          checked={check[t] === undefined ? true : check[t]}
                           onChange={() => changeCheck(t)}
+                          inputProps={{ "aria-label": "controlled" }}
                         />
                       </Badge>
                     }
@@ -1709,58 +1752,6 @@ function App() {
                 );
               else return null;
             })}
-          {/* <FormControlLabel
-            label="Errors"
-            control={
-              <Badge color="info" badgeContent={badgeCountError}>
-                <Checkbox checked={checkError} onChange={changeCheckError} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            sx={{ ml: 1 }}
-            label="Warnings"
-            control={
-              <Badge color="info" badgeContent={badgeCountWarn}>
-                <Checkbox checked={checkWarn} onChange={changeCheckWarn} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Serious"
-            control={
-              <Badge color="info" badgeContent={badgeCountSerious}>
-                <Checkbox
-                  checked={checkSerious}
-                  onChange={changeCheckSerious}
-                />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Job"
-            control={
-              <Badge color="info" badgeContent={badgeCountJob}>
-                <Checkbox checked={checkJob} onChange={changeCheckJob} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Notice"
-            control={
-              <Badge color="info" badgeContent={badgeCountNotice}>
-                <Checkbox checked={checkNotice} onChange={changeCheckNotice} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Other"
-            control={
-              <Badge color="info" badgeContent={badgeCountOther}>
-                <Checkbox checked={checkOther} onChange={changeCheckOther} />
-              </Badge>
-            }
-          /> */}
           <p />
           <Box
             placeholder="Empty"
@@ -1778,12 +1769,6 @@ function App() {
               links.map((link, id) => {
                 // should we show a link?
                 let show = true;
-                // if (!checkWarn && link.type === "WARN") show = false;
-                // if (!checkError && link.type === "ERROR") show = false;
-                // if (!checkNotice && link.type === "NOTICE") show = false;
-                // if (!checkSerious && link.type === "SERIOUS") show = false;
-                // if (!checkJob && link.type === "JOB") show = false;
-                // if (!checkOther && link.type === "OTHER") show = false;
                 uniqueTypes.forEach((t) => {
                   if (!check[t] && link.type === t) show = false;
                 });
@@ -1796,11 +1781,11 @@ function App() {
                         onClick={() => {
                           setTimeout(function () {
                             logRef.current.scrollBy({
-                              top: -20,
+                              top: -33,
                               left: 0,
                               behavior: "smooth",
                             });
-                          }, 1000);
+                          }, 500);
                         }}
                       >
                         {link.text}
