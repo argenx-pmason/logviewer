@@ -24,8 +24,8 @@ import { getDir, getVersions, xmlToJson } from "./utility";
 import "./App.css";
 // rules are kept on LSAF in /general/biostat/tools/common/metadata/rules.json
 import rules from "./rules.json";
-import sample1 from "./job_adsl.log";
-import sample2 from "./sample.log";
+import sample1 from "./1.log";
+import sample2 from "./2.log";
 
 import {
   Add,
@@ -78,10 +78,12 @@ function App() {
         return; // optimise process to avoid loading the same thing multiple times
       console.log("getLog ", url);
       fetch(url).then(function (response) {
+        // console.log('read ',url)
         setLastUrl(url);
         setLastShowMacroLines(showMacroLines);
         setLastShowSource(showSource);
         response.text().then(function (text) {
+          // console.log('processed')
           setLogOriginalText(text);
           const newText = analyse(text); // make the log text with links and lookup for line to link
           setLogText(newText);
@@ -158,6 +160,7 @@ function App() {
         tempLinks = [],
         tempLineNumberToLink = [],
         html = lines.map((element, lineNumber) => {
+          // console.log(lineNumber)
           // const lineNumber = ln + 1; // so the first line will be line 1, not line 0
           let matchFound = false;
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
@@ -181,6 +184,9 @@ function App() {
           let preparedToReturn = element;
           // make sure we have rules that handle all the things we might want to link to, so that there will be a link to be used
           rules.forEach((rule) => {
+            // if (id>648) console.log(matchFound,rule.regularExpression,element)
+
+            // if (id>648) {const re= rule.regularExpression.test(element);console.log(re)}
             if (
               !matchFound &&
               ((rule.ruleType === "startswith" &&
@@ -189,6 +195,7 @@ function App() {
                   rule.regularExpression.test(element)))
             ) {
               id++;
+              // console.log('id',id)
               matchFound = true; // set this showing we have matched a rule for this line, so we dont want to match any other rules for this line
               const tag = rule.prefix,
                 prefix = tag.substring(0, tag.length - 1) + ` id='${id}'>`;
@@ -224,6 +231,8 @@ function App() {
                   break;
                 default:
               }
+              // if (id>648) console.log('-')
+
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
               // handle link creation, where we have a regex and want to make something using the matching text
               if (
@@ -231,8 +240,11 @@ function App() {
                 rule.substitute &&
                 rule.regularExpression.test(element)
               ) {
+                // if (id>648) console.log('-')
                 const matches = element.match(rule.regularExpression);
+                // if (id>648) console.log('-')
                 matches.forEach((match) => {
+                  // if (id>648) console.log('-')
                   //TODO: if match ends in . then remove it when making link
                   const a = rule.prefix.replace("{{matched}}", match),
                     b = rule.suffix.replace("{{matched}}", match);
@@ -244,11 +256,13 @@ function App() {
               }
             }
           });
+          // console.log('-')
           setLinks(tempLinks);
           return preparedToReturn;
         });
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
       setLineNumberToLink(tempLineNumberToLink);
+      // console.log('-')
       return html.filter((element) => element != null).join("<br>");
     },
     selectLog = (index) => {
@@ -1330,8 +1344,8 @@ function App() {
                 <Button
                   onClick={() => {
                     resetCounts();
-                    getLog(sample2);
-                    setSelection(sample2);
+                    getLog(sample1);
+                    setSelection(sample1);
                   }}
                   sx={{
                     minWidth: 0,
@@ -1351,8 +1365,8 @@ function App() {
                 <Button
                   onClick={() => {
                     resetCounts();
-                    getLog(sample1);
-                    setSelection(sample1);
+                    getLog(sample2);
+                    setSelection(sample2);
                   }}
                   sx={{
                     minWidth: 0,
