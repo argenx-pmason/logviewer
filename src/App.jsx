@@ -21,6 +21,8 @@ import {
   Menu,
   MenuItem,
   Snackbar,
+  DialogActions,
+  DialogContentText,
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -48,6 +50,7 @@ import {
   ZoomIn,
   ZoomOut,
   Colorize,
+  Visibility,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 // import Mermaid from "react-mermaid";
@@ -68,8 +71,9 @@ function App() {
     webDavPrefix = urlPrefix + "/lsaf/webdav/repo",
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
+    [showLineNumbers, setshowLineNumbers] = useState(false),
     logRef = createRef(),
-    localFileRef = createRef(),
+    // localFileRef = createRef(),
     iconPadding = 0.1,
     // [showFileSelector, setShowFileSelector] = useState(false),
     [lastUrl, setLastUrl] = useState(null),
@@ -77,6 +81,13 @@ function App() {
     [lastShowMacroLines, setLastShowMacroLines] = useState(null),
     [uniqueTypes, setUniqueTypes] = useState(null),
     [nLines, setNLines] = useState(null),
+    [openRulesModal, setOpenRulesModal] = useState(false),
+    // handleClickOpenRulesModal = () => {
+    //   setOpenRulesModal(true);
+    // },
+    handleCloseRulesModal = () => {
+      setOpenRulesModal(false);
+    },
     [localUrl, setLocalUrl] = useState(null),
     [scale, setScale] = useState(1),
     [mermaidInfo, setMermaidInfo] = useState({ characters: null, lines: null }),
@@ -139,6 +150,7 @@ function App() {
         winHeight: window.innerHeight,
       });
     },
+    zeroPad = (num, places) => String(num).padStart(places, "0"),
     counts = {},
     [selectedLocalFile, setSelectedLocalFile] = useState(""),
     incrementCount = (type) => {
@@ -456,6 +468,19 @@ function App() {
       await getVersions(webDavPrefix + dir, processXml);
       setWaitGetDir(false);
     },
+    ColDefnRules = [
+      { field: "id", headerName: "ID", width: 90, hide: true },
+      { field: "type", headerName: "type", width: 80 },
+      { field: "ruleType", headerName: "ruleType", width: 80 },
+      { field: "startswith", headerName: "startswith", width: 100 },
+      { field: "regex", headerName: "regex", width: 400 },
+      { field: "prefix", headerName: "prefix", width: 400 },
+      { field: "suffix", headerName: "suffix", width: 90 },
+      { field: "anchor", headerName: "anchor", width: 50 },
+      { field: "linkColor", headerName: "linkColor", width: 50 },
+      { field: "interesting", headerName: "interesting", width: 50 },
+      { field: "substitute", headerName: "substitute", width: 50 },
+    ],
     ColDefnOutputs = [
       { field: "id", headerName: "ID", width: 90, hide: true },
       { field: "lineNumber", headerName: "Line", width: 90 },
@@ -1090,11 +1115,8 @@ function App() {
     };
   }, [windowDimension]);
 
-  // for local mode - get the list of logs by reading directory
-  useEffect(() => {
-    const dir = encodeURIComponent(
-        "/Users/philipmason/Documents/GitHub/logviewer/tests"
-      ),
+  const readLocalFiles = (localDir) => {
+    const dir = encodeURIComponent(localDir),
       url = "http://localhost:3001/dir/" + dir;
     setLogDirectory(decodeURIComponent(dir));
     fetch(url).then(function (response) {
@@ -1122,6 +1144,14 @@ function App() {
         );
       });
     });
+  };
+
+  // for local mode - get the list of logs by reading directory
+  useEffect(() => {
+    const defaultLocalDirectory =
+      "/Users/philipmason/Documents/GitHub/logviewer/tests";
+    setLogDirectory(defaultLocalDirectory);
+    readLocalFiles(defaultLocalDirectory);
   }, []);
 
   // for local mode - get the list of rules by reading directory
@@ -1229,12 +1259,13 @@ function App() {
               }}
             />
           ) : null}
-          {!waitGetDir && mode !== "local" ? (
+          {!waitGetDir ? (
             <Tooltip title="Read directory and show a list of logs to select from">
               <Button
                 onClick={() => {
                   if (mode === "local") {
-                    localFileRef.current.click();
+                    // localFileRef.current.click();
+                    readLocalFiles(logDirectory);
                   } else {
                     setWaitGetDir(true);
                     resetCounts();
@@ -1437,6 +1468,21 @@ function App() {
                 }
               />
             </Tooltip>
+            <Tooltip title="Show Line numbers">
+              <FormControlLabel
+                sx={{ marginRight: iconPadding }}
+                control={
+                  <Switch
+                    checked={showLineNumbers}
+                    onChange={() => {
+                      setshowLineNumbers(!showLineNumbers);
+                    }}
+                    name="mprint"
+                    size="small"
+                  />
+                }
+              />
+            </Tooltip>
             <Tooltip title="Page Down">
               <IconButton
                 size="small"
@@ -1495,8 +1541,9 @@ function App() {
                     (link) => link.interesting && link.lineNumber < currentLine
                   );
                   if (interesting.length > 0) {
-                    jumpTo(interesting[0].id);
-                    setCurrentLine(interesting[0].lineNumber);
+                    const last = interesting.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
                   }
                 }}
               >
@@ -1548,8 +1595,9 @@ function App() {
                       link.type === "ERROR" && link.lineNumber < currentLine
                   );
                   if (errors.length > 0) {
-                    jumpTo(errors[0].id);
-                    setCurrentLine(errors[0].lineNumber);
+                    const last = errors.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
                   }
                 }}
               >
@@ -1601,8 +1649,9 @@ function App() {
                       link.type === "WARN" && link.lineNumber < currentLine
                   );
                   if (warnings.length > 0) {
-                    jumpTo(warnings[0].id);
-                    setCurrentLine(warnings[0].lineNumber);
+                    const last = warnings.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
                   }
                 }}
               >
@@ -1632,6 +1681,17 @@ function App() {
                 }}
               >
                 <SquareFoot fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="View (edit) rules">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setOpenRulesModal(true);
+                }}
+              >
+                <Visibility fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Extract SAS code (if possible)">
@@ -1775,6 +1835,7 @@ function App() {
                 if (show) {
                   return (
                     <React.Fragment key={id}>
+                      {showLineNumbers ? zeroPad(link.lineNumber, 6) + " " : ""}
                       <a
                         style={{ color: `${link.linkColor}` }}
                         href={`#${link.id}`}
@@ -2115,6 +2176,49 @@ function App() {
             >
               <Mermaid chart={chart} useMaxWidth={useMaxWidth} />
             </DialogContent>
+          </Dialog>
+          <Dialog
+            fullScreen
+            open={openRulesModal}
+            onClose={handleCloseRulesModal}
+          >
+            <DialogTitle>Rules Admin</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Table will be editable soon. New rules will be able to be added
+                too.
+              </DialogContentText>
+              {rules && (
+                <DataGridPro
+                  rows={rules.map((rule, id) => {
+                    return { id: id, ...rule };
+                  })}
+                  rowHeight={rowHeight}
+                  columns={ColDefnRules}
+                  density="compact"
+                  hideFooter={true}
+                  sx={{
+                    height: windowDimension.winHeight - 100,
+                    fontWeight: "fontSize=5",
+                    fontSize: "0.7em",
+                  }}
+                  // onRowClick={(e) => {
+                  //   window.location.hash = e.row.link;
+                  // }}
+                  // components={{ Toolbar: GridToolbar }}
+                />
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseRulesModal}>Cancel</Button>
+              <Button
+                onClick={() => {
+                  alert("coming soon");
+                }}
+              >
+                Add a new rule
+              </Button>
+            </DialogActions>
           </Dialog>
         </Grid>
       </Grid>
