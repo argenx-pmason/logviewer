@@ -51,6 +51,7 @@ import {
   ZoomOut,
   Colorize,
   Visibility,
+  Publish,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 // import Mermaid from "react-mermaid";
@@ -72,6 +73,7 @@ function App() {
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
     [showLineNumbers, setshowLineNumbers] = useState(false),
+    [dirListing, setDirListing] = useState(null),
     logRef = createRef(),
     // localFileRef = createRef(),
     iconPadding = 0.1,
@@ -137,6 +139,7 @@ function App() {
       }
     },
     [listOfLogs, setListOfLogs] = useState(null),
+    [listOfDirs, setListOfDirs] = useState(null),
     [fontSize, setFontSize] = useState(12),
     [leftPanelWidth, setLeftPanelWidth] = useState(6),
     [rightPanelWidth, setRightPanelWidth] = useState(6),
@@ -393,6 +396,16 @@ function App() {
     openInNewTab = (url) => {
       const win = window.open(url, "_blank");
       win.focus();
+    },
+    processDirectory = (dirPassed) => {
+      if (mode === "local") {
+        // localFileRef.current.click();
+        readLocalFiles(dirPassed || logDirectory);
+      } else {
+        setWaitGetDir(true);
+        resetCounts();
+        getWebDav(dirPassed || logDirectory);
+      }
     },
     [showSource, setShowSource] = useState(true),
     [showMacroLines, setshowMacroLines] = useState(true),
@@ -1040,7 +1053,7 @@ function App() {
   }, [uniqueTypes]);
 
   useEffect(() => {
-    if (!logText) return;
+    if (!logText || selectedLog === null) return;
     analyzeLog();
     // eslint-disable-next-line
   }, [logText]); // logText changes when it has been analyzed and all links and lookups prepared
@@ -1115,36 +1128,70 @@ function App() {
     };
   }, [windowDimension]);
 
-  const readLocalFiles = (localDir) => {
-    const dir = encodeURIComponent(localDir),
-      url = "http://localhost:3001/dir/" + dir;
-    setLogDirectory(decodeURIComponent(dir));
-    fetch(url).then(function (response) {
-      response.text().then(function (text) {
-        const files = JSON.parse(text);
-        setListOfLogs(
-          files
-            .filter((log) => {
-              return log !== null && log.endsWith(".log");
-            })
-            .map((log) => {
-              return { value: log, label: log };
-            })
-            .sort((a, b) => {
-              const x = a.label.toLowerCase(),
-                y = b.label.toLowerCase();
-              if (x < y) {
-                return -1;
-              }
-              if (x > y) {
-                return 1;
-              }
-              return 0;
-            })
+  const makeDirListing = (dirsArray) => {
+      // const html = dirsArray.map((dir) => {
+      //   return `<span onClick='
+      //   const newDir=document.getElementById("logDirectory").value+"/${dir}";
+      //   console.log(newDir);
+      //   document.getElementById("logDirectory").value="/Users";
+      //   document.getElementById("readDirectory").click();
+      //   '>${dir}</span>`;
+      // });
+      // setLogText(html.join("\n"));
+      const obj = dirsArray.map((dir, i) => {
+        return (
+          <Box
+            key={dir + i}
+            onClick={() => {
+              // setLogDirectory(logDirectory + "/" + dir);
+              readLocalFiles(logDirectory + "/" + dir);
+            }}
+          >
+            {dir}
+          </Box>
         );
       });
-    });
-  };
+      console.log("obj", obj);
+      setDirListing(obj);
+    },
+    readLocalFiles = (localDir) => {
+      const dir = encodeURIComponent(localDir),
+        url = "http://localhost:3001/dir/" + dir;
+      setLogDirectory(decodeURIComponent(dir));
+      // console.log("url", url);
+      fetch(url).then(function (response) {
+        response.text().then(function (text) {
+          const dirObject = JSON.parse(text);
+          const { dirs, files } = dirObject;
+          // console.log("localDir", localDir);
+          // "dirs", dirs, "files", files);
+          setSelectedLog(null);
+          setListOfDirs(dirs);
+          setLogOriginalText(text);
+          // makeDirListing(dirs);
+          setListOfLogs(
+            files
+              .filter((log) => {
+                return log !== null && log.endsWith(".log");
+              })
+              .map((log) => {
+                return { value: log, label: log };
+              })
+              .sort((a, b) => {
+                const x = a.label.toLowerCase(),
+                  y = b.label.toLowerCase();
+                if (x < y) {
+                  return -1;
+                }
+                if (x > y) {
+                  return 1;
+                }
+                return 0;
+              })
+          );
+        });
+      });
+    };
 
   // for local mode - get the list of logs by reading directory
   useEffect(() => {
@@ -1161,7 +1208,9 @@ function App() {
     setRulesDirectory(decodeURIComponent(dir));
     fetch(url).then(function (response) {
       response.text().then(function (text) {
-        const files = JSON.parse(text);
+        const dirObject = JSON.parse(text);
+        const { dirs, files } = dirObject;
+        console.log("dirs", dirs, "files", files);
         setListOfRules(
           files
             .filter((ruleFile) => {
@@ -1262,15 +1311,9 @@ function App() {
           {!waitGetDir ? (
             <Tooltip title="Read directory and show a list of logs to select from">
               <Button
+                id="readDirectory"
                 onClick={() => {
-                  if (mode === "local") {
-                    // localFileRef.current.click();
-                    readLocalFiles(logDirectory);
-                  } else {
-                    setWaitGetDir(true);
-                    resetCounts();
-                    getWebDav(logDirectory);
-                  }
+                  processDirectory();
                 }}
                 sx={{
                   m: 2,
@@ -1283,10 +1326,39 @@ function App() {
               </Button>
             </Tooltip>
           ) : null}
+          <Tooltip title="Go up to parent directory">
+            <IconButton
+              size="small"
+              onClick={() => {
+                const parentDir = logDirectory
+                  .split("/")
+                  .slice(0, -1)
+                  .join("/");
+                if (mode === "local") {
+                  readLocalFiles(parentDir);
+                  setLogText(null);
+                  // localFileRef.current.click();
+                  // setLogDirectory(parentDir);
+                } else {
+                  setWaitGetDir(true);
+                  resetCounts();
+                  getWebDav(parentDir);
+                }
+                // processDirectory();
+              }}
+              sx={{ mt: 1, color: "green" }}
+            >
+              <Publish fontSize="small" />
+            </IconButton>
+          </Tooltip>
           {waitGetDir ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
           {!waitSelectLog && listOfLogs ? (
             <Select
-              placeholder="Choose a log"
+              placeholder={
+                listOfLogs.length > 0
+                  ? "Choose a log (" + listOfLogs.length + " found)"
+                  : "No logs found"
+              }
               options={listOfLogs}
               value={selectedLog}
               onChange={selectLog}
@@ -1776,8 +1848,10 @@ function App() {
               </Tooltip>
             ) : null}
           </Box>
-          <b>Program:</b> {program}, <b>Submitted:</b> {submitted},{" "}
-          <b>Ended:</b> {submitEnd}, <b>Lines:</b> {nLines}
+          {program && <b>Program:</b>} {program} &nbsp;{" "}
+          {submitted && <b>Submitted:</b>} {submitted} &nbsp;{" "}
+          {submitEnd && <b>Ended:</b>} {submitEnd} &nbsp;{" "}
+          {nLines && <b>Lines:</b>} {nLines}
         </Grid>
         <Grid item xs={leftPanelWidth}>
           {uniqueTypes &&
@@ -2042,6 +2116,7 @@ function App() {
           )}
         </Grid>
         <Grid item xs={rightPanelWidth}>
+          {dirListing}
           {logText && (
             <Box
               placeholder="Empty"
@@ -2066,11 +2141,26 @@ function App() {
               ></pre>
             </Box>
           )}
-          {!logText && (
+          {!logText && listOfDirs ? (
+            listOfDirs.map((dir, id) => {
+              return (
+                <Box
+                  key={"dir" + id}
+                  onClick={() => {
+                    setLogDirectory(logDirectory + "/" + dir);
+                    processDirectory(logDirectory + "/" + dir);
+                  }}
+                  sx={{ color: "blue", cursor: "pointer" }}
+                >
+                  {dir}
+                </Box>
+              );
+            })
+          ) : !logText ? (
             <Box sx={{ m: 10, fontSize: 20, color: "red" }}>
               Log will be displayed here.
             </Box>
-          )}
+          ) : null}
           <Dialog
             open={openModal}
             onClose={() => setOpenModal(false)}
