@@ -59,7 +59,7 @@ import Mermaid from "./Mermaid";
 
 function App() {
   LicenseInfo.setLicenseKey(
-    "5b931c69b031b808de26d5902e04c36fTz00Njk0NyxFPTE2ODg4MDI3MDM3MjAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
+    "369a1eb75b405178b0ae6c2b51263cacTz03MTMzMCxFPTE3MjE3NDE5NDcwMDAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
   );
   const rowHeight = 22,
     increment = 0.25,
@@ -453,7 +453,9 @@ function App() {
     mode = href.startsWith("http://localhost") ? "local" : "remote",
     // server = href.split("//")[1].split("/")[0],
     [rulesDirectory, setRulesDirectory] = useState(
-      "/Users/philipmason/Documents/GitHub/logviewer/src"
+      navigator.platform.startsWith("Win")
+        ? "C:\\github\\logviewer\\src"
+        : "/Users/philipmason/Documents/GitHub/logviewer/src"
     ),
     [listOfRules, setListOfRules] = useState([]),
     [openRulesMenu, setOpenRulesMenu] = useState(false),
@@ -1167,13 +1169,24 @@ function App() {
       const dir = encodeURIComponent(localDir),
         url = "http://localhost:3001/dir/" + dir;
       setLogDirectory(decodeURIComponent(dir));
-      // console.log("url", url);
+      console.log("url", url);
       fetch(url).then(function (response) {
+        console.log(response);
         response.text().then(function (text) {
           const dirObject = JSON.parse(text);
-          const { dirs, files } = dirObject;
-          // console.log("localDir", localDir);
-          // "dirs", dirs, "files", files);
+          // const { dirs, files } = dirObject;
+          const files = dirObject,
+            dirs = null;
+          // console.log(
+          //   "dirObject",
+          //   dirObject,
+          //   "localDir",
+          //   localDir,
+          //   "dirs",
+          //   dirs,
+          //   "files",
+          //   files
+          // );
           setSelectedLog(null);
           setListOfDirs(dirs);
           setLogOriginalText(text);
@@ -1204,8 +1217,10 @@ function App() {
 
   // for local mode - get the list of logs by reading directory
   useEffect(() => {
-    const defaultLocalDirectory =
-      "/Users/philipmason/Documents/GitHub/logviewer/tests";
+    // console.log(navigator);
+    const defaultLocalDirectory = navigator.platform.startsWith("Win")
+      ? "C:/github/logviewer/src"
+      : "/Users/philipmason/Documents/GitHub/logviewer/tests";
     setLogDirectory(defaultLocalDirectory);
     readLocalFiles(defaultLocalDirectory);
   }, []);
@@ -1218,7 +1233,9 @@ function App() {
     fetch(url).then(function (response) {
       response.text().then(function (text) {
         const dirObject = JSON.parse(text);
-        const { dirs, files } = dirObject;
+        // const { dirs, files } = dirObject;
+        const files = dirObject,
+          dirs = null;
         console.log("dirs", dirs, "files", files);
         setListOfRules(
           files
@@ -1254,9 +1271,7 @@ function App() {
     //   url = "http://localhost:3001/getfile/" + dir + "/" + file;
     if (selectedLocalFile === "") return;
     const file = selectedLocalFile.split("/").pop(),
-      dir = encodeURIComponent(
-        "/Users/philipmason/Documents/GitHub/logviewer/tests"
-      ),
+      dir = encodeURIComponent(logDirectory),
       url = "http://localhost:3001/getfile/" + dir + "/" + file;
     setLocalUrl(url);
     // console.log(
