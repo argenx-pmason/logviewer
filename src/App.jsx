@@ -3,7 +3,6 @@ import Select from "react-select";
 import {
   Box,
   Grid,
-  Typography,
   Badge,
   Tooltip,
   IconButton,
@@ -15,6 +14,15 @@ import {
   CircularProgress,
   Tabs,
   Tab,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Chip,
+  Menu,
+  MenuItem,
+  Snackbar,
+  DialogActions,
+  DialogContentText,
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -23,10 +31,7 @@ import { LicenseInfo } from "@mui/x-data-grid-pro";
 import { getDir, getVersions, xmlToJson } from "./utility";
 import "./App.css";
 // rules are kept on LSAF in /general/biostat/tools/common/metadata/rules.json
-import rules from "./rules.json";
-import sample1 from "./1.log";
-import sample2 from "./2.log";
-
+import defaultRules from "./rules.json";
 import {
   Add,
   Remove,
@@ -38,31 +43,58 @@ import {
   ArrowDownward,
   SquareFoot,
   FileDownloadDone,
+  BarChart,
+  Close,
   Compress,
   Expand,
+  ZoomIn,
+  ZoomOut,
+  Colorize,
+  Visibility,
+  Publish,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
+// import Mermaid from "react-mermaid";
+import Mermaid from "./Mermaid";
 
 function App() {
   LicenseInfo.setLicenseKey(
-    "5b931c69b031b808de26d5902e04c36fTz00Njk0NyxFPTE2ODg4MDI3MDM3MjAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
+    "369a1eb75b405178b0ae6c2b51263cacTz03MTMzMCxFPTE3MjE3NDE5NDcwMDAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
   );
   const rowHeight = 22,
     increment = 0.25,
+    [chart, setChart] = useState(`flowchart TD
+    Start --> Stop`),
+    [openModal, setOpenModal] = useState(false),
     [verticalSplit, setVerticalSplit] = useState(3),
     urlPrefix = window.location.protocol + "//" + window.location.host,
     filePrefix = "/lsaf/filedownload/sdd%3A//",
     webDavPrefix = urlPrefix + "/lsaf/webdav/repo",
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
+    [showLineNumbers, setshowLineNumbers] = useState(false),
+    [dirListing, setDirListing] = useState(null),
     logRef = createRef(),
-    localFileRef = createRef(),
+    // localFileRef = createRef(),
     iconPadding = 0.1,
     // [showFileSelector, setShowFileSelector] = useState(false),
     [lastUrl, setLastUrl] = useState(null),
     [lastShowSource, setLastShowSource] = useState(null),
     [lastShowMacroLines, setLastShowMacroLines] = useState(null),
+    [uniqueTypes, setUniqueTypes] = useState(null),
     [nLines, setNLines] = useState(null),
+    [openRulesModal, setOpenRulesModal] = useState(false),
+    // handleClickOpenRulesModal = () => {
+    //   setOpenRulesModal(true);
+    // },
+    handleCloseRulesModal = () => {
+      setOpenRulesModal(false);
+    },
+    [localUrl, setLocalUrl] = useState(null),
+    [scale, setScale] = useState(1),
+    [mermaidInfo, setMermaidInfo] = useState({ characters: null, lines: null }),
+    [rules, setRules] = useState(defaultRules),
+    [anchorEl, setAnchorEl] = useState(null),
     getLog = (url) => {
       // const username = "",
       //   password = "",
@@ -76,21 +108,38 @@ function App() {
         showMacroLines === lastShowMacroLines
       )
         return; // optimise process to avoid loading the same thing multiple times
-      console.log("getLog ", url);
-      fetch(url).then(function (response) {
-        // console.log('read ',url)
-        setLastUrl(url);
+      if (mode === "local") {
         setLastShowMacroLines(showMacroLines);
         setLastShowSource(showSource);
-        response.text().then(function (text) {
-          // console.log('processed')
-          setLogOriginalText(text);
-          const newText = analyse(text); // make the log text with links and lookup for line to link
-          setLogText(newText);
+        fetch(localUrl).then(function (response) {
+          // console.log(response);
+          if (response.type !== "basic") {
+            response.text().then(function (text) {
+              console.log(
+                `${text.length} characters read from file ${localUrl}`
+              );
+              setLogOriginalText(text);
+              const newText = analyse(text); // make the log text with links and lookup for line to link
+              setLogText(newText);
+            });
+          }
         });
-      });
+      } else {
+        console.log("getLog ", url);
+        fetch(url).then(function (response) {
+          setLastUrl(url);
+          setLastShowMacroLines(showMacroLines);
+          setLastShowSource(showSource);
+          response.text().then(function (text) {
+            setLogOriginalText(text);
+            const newText = analyse(text); // make the log text with links and lookup for line to link
+            setLogText(newText);
+          });
+        });
+      }
     },
     [listOfLogs, setListOfLogs] = useState(null),
+    [listOfDirs, setListOfDirs] = useState(null),
     [fontSize, setFontSize] = useState(12),
     [leftPanelWidth, setLeftPanelWidth] = useState(6),
     [rightPanelWidth, setRightPanelWidth] = useState(6),
@@ -104,6 +153,7 @@ function App() {
         winHeight: window.innerHeight,
       });
     },
+    zeroPad = (num, places) => String(num).padStart(places, "0"),
     counts = {},
     [selectedLocalFile, setSelectedLocalFile] = useState(""),
     incrementCount = (type) => {
@@ -112,28 +162,49 @@ function App() {
       return counts[type];
     },
     [tabValue, changeTabValue] = useState(0),
-    [badgeCountError, setBadgeCountError] = useState(0),
-    [badgeCountWarn, setBadgeCountWarn] = useState(0),
-    [badgeCountNotice, setBadgeCountNotice] = useState(0),
-    [badgeCountJob, setBadgeCountJob] = useState(0),
-    [badgeCountSerious, setBadgeCountSerious] = useState(0),
-    [badgeCountOther, setBadgeCountOther] = useState(0),
+    [badgeCount, setBadgeCount] = useState({}),
+    [check, setCheck] = useState({}),
+    changeCheck = (type) => {
+      if (check.hasOwnProperty(type)) {
+        const newCheck = { ...check };
+        newCheck[type] = !newCheck[type];
+        setCheck(newCheck);
+      } else {
+        const newCheck = { ...check };
+        newCheck[type] = true;
+        setCheck(newCheck);
+      }
+    },
+    // [badgeCountError, setBadgeCountError] = useState(0),
+    // [badgeCountWarn, setBadgeCountWarn] = useState(0),
+    // [badgeCountNotice, setBadgeCountNotice] = useState(0),
+    // [badgeCountJob, setBadgeCountJob] = useState(0),
+    // [badgeCountSerious, setBadgeCountSerious] = useState(0),
+    // [badgeCountOther, setBadgeCountOther] = useState(0),
     [currentLine, setCurrentLine] = useState(1),
     [macrosSelected, setMacrosSelected] = useState(null),
     resetCounts = () => {
-      setBadgeCountError(0);
-      setBadgeCountWarn(0);
-      setBadgeCountNotice(0);
-      setBadgeCountSerious(0);
-      setBadgeCountJob(0);
-      setBadgeCountOther(0);
+      console.log("resetCounts");
+      // setBadgeCountError(0);
+      // setBadgeCountWarn(0);
+      // setBadgeCountNotice(0);
+      // setBadgeCountSerious(0);
+      // setBadgeCountJob(0);
+      // setBadgeCountOther(0);
+      // TODO: generalise the reset
+      const tempBadgeCount = {};
+      uniqueTypes.forEach((type) => {
+        console.log(type);
+        tempBadgeCount[type] = 0;
+      });
+      setBadgeCount(tempBadgeCount);
     },
     selectStyles = {
       control: (baseStyles, state) => ({
         ...baseStyles,
         fontSize: "12px",
         marginLeft: 3,
-        background: "#eaf3d8",
+        background: "#c5e1c5",
         border: state.isFocused ? "1px solid #0000ff" : "2px solid #00ffff",
         // borderColor: state.isFocused ? "green" : "red",
         // "&:hover": {
@@ -150,12 +221,32 @@ function App() {
       //   border: "2px solid #ff8b67",
       // }),
     },
+    [popUpMessage, setPopUpMessage] = useState(null),
+    [openPopUp, setOpenPopUp] = useState(false),
+    extractSasCode = (text) => {
+      if (!logOriginalText) return;
+      let lastLineNumber = null;
+      const sasCode = logOriginalText
+        .split("\n")
+        .filter((element) => /^(\d+ )/.test(element))
+        .map((line) => {
+          const lineNumber = line.split(" ")[0],
+            content = line.replace(/\d+\s+[\\+|\\!]?([^\n]*)/, "$1"),
+            actual = lineNumber.Number;
+          if (!lastLineNumber || actual > lastLineNumber) {
+            lastLineNumber = actual;
+            return content;
+          } else return null;
+        })
+        .filter((element) => element != null);
+
+      navigator.clipboard.writeText(sasCode.join("\n"));
+      setPopUpMessage("SAS code copied to clipboard");
+      setOpenPopUp(true);
+    },
     analyse = (text) => {
       let id = 0;
-      rules.forEach((rule) => {
-        if (rule.ruleType === "regex")
-          rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
-      });
+      // console.log("rules", rules);
       const lines = text.split("\n"),
         tempLinks = [],
         tempLineNumberToLink = [],
@@ -209,31 +300,37 @@ function App() {
                   interesting: rule.interesting,
                 });
               tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
-              const count = incrementCount(rule.type);
-              switch (rule.type) {
-                case "ERROR":
-                  setBadgeCountError(count);
-                  break;
-                case "WARN":
-                  setBadgeCountWarn(count);
-                  break;
-                case "SERIOUS":
-                  setBadgeCountSerious(count);
-                  break;
-                case "JOB":
-                  setBadgeCountJob(count);
-                  break;
-                case "NOTICE":
-                  setBadgeCountNotice(count);
-                  break;
-                case "OTHER":
-                  setBadgeCountOther(count);
-                  break;
-                default:
-              }
-              // if (id>648) console.log('-')
-
+              incrementCount(rule.type);
+              // switch (rule.type) {
+              //   case "ERROR":
+              //     setBadgeCountError(count);
+              //     break;
+              //   case "WARN":
+              //     setBadgeCountWarn(count);
+              //     break;
+              //   case "SERIOUS":
+              //     setBadgeCountSerious(count);
+              //     break;
+              //   case "JOB":
+              //     setBadgeCountJob(count);
+              //     break;
+              //   case "NOTICE":
+              //     setBadgeCountNotice(count);
+              //     break;
+              //   case "OTHER":
+              //     setBadgeCountOther(count);
+              //     break;
+              //   default:
+              // }
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
+              // if (rule.linkColor === "red")
+              //   console.log(
+              //     rule,
+              //     rule.ruleType,
+              //     rule.substitute,
+              //     rule.regularExpression?.test(element),
+              //     element
+              //   );
               // handle link creation, where we have a regex and want to make something using the matching text
               if (
                 rule.ruleType === "regex" &&
@@ -244,13 +341,20 @@ function App() {
                 const matches = element.match(rule.regularExpression);
                 // if (id>648) console.log('-')
                 matches.forEach((match) => {
-                  // if (id>648) console.log('-')
-                  //TODO: if match ends in . then remove it when making link
-                  const a = rule.prefix.replace("{{matched}}", match),
-                    b = rule.suffix.replace("{{matched}}", match);
-                  preparedToReturn = element.replace(match, a + b);
-                  if (match.startsWith("/general/biostat")) {
-                    //TODO - add some code to put in auto links
+                  preparedToReturn = element;
+                  if (rule.prefix.includes("{{matched}}")) {
+                    //TODO: if match ends in . then remove it when making link
+                    const a = rule.prefix.replace("{{matched}}", match),
+                      b = rule.suffix.replace("{{matched}}", match);
+                    preparedToReturn = element.replace(match, a + b);
+                  }
+                  if (rule.prefix.includes("{{line}}")) {
+                    const c = rule.prefix.replace(
+                        "{{line}}",
+                        encodeURI(element)
+                      ),
+                      d = rule.suffix.replace("{{line}}", element);
+                    preparedToReturn = "<span id=" + id + "></span>" + c + d;
                   }
                 });
               }
@@ -260,6 +364,12 @@ function App() {
           setLinks(tempLinks);
           return preparedToReturn;
         });
+      const tempBadgeCount = {};
+      uniqueTypes.forEach((type) => {
+        if (counts.hasOwnProperty(type)) tempBadgeCount[type] = counts[type];
+      });
+      setBadgeCount(tempBadgeCount);
+
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
       setLineNumberToLink(tempLineNumberToLink);
       // console.log('-')
@@ -268,13 +378,22 @@ function App() {
     selectLog = (index) => {
       setWaitSelectLog(true);
       const { value } = index;
-      // eslint-disable-next-line
-      getLog(value);
-      document.title = value.split("/").pop();
-      resetCounts();
-      setSelectedLog(index);
-      setSelection(value);
-
+      if (mode !== "local") {
+        // eslint-disable-next-line
+        getLog(value);
+        document.title = value.split("/").pop();
+        resetCounts();
+        setSelectedLog(index);
+        setSelection(value);
+      } else {
+        // handle selecting a local file
+        // console.log(index);
+        // document.title = value.split("/").pop();
+        // resetCounts();
+        setSelectedLocalFile(value);
+        setSelectedLog(index);
+        // setSelection(value);
+      }
       setWaitSelectLog(false);
     },
     handleNewLog = (newLog) => {
@@ -287,41 +406,79 @@ function App() {
       const win = window.open(url, "_blank");
       win.focus();
     },
+    processDirectory = (dirPassed) => {
+      if (mode === "local") {
+        // localFileRef.current.click();
+        readLocalFiles(dirPassed || logDirectory);
+      } else {
+        setWaitGetDir(true);
+        resetCounts();
+        getWebDav(dirPassed || logDirectory);
+      }
+    },
     [showSource, setShowSource] = useState(true),
     [showMacroLines, setshowMacroLines] = useState(true),
     [selection, setSelection] = useState(""),
     [selectedLog, setSelectedLog] = useState(null),
     [links, setLinks] = useState(null),
     [lineNumberToLink, setLineNumberToLink] = useState(null),
-    [checkWarn, setCheckWarn] = useState(true),
     [waitGetDir, setWaitGetDir] = useState(false),
     [waitSelectLog, setWaitSelectLog] = useState(false),
-    [checkError, setCheckError] = useState(true),
-    [checkNotice, setCheckNotice] = useState(false),
-    [checkSerious, setCheckSerious] = useState(true),
-    [checkJob, setCheckJob] = useState(true),
-    [checkOther, setCheckOther] = useState(false),
-    changeCheckWarn = (event) => {
-      setCheckWarn(event.target.checked);
-    },
-    changeCheckError = (event) => {
-      setCheckError(event.target.checked);
-    },
-    changeCheckNotice = (event) => {
-      setCheckNotice(event.target.checked);
-    },
-    changeCheckJob = (event) => {
-      setCheckJob(event.target.checked);
-    },
-    changeCheckSerious = (event) => {
-      setCheckSerious(event.target.checked);
-    },
-    changeCheckOther = (event) => {
-      setCheckOther(event.target.checked);
-    },
+    [useMaxWidth] = useState(false),
+    // [checkWarn, setCheckWarn] = useState(true),
+    // [checkError, setCheckError] = useState(true),
+    // [checkNotice, setCheckNotice] = useState(false),
+    // [checkSerious, setCheckSerious] = useState(true),
+    // [checkJob, setCheckJob] = useState(true),
+    // [checkOther, setCheckOther] = useState(false),
+    // changeCheckWarn = (event) => {
+    //   setCheckWarn(event.target.checked);
+    // },
+    // changeCheckError = (event) => {
+    //   setCheckError(event.target.checked);
+    // },
+    // changeCheckNotice = (event) => {
+    //   setCheckNotice(event.target.checked);
+    // },
+    // changeCheckJob = (event) => {
+    //   setCheckJob(event.target.checked);
+    // },
+    // changeCheckSerious = (event) => {
+    //   setCheckSerious(event.target.checked);
+    // },
+    // changeCheckOther = (event) => {
+    //   setCheckOther(event.target.checked);
+    // },
     { href } = window.location,
     mode = href.startsWith("http://localhost") ? "local" : "remote",
-    server = href.split("//")[1].split("/")[0],
+    // server = href.split("//")[1].split("/")[0],
+    [rulesDirectory, setRulesDirectory] = useState(
+      navigator.platform.startsWith("Win")
+        ? "C:\\github\\logviewer\\src"
+        : "/Users/philipmason/Documents/GitHub/logviewer/src"
+    ),
+    [listOfRules, setListOfRules] = useState([]),
+    [openRulesMenu, setOpenRulesMenu] = useState(false),
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Ftests/a.log
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Fsrc%2Flogs.json
+    handleCloseRulesMenu = (item) => {
+      console.log(item);
+      const url =
+        "http://localhost:3001/getfile/" +
+        encodeURIComponent(rulesDirectory) +
+        "/" +
+        item;
+      fetch(url).then(function (response) {
+        response.text().then(function (text) {
+          const tempRules = JSON.parse(text);
+          console.log(
+            `${tempRules.length} rules were read from rules file: ${url}`
+          );
+          setRules(tempRules);
+        });
+      });
+      setOpenRulesMenu(false);
+    },
     [logDirectory, setLogDirectory] = useState(
       "/general/biostat/jobs/gadam_ongoing_studies/dev/logs/"
     ),
@@ -335,6 +492,19 @@ function App() {
       await getVersions(webDavPrefix + dir, processXml);
       setWaitGetDir(false);
     },
+    ColDefnRules = [
+      { field: "id", headerName: "ID", width: 90, hide: true },
+      { field: "type", headerName: "type", width: 80 },
+      { field: "ruleType", headerName: "ruleType", width: 80 },
+      { field: "startswith", headerName: "startswith", width: 100 },
+      { field: "regex", headerName: "regex", width: 400 },
+      { field: "prefix", headerName: "prefix", width: 400 },
+      { field: "suffix", headerName: "suffix", width: 90 },
+      { field: "anchor", headerName: "anchor", width: 50 },
+      { field: "linkColor", headerName: "linkColor", width: 50 },
+      { field: "interesting", headerName: "interesting", width: 50 },
+      { field: "substitute", headerName: "substitute", width: 50 },
+    ],
     ColDefnOutputs = [
       { field: "id", headerName: "ID", width: 90, hide: true },
       { field: "lineNumber", headerName: "Line", width: 90 },
@@ -483,6 +653,7 @@ function App() {
         tempMprint = {},
         tempMlogic = {},
         tempSymbolgen = {};
+      // console.log("logArray", logArray);
       logArray.forEach((line, lineNumber) => {
         // Inputs
         if (line.startsWith("NOTE: There were ")) {
@@ -776,10 +947,124 @@ function App() {
       setSelectionModel(tempSelectionModel);
       setMlogic(tempMlogic0);
       setSymbolgen(tempSymbolgen0);
+      makeDiagram(tempInputs, tempOutputs, tempRealTime);
+    },
+    makeDiagram = (inputs, outputs, real) => {
+      let step = 0;
+      const all = inputs
+        .map((item) => {
+          return {
+            type: "input",
+            ...item,
+          };
+        })
+        .concat(
+          outputs.map((item) => {
+            return {
+              type: "output",
+              ...item,
+            };
+          })
+        )
+        .concat(
+          real.map((item) => {
+            return {
+              type: "real",
+              ...item,
+            };
+          })
+        )
+        .sort((a, b) => (a.lineNumber < b.lineNumber ? -1 : 1))
+        .map((item, id) => {
+          if (item.type === "real") step++;
+          return { step: item.type === "real" ? step - 1 : step, ...item };
+        });
+      const inputRows = all.filter((item) => item.type === "input"),
+        outputRows = all.filter((item) => item.type === "output"),
+        realRows = all.filter((item) => item.type === "real");
+      const mappings = inputRows.map((i) => {
+        const outputsForInputs = outputRows
+          .filter((o) => o.step === i.step)
+          .map((o) => {
+            return { table: o.libname + "." + o.dataset, step: o.step };
+          });
+        return {
+          i: i.libname + "." + i.dataset,
+          outputsForInputs: outputsForInputs,
+        };
+      });
+      let dot = [];
+      // add dot commands for outputs that have no inputs
+      outputRows.forEach((o) => {
+        const inputsForOutputs = inputRows.filter((i) => o.step === i.step);
+        if (inputsForOutputs.length === 0)
+          dot.push(
+            o.libname +
+              "." +
+              o.dataset +
+              "[[" +
+              o.libname +
+              "." +
+              o.dataset +
+              "]]"
+          );
+      });
+      // add dot commands for inputs
+      mappings.forEach((item) => {
+        if (item.outputsForInputs.length === 0)
+          dot.push(item.i + "([" + item.i + "])");
+        else {
+          item.outputsForInputs.forEach((o, oIndex) => {
+            const stepInfo = realRows.filter((r) => r.step === o.step);
+            const seconds =
+              stepInfo.length > 0 ? " |" + stepInfo[0].seconds + "| " : null;
+            dot.push(
+              item.i +
+                "([" +
+                item.i +
+                "]) -->" +
+                seconds +
+                o.table +
+                "[[" +
+                o.table +
+                "]]"
+            );
+          });
+        }
+      });
+      const uniqueDot = [...new Set(dot)],
+        mermaid = `flowchart TB\n${uniqueDot.join("\n")}`;
+      setChart(mermaid);
+      setMermaidInfo({ characters: mermaid.length, lines: uniqueDot.length });
     };
 
+  // run once on page load
   useEffect(() => {
-    if (!logText) return;
+    rules.forEach((rule) => {
+      if (rule.ruleType === "regex")
+        rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
+    });
+    const rulesToProcess = rules.filter(
+      (item) => item.type !== null && item.anchor
+    );
+    setUniqueTypes([...new Set(rulesToProcess.map((item) => item.type))]);
+  }, [rules]);
+
+  // when uniqueTypes changes, run this to update associated data structures
+  useEffect(() => {
+    if (!uniqueTypes) return;
+    const tempBadgeCount = {},
+      tempCheck = {};
+    uniqueTypes.forEach((type) => {
+      tempBadgeCount[type] = 0;
+      tempCheck[type] = true;
+    });
+    setBadgeCount(tempBadgeCount);
+    setCheck(tempCheck);
+  }, [uniqueTypes]);
+
+  useEffect(() => {
+    if (!logText || selectedLog === null) return;
     analyzeLog();
     // eslint-disable-next-line
   }, [logText]); // logText changes when it has been analyzed and all links and lookups prepared
@@ -854,9 +1139,163 @@ function App() {
     };
   }, [windowDimension]);
 
+  const makeDirListing = (dirsArray) => {
+      // const html = dirsArray.map((dir) => {
+      //   return `<span onClick='
+      //   const newDir=document.getElementById("logDirectory").value+"/${dir}";
+      //   console.log(newDir);
+      //   document.getElementById("logDirectory").value="/Users";
+      //   document.getElementById("readDirectory").click();
+      //   '>${dir}</span>`;
+      // });
+      // setLogText(html.join("\n"));
+      const obj = dirsArray.map((dir, i) => {
+        return (
+          <Box
+            key={dir + i}
+            onClick={() => {
+              // setLogDirectory(logDirectory + "/" + dir);
+              readLocalFiles(logDirectory + "/" + dir);
+            }}
+          >
+            {dir}
+          </Box>
+        );
+      });
+      console.log("obj", obj);
+      setDirListing(obj);
+    },
+    readLocalFiles = (localDir) => {
+      const dir = encodeURIComponent(localDir),
+        url = "http://localhost:3001/dir/" + dir;
+      setLogDirectory(decodeURIComponent(dir));
+      console.log("url", url);
+      fetch(url).then(function (response) {
+        console.log(response);
+        response.text().then(function (text) {
+          const dirObject = JSON.parse(text);
+          // const { dirs, files } = dirObject;
+          const files = dirObject,
+            dirs = null;
+          // console.log(
+          //   "dirObject",
+          //   dirObject,
+          //   "localDir",
+          //   localDir,
+          //   "dirs",
+          //   dirs,
+          //   "files",
+          //   files
+          // );
+          setSelectedLog(null);
+          setListOfDirs(dirs);
+          setLogOriginalText(text);
+          // makeDirListing(dirs);
+          setListOfLogs(
+            files
+              .filter((log) => {
+                return log !== null && log.endsWith(".log");
+              })
+              .map((log) => {
+                return { value: log, label: log };
+              })
+              .sort((a, b) => {
+                const x = a.label.toLowerCase(),
+                  y = b.label.toLowerCase();
+                if (x < y) {
+                  return -1;
+                }
+                if (x > y) {
+                  return 1;
+                }
+                return 0;
+              })
+          );
+        });
+      });
+    };
+
+  // for local mode - get the list of logs by reading directory
   useEffect(() => {
-    if (!localFileRef && mode === "local") return;
-  });
+    // console.log(navigator);
+    const defaultLocalDirectory = navigator.platform.startsWith("Win")
+      ? "C:/github/logviewer/src"
+      : "/Users/philipmason/Documents/GitHub/logviewer/tests";
+    setLogDirectory(defaultLocalDirectory);
+    readLocalFiles(defaultLocalDirectory);
+  }, []);
+
+  // for local mode - get the list of rules by reading directory
+  useEffect(() => {
+    const dir = encodeURIComponent(rulesDirectory),
+      url = "http://localhost:3001/dir/" + dir;
+    setRulesDirectory(decodeURIComponent(dir));
+    fetch(url).then(function (response) {
+      response.text().then(function (text) {
+        const dirObject = JSON.parse(text);
+        // const { dirs, files } = dirObject;
+        const files = dirObject,
+          dirs = null;
+        console.log("dirs", dirs, "files", files);
+        setListOfRules(
+          files
+            .filter((ruleFile) => {
+              return ruleFile !== null && ruleFile.endsWith(".json");
+            })
+            .map((ruleFile) => {
+              return { value: ruleFile, label: ruleFile };
+            })
+            .sort((a, b) => {
+              const x = a.label.toLowerCase(),
+                y = b.label.toLowerCase();
+              if (x < y) {
+                return -1;
+              }
+              if (x > y) {
+                return 1;
+              }
+              return 0;
+            })
+        );
+      });
+    });
+    // eslint-disable-next-line
+  }, []);
+
+  // for local mode - get the log file
+  useEffect(() => {
+    // const dir = encodeURIComponent(
+    //     "/Users/philipmason/Documents/GitHub/logviewer/src"
+    //   ),
+    //   file = "sample.log",
+    //   url = "http://localhost:3001/getfile/" + dir + "/" + file;
+    if (selectedLocalFile === "") return;
+    const file = selectedLocalFile.split("/").pop(),
+      dir = encodeURIComponent(logDirectory),
+      url = "http://localhost:3001/getfile/" + dir + "/" + file;
+    setLocalUrl(url);
+    // console.log(
+    //   "selectedLocalFile",
+    //   selectedLocalFile,
+    //   "\nfile",
+    //   file,
+    //   "\ndir",
+    //   dir,
+    //   "\nfile",
+    //   file,
+    //   "\nurl",
+    //   url
+    // );
+    fetch(url).then(function (response) {
+      response.text().then(function (text) {
+        console.log(`${text.length} characters were read from file ${url}`);
+        setLogOriginalText(text);
+        const newText = analyse(text); // make the log text with links and lookup for line to link
+        setLogText(newText);
+      });
+    });
+    // eslint-disable-next-line
+  }, [selectedLocalFile, rules]);
 
   useEffect(() => {
     if (selection === null) return;
@@ -878,7 +1317,7 @@ function App() {
     <Box>
       <Grid container spacing={1}>
         <Grid item xs={leftPanelWidth} sx={{ mt: 1 }}>
-          {logDirectory && mode === "remote" ? (
+          {logDirectory ? (
             <TextField
               id="logDirectory"
               label="Directory containing logs"
@@ -893,17 +1332,12 @@ function App() {
               }}
             />
           ) : null}
-          {!waitGetDir && mode !== "local" ? (
+          {!waitGetDir ? (
             <Tooltip title="Read directory and show a list of logs to select from">
               <Button
+                id="readDirectory"
                 onClick={() => {
-                  if (mode === "local") {
-                    localFileRef.current.click();
-                  } else {
-                    setWaitGetDir(true);
-                    resetCounts();
-                    getWebDav(logDirectory);
-                  }
+                  processDirectory();
                 }}
                 sx={{
                   m: 2,
@@ -916,35 +1350,48 @@ function App() {
               </Button>
             </Tooltip>
           ) : null}
+          <Tooltip title="Go up to parent directory">
+            <IconButton
+              size="small"
+              onClick={() => {
+                const parentDir = logDirectory
+                  .split("/")
+                  .slice(0, -1)
+                  .join("/");
+                if (mode === "local") {
+                  readLocalFiles(parentDir);
+                  setLogText(null);
+                  // localFileRef.current.click();
+                  // setLogDirectory(parentDir);
+                } else {
+                  setWaitGetDir(true);
+                  resetCounts();
+                  getWebDav(parentDir);
+                }
+                // processDirectory();
+              }}
+              sx={{ mt: 1, color: "green" }}
+            >
+              <Publish fontSize="small" />
+            </IconButton>
+          </Tooltip>
           {waitGetDir ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
           {!waitSelectLog && listOfLogs ? (
             <Select
-              placeholder="Choose a log"
+              placeholder={
+                listOfLogs.length > 0
+                  ? "Choose a log (" + listOfLogs.length + " found)"
+                  : "No logs found"
+              }
               options={listOfLogs}
               value={selectedLog}
               onChange={selectLog}
               styles={selectStyles}
             />
           ) : null}
-          {mode === "local" ? (
-            <TextField
-              type="file"
-              ref={localFileRef}
-              value={selectedLocalFile}
-              onChange={(e) => {
-                setSelectedLocalFile(e.target.current);
-              }}
-            />
-          ) : null}
           {waitSelectLog ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
         </Grid>
         <Grid item xs={rightPanelWidth}>
-          {/* <Typography
-            variant="h6"
-            sx={{ fontSize: { fontSize }, color: "black", mt: 1 }}
-          >
-            {selection}
-          </Typography> */}
           <Box
             variant={"dense"}
             sx={{
@@ -1117,6 +1564,21 @@ function App() {
                 }
               />
             </Tooltip>
+            <Tooltip title="Show Line numbers">
+              <FormControlLabel
+                sx={{ marginRight: iconPadding }}
+                control={
+                  <Switch
+                    checked={showLineNumbers}
+                    onChange={() => {
+                      setshowLineNumbers(!showLineNumbers);
+                    }}
+                    name="mprint"
+                    size="small"
+                  />
+                }
+              />
+            </Tooltip>
             <Tooltip title="Page Down">
               <IconButton
                 size="small"
@@ -1175,8 +1637,9 @@ function App() {
                     (link) => link.interesting && link.lineNumber < currentLine
                   );
                   if (interesting.length > 0) {
-                    jumpTo(interesting[0].id);
-                    setCurrentLine(interesting[0].lineNumber);
+                    const last = interesting.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
                   }
                 }}
               >
@@ -1228,8 +1691,9 @@ function App() {
                       link.type === "ERROR" && link.lineNumber < currentLine
                   );
                   if (errors.length > 0) {
-                    jumpTo(errors[0].id);
-                    setCurrentLine(errors[0].lineNumber);
+                    const last = errors.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
                   }
                 }}
               >
@@ -1281,8 +1745,9 @@ function App() {
                       link.type === "WARN" && link.lineNumber < currentLine
                   );
                   if (warnings.length > 0) {
-                    jumpTo(warnings[0].id);
-                    setCurrentLine(warnings[0].lineNumber);
+                    const last = warnings.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
                   }
                 }}
               >
@@ -1297,20 +1762,67 @@ function App() {
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="View rules used to parse logs">
+            <Tooltip title="Show Chart">
+              <IconButton size="small" onClick={() => setOpenModal(true)}>
+                <BarChart fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Choose rules used to parse logs">
               <IconButton
                 size="small"
                 sx={{ padding: iconPadding }}
-                onClick={() => {
-                  window.open(
-                    `https://${server}/lsaf/filedownload/sdd:/general/biostat/tools/fileviewer/index.html?file=https://${server}/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer/rules.json`,
-                    "_blank"
-                  );
+                onClick={(e) => {
+                  setAnchorEl(e.currentTarget);
+                  setOpenRulesMenu(true);
                 }}
               >
                 <SquareFoot fontSize="small" />
               </IconButton>
             </Tooltip>
+            <Tooltip title="View (edit) rules">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setOpenRulesModal(true);
+                }}
+              >
+                <Visibility fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Extract SAS code (if possible)">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  extractSasCode();
+                }}
+              >
+                <Colorize fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Snackbar
+              open={openPopUp}
+              onClose={() => setOpenPopUp(false)}
+              autoHideDuration={3000}
+              message={popUpMessage}
+            />
+            <Menu
+              open={openRulesMenu}
+              onClose={handleCloseRulesMenu}
+              anchorEl={anchorEl}
+            >
+              {listOfRules &&
+                listOfRules.length > 0 &&
+                listOfRules.map((rule, id) => (
+                  <MenuItem
+                    key={id}
+                    onClick={(e) => handleCloseRulesMenu(rule.value)}
+                  >
+                    {rule.label}
+                  </MenuItem>
+                ))}
+            </Menu>
             <Tooltip title={`Compress by ${increment}`}>
               <IconButton
                 size="small"
@@ -1339,61 +1851,12 @@ function App() {
                 <Expand fontSize="small" />
               </IconButton>
             </Tooltip>
+
             {mode === "local" ? (
-              <Tooltip title="Constructed sample from source directory (for testing)">
+              <Tooltip title="Test email">
                 <Button
                   onClick={() => {
-                    resetCounts();
-                    getLog(sample1);
-                    setSelection(sample1);
-                  }}
-                  sx={{
-                    minWidth: 0,
-                    fontSize: 8,
-                    p: 1,
-                    border: 1,
-                    m: 0.5,
-                    color: "lightgray",
-                  }}
-                >
-                  1
-                </Button>
-              </Tooltip>
-            ) : null}
-            {mode === "local" ? (
-              <Tooltip title="Log file from source directory (for testing)">
-                <Button
-                  onClick={() => {
-                    resetCounts();
-                    getLog(sample2);
-                    setSelection(sample2);
-                  }}
-                  sx={{
-                    minWidth: 0,
-                    fontSize: 8,
-                    p: 1,
-                    border: 0.5,
-                    m: 1,
-                    color: "lightgray",
-                  }}
-                >
-                  2
-                </Button>
-              </Tooltip>
-            ) : null}
-            {mode === "local" ? (
-              <Tooltip title="LSAF version of a log from webdav">
-                <Button
-                  onClick={() => {
-                    resetCounts();
-                    getLog(
-                      urlPrefix +
-                        "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                    );
-                    setSelection(
-                      urlPrefix +
-                        "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                    );
+                    console.log("email");
                   }}
                   sx={{
                     minWidth: 0,
@@ -1409,62 +1872,44 @@ function App() {
               </Tooltip>
             ) : null}
           </Box>
-          <b>Program:</b> {program}, <b>Submitted:</b> {submitted},{" "}
-          <b>Ended:</b> {submitEnd}, <b>Lines:</b> {nLines}
+          {program && <b>Program:</b>} {program} &nbsp;{" "}
+          {submitted && <b>Submitted:</b>} {submitted} &nbsp;{" "}
+          {submitEnd && <b>Ended:</b>} {submitEnd} &nbsp;{" "}
+          {nLines && <b>Lines:</b>} {nLines}
         </Grid>
         <Grid item xs={leftPanelWidth}>
-          <FormControlLabel
-            label="Errors"
-            control={
-              <Badge color="info" badgeContent={badgeCountError}>
-                <Checkbox checked={checkError} onChange={changeCheckError} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            sx={{ ml: 1 }}
-            label="Warnings"
-            control={
-              <Badge color="info" badgeContent={badgeCountWarn}>
-                <Checkbox checked={checkWarn} onChange={changeCheckWarn} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Serious"
-            control={
-              <Badge color="info" badgeContent={badgeCountSerious}>
-                <Checkbox
-                  checked={checkSerious}
-                  onChange={changeCheckSerious}
-                />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Job"
-            control={
-              <Badge color="info" badgeContent={badgeCountJob}>
-                <Checkbox checked={checkJob} onChange={changeCheckJob} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Notice"
-            control={
-              <Badge color="info" badgeContent={badgeCountNotice}>
-                <Checkbox checked={checkNotice} onChange={changeCheckNotice} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Other"
-            control={
-              <Badge color="info" badgeContent={badgeCountOther}>
-                <Checkbox checked={checkOther} onChange={changeCheckOther} />
-              </Badge>
-            }
-          />
+          {uniqueTypes &&
+            // uniqueTypes.length === badgeCount.length &&
+            uniqueTypes.map((t) => {
+              // console.log(
+              //   "t",
+              //   t,
+              //   // badgeCount,
+              //   "badgeCount[t]",
+              //   badgeCount[t],
+              //   "uniqueTypes.length",
+              //   uniqueTypes.length,
+              //   "Object.keys(badgeCount).length",
+              //   Object.keys(badgeCount).length
+              // );
+              if (uniqueTypes.length >= Object.keys(badgeCount).length)
+                return (
+                  <FormControlLabel
+                    key={t}
+                    label={t}
+                    control={
+                      <Badge color="info" badgeContent={badgeCount[t]}>
+                        <Checkbox
+                          checked={check[t] === undefined ? true : check[t]}
+                          onChange={() => changeCheck(t)}
+                          inputProps={{ "aria-label": "controlled" }}
+                        />
+                      </Badge>
+                    }
+                  />
+                );
+              else return null;
+            })}
           <p />
           <Box
             placeholder="Empty"
@@ -1482,26 +1927,24 @@ function App() {
               links.map((link, id) => {
                 // should we show a link?
                 let show = true;
-                if (!checkWarn && link.type === "WARN") show = false;
-                if (!checkError && link.type === "ERROR") show = false;
-                if (!checkNotice && link.type === "NOTICE") show = false;
-                if (!checkSerious && link.type === "SERIOUS") show = false;
-                if (!checkJob && link.type === "JOB") show = false;
-                if (!checkOther && link.type === "OTHER") show = false;
+                uniqueTypes.forEach((t) => {
+                  if (!check[t] && link.type === t) show = false;
+                });
                 if (show) {
                   return (
                     <React.Fragment key={id}>
+                      {showLineNumbers ? zeroPad(link.lineNumber, 6) + " " : ""}
                       <a
                         style={{ color: `${link.linkColor}` }}
                         href={`#${link.id}`}
                         onClick={() => {
                           setTimeout(function () {
                             logRef.current.scrollBy({
-                              top: -20,
+                              top: -33,
                               left: 0,
                               behavior: "smooth",
                             });
-                          }, 1000);
+                          }, 500);
                         }}
                       >
                         {link.text}
@@ -1697,6 +2140,7 @@ function App() {
           )}
         </Grid>
         <Grid item xs={rightPanelWidth}>
+          {dirListing}
           {logText && (
             <Box
               placeholder="Empty"
@@ -1704,7 +2148,7 @@ function App() {
                 border: 2,
                 fontSize: fontSize,
                 fontFamily: "courier",
-                maxHeight: windowDimension.winHeight - 38 * verticalSplit,
+                maxHeight: windowDimension.winHeight - 50 * verticalSplit,
                 maxWidth:
                   (windowDimension.winWidth / 12) * rightPanelWidth - 25,
                 overflow: "auto",
@@ -1721,7 +2165,175 @@ function App() {
               ></pre>
             </Box>
           )}
-          {!logText && <Typography>Log will be displayed here.</Typography>}
+          {!logText && listOfDirs ? (
+            listOfDirs.map((dir, id) => {
+              return (
+                <Box
+                  key={"dir" + id}
+                  onClick={() => {
+                    setLogDirectory(logDirectory + "/" + dir);
+                    processDirectory(logDirectory + "/" + dir);
+                  }}
+                  sx={{ color: "blue", cursor: "pointer" }}
+                >
+                  {dir}
+                </Box>
+              );
+            })
+          ) : !logText ? (
+            <Box sx={{ m: 10, fontSize: 20, color: "red" }}>
+              Log will be displayed here.
+            </Box>
+          ) : null}
+          <Dialog
+            open={openModal}
+            onClose={() => setOpenModal(false)}
+            scroll={"paper"}
+            fullScreen
+            style={{ backdropFilter: "blur(5px" }}
+          >
+            <DialogTitle>
+              <Tooltip title={`Zoom out`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setScale(scale > 0.25 ? scale - 0.25 : 0.125);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "blue",
+                    float: "left",
+                  }}
+                >
+                  <ZoomOut fontSize="small" />
+                </IconButton>
+              </Tooltip>{" "}
+              <Tooltip title={`Reset`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setScale(1);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "blue",
+                    float: "left",
+                  }}
+                >
+                  <RestartAlt fontSize="small" />
+                </IconButton>
+              </Tooltip>{" "}
+              <Tooltip title={`Zoom out`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setScale(scale + 0.5);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "blue",
+                    float: "left",
+                  }}
+                >
+                  <ZoomIn fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Button
+                onClick={() => {
+                  setOpenModal(false);
+                }}
+              >
+                Close
+              </Button>
+              <Tooltip title={`Close Dialog`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setOpenModal(false);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "red",
+                    float: "right",
+                  }}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {mermaidInfo.lines && (
+                <Chip
+                  label={mermaidInfo.lines.toLocaleString() + " lines"}
+                  sx={{
+                    fontSize: 12,
+                    float: "right",
+                  }}
+                />
+              )}
+              {mermaidInfo.characters && (
+                <Chip
+                  label={
+                    mermaidInfo.characters.toLocaleString() + " characters"
+                  }
+                  sx={{
+                    fontSize: 12,
+                    float: "right",
+                  }}
+                />
+              )}
+            </DialogTitle>
+            <DialogContent
+              sx={{
+                transform: `scale(${scale})`,
+                transformOrigin: "0% 0% 0px;",
+                width: Math.round(windowDimension.winWidth / scale),
+              }}
+            >
+              <Mermaid chart={chart} useMaxWidth={useMaxWidth} />
+            </DialogContent>
+          </Dialog>
+          <Dialog
+            fullScreen
+            open={openRulesModal}
+            onClose={handleCloseRulesModal}
+          >
+            <DialogTitle>Rules Admin</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Table will be editable soon. New rules will be able to be added
+                too.
+              </DialogContentText>
+              {rules && (
+                <DataGridPro
+                  rows={rules.map((rule, id) => {
+                    return { id: id, ...rule };
+                  })}
+                  rowHeight={rowHeight}
+                  columns={ColDefnRules}
+                  density="compact"
+                  hideFooter={true}
+                  sx={{
+                    height: windowDimension.winHeight - 100,
+                    fontWeight: "fontSize=5",
+                    fontSize: "0.7em",
+                  }}
+                  // onRowClick={(e) => {
+                  //   window.location.hash = e.row.link;
+                  // }}
+                  // components={{ Toolbar: GridToolbar }}
+                />
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseRulesModal}>Cancel</Button>
+              <Button
+                onClick={() => {
+                  alert("coming soon");
+                }}
+              >
+                Add a new rule
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Grid>
       </Grid>
     </Box>

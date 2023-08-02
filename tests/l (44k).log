@@ -1,0 +1,932 @@
+1                                       The SAS System              08:27 Monday, June 30, 2014
+
+NOTE: Unable to open SASUSER.PROFILE. WORK.PROFILE will be opened instead.
+NOTE: All profile changes will be lost at the end of the session.
+NOTE: Copyright (c) 2002-2010 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.3 (TS1M1) 
+      Licensed to CABOT  GRID CONTROL SVR - KINGSHILL 1, Site 51211877.
+NOTE: This session is executing on the X64_ES08R2  platform.
+
+
+
+NOTE: Updated analytical products:
+
+SAS/STAT 9.3_M1, SAS/ETS 9.3_M1, SAS/OR 9.3_M1
+
+NOTE: The paths specified with the UTILLOC option do not exist.  UTILLOC=WORK will be used 
+      instead.
+NOTE: SAS initialization used:
+      real time           0.17 seconds
+      cpu time            0.10 seconds
+      
+1          /*	This code is written in SQL since it is the core process of Letter Fulfilment for
+1        !  the Proof of Concept.*/
+2          /*	It should be translated into Microsoft SQL/Server SQL.*/
+3          
+4          %include '\\kh-pre-gman\SASDATA\Strategies\init.sas' ;
+NOTE: Libref CICDM was successfully assigned as follows: 
+      Engine:        OLEDB 
+      Physical Name: SQLNCLI10
+NOTE: Libref SASIDM was successfully assigned as follows: 
+      Engine:        OLEDB 
+      Physical Name: SQLNCLI10
+NOTE: Libref MATABLES was successfully assigned as follows: 
+      Engine:        BASE 
+      Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\pmason
+NOTE: Libref APEX was successfully assigned as follows: 
+      Engine:        BASE 
+      Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\APEX
+NOTE: Libref CABOT was successfully assigned as follows: 
+      Engine:        BASE 
+      Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\cabot_allocations
+NOTE: Libref _FMT_ was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: Y:\SASDATA\Data Management\SASFormats
+WARNING: Libname USER is not assigned.
+228        
+229        /*This is the letter we are going to process.*/
+230        /*This could be written to loop through all unique values in the treatment table so
+230      ! that they can all be handled.*/
+231        %let treatmentCode=DCG120180 ;
+232        %let letterCode=CABOT_CAB007 ;
+233        
+2                                       The SAS System              08:27 Monday, June 30, 2014
+
+234        /*need to repeat this loop for each value of treatmentCode & letterCode*/
+235        proc sql ;
+236        /*	select the treatmentCode/letterCode combination we want to fulfil ;*/
+237        	create table codes as
+238        		select distinct treatmentCode, letterCode
+239        			from matables.treatmentDaily
+240        				where treatmentCode="&treatmentCode" and
+241        					letterCode="&letterCode";
+NOTE: Table WORK.CODES created, with 1 rows and 2 columns.
+
+242        /*	get the TABLE name to be created ;*/
+243        	select distinct strip(c.table) into :c separated by ' '
+244        		from codes as td
+245        			left join matables._sqlCreate as c on td.treatmentCode=c.treatmentCode &
+245      ! td.letterCode=c.letterCode ;
+246        /*	build the SELECT clause ;*/
+247        	select distinct
+248        		case when s.format=' ' & s.label=' ' then  strip(s.source)||' as
+248      ! '||strip(s.outputName)
+249        			when s.format=' ' & s.label>' ' then strip(s.source)||' as
+249      ! '||strip(s.outputName)||' label="'||strip(s.label)||'"'
+250        		 	when s.format>' ' & s.label=' ' then strip(s.source)||' as
+250      ! '||strip(s.outputName)||' format='||strip(s.format)
+251        											else strip(s.source)||' as '||strip(s.outputName)||'
+251      ! format='||strip(s.format)||' label="'||strip(s.label)||'"'
+252        		end into :s separated by ','
+253        		from codes as td
+254        			left join matables._sqlSelect as s on td.treatmentCode=s.treatmentCode &
+254      ! td.letterCode=s.letterCode
+255        		where s.source>' ' & s.outputName>' '
+256        		order by sequence ;
+WARNING: The query as specified involves ordering by an item that doesn't appear in its SELECT 
+         clause. Since you are ordering the output of a SELECT DISTINCT it may appear that 
+         some duplicates have not been eliminated.
+257        /*	build the FROM clause ;*/
+258        	select distinct strip(f.source) into :f separated by ' '
+259        		from codes as td
+260        			left join matables._sqlFrom as f on td.treatmentCode=f.treatmentCode &
+260      ! td.letterCode=f.letterCode
+261        		order by sequence ;
+WARNING: The query as specified involves ordering by an item that doesn't appear in its SELECT 
+         clause. Since you are ordering the output of a SELECT DISTINCT it may appear that 
+         some duplicates have not been eliminated.
+262        /*	build the WHERE clause ;*/
+263        	select distinct strip(w.source) into :w_clause separated by ' '
+264        		from codes as td
+265        			left join matables._sqlWhere as w on td.treatmentCode=w.treatmentCode &
+265      ! td.letterCode=w.letterCode
+266        		order by sequence ;
+WARNING: The query as specified involves ordering by an item that doesn't appear in its SELECT 
+3                                       The SAS System              08:27 Monday, June 30, 2014
+
+         clause. Since you are ordering the output of a SELECT DISTINCT it may appear that 
+         some duplicates have not been eliminated.
+267        /*	if we have a where clause then we need the WHERE in front of it ;*/
+268        	create table w2
+269        		(w char(1024)) ;
+NOTE: Table WORK.W2 created, with 0 rows and 1 columns.
+270        	insert into w2
+271        		set w=case when missing("%superq(w_clause)") then " " else "where
+271      ! %superq(w_clause)" end  ;
+NOTE: 1 row was inserted into WORK.W2.
+
+272        	select strip(w) into :w from w2 ;
+273        quit ;
+NOTE: The PROCEDURE SQL printed pages 1-7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.57 seconds
+      cpu time            0.10 seconds
+      
+
+274        %put NOTE: CREATE TABLE --- %superq(c) ;
+NOTE: CREATE TABLE --- letterTest
+275        %put NOTE: SELECT --------- %superq(s) ;
+NOTE: SELECT --------- table2.CUSTOMERACCOUNTKEY as CUSTOMERACCOUNTKEY,( 
+PUT(table3.DepartmentKey,DEPARTMENTDESCRIPTION.) ) as DEPARTMENT_2,( 
+PUT(table3.CustomerAccountPositionKey, CUSTACCTPOS_POSITIONDESCRIPTION.) ) as 
+CUSTOMER_ACCOUNT_POSITION_DESCRI,( table4.AccountName ) as 
+ACCOUNTNAME,table3.BankAccountNumber as BANKACCOUNTNUMBER,table3.BankAddress1 as 
+BANKADDRESS1,table3.BankAddress2 as BANKADDRESS2,table3.BankAddress3 as 
+BANKADDRESS3,table3.BankTown as BANKTOWN,table3.BankCounty as BANKCOUNTY,table3.BankName as 
+BANKNAME,table3.SortCode as SORTCODE,table9.AddressLine1 as ADDRESSLINE1,table9.AddressLine2 
+as ADDRESSLINE2,table9.AddressLine3 as ADDRESSLINE3_1,( CASE WHEN table9.Town = ' ' or 
+table9.Town IS NULL or table9.Town = '                                                  ' THEN 
+propcase(table9.County) ELSE propcase(table9.Town) END ) as CURRENTTOWN,table9.PostCode as 
+POSTCODE_2,( table4.DateOfBirth ) as DATEOFBIRTH_1,table4.FirstName as FIRSTNAME_1,( 
+PUT(table4.TitleID,TITLE_SALUTATION.) ) as DESIGNATION_2,table4.LastName as LASTNAME_2,( 
+PUT(table4.TitleID,TITLE_DESCRIPTION.) ) as DESIGNATION,table7.StatementAccruedInterest as 
+STATEMENTACCRUEDINTEREST,table3.CCAClosingBalance as CCACLOSINGBALANCE_1,( 
+table3.StatementDueDate ) as STATEMENTDUEDATE,table3.CCAOpeningBalance as 
+CCAOPENINGBALANCE_1,( table3.PreviousStatementDate ) as 
+PREVIOUSSTATEMENTDATE,table7.AccountNumber as ACCOUNTNUMBER,table3.CustomerAccountID as 
+CUSTOMERACCOUNTID,( table4._105_Review_Date ) as _105_REVIEW_DATE,( table7.purchaseDate ) as 
+PURCHASEDATE,( table4.PaymentPlanLastMissedInstDate ) as PAYMENTPLANLASTMISSEDINSTDATE_2,( 
+table7.determinationDate ) as DETERMINATIONDATE,table7.secure as SECURE,( 
+PUT(table3.externalAgentID,DIMEXTAGENTID_NAME.) ) as EXTERNALAGENTID_2,( case      when 
+table6.PartyType ='EA' then table11.value     else ''     end ) as 
+EXTERNAL_AGENT_PHONE,table3.claimNumber as CLAIMNUMBER,table7.clearedBalance as 
+CLEAREDBALANCE_1,table7.DebtAmount as DEBTAMOUNT,( table3.FirstInstallmentDate ) as 
+FIRSTINSTALLMENTDATE_1,table3.planinstallmentamount as PLANINSTALLMENTAMOUNT,( 
+table3.NextInstallmentDate ) as NEXTINSTALLMENTDATE_1,table7.InterestAccrued as 
+INTERESTACCRUED,( table7.LastPaymentDate ) as LASTPAYMENTDATE_1,table7.LastPaymentAmount as 
+4                                       The SAS System              08:27 Monday, June 30, 2014
+
+LASTPAYMENTAMOUNT_3,table7.ConsolidatedBalance as CONSOLIDATEDBALANCE,( table4.PreferredEmail 
+) as PREFERREDEMAIL_1,table7.contractualInstalmentAmount as 
+CONTRACTUALINSTALMENTAMOUNT,table7.rebateAmount as REBATEAMOUNT,table7.currentInterestRate as 
+CURRENTINTERESTRATE,table7.preDefaultArrears as PREDEFAULTARREARS_1,( 
+table4.dateLatestComplaintReceived ) as DATELATESTCOMPLAINTRECEIVED,( 
+PUT(table7.ProductTypeId, PRODUCTTYPE_DESCRIPTION.) ) as PRODUCT_TYPE_DESCRIPTION,( 
+table7.AccountOpenedDate ) as ACCOUNTOPENEDDATE_1,table7.loanTerm as 
+LOANTERM,table7.LoanAdvance as LOANADVANCE,table7.ccjAmount as CCJAMOUNT,table4.FirstName as 
+FIRSTNAME,table4.LastName as LASTNAME,( table4.DateOfBirth ) as DATEOFBIRTH,table9.PostCode as 
+POSTCODE,( case      when put(table3.externalAgentID, DIMEXTAGENTID_DPAAGREEMENT.)='Y' then 
+'Y'     else table3.dpaAgreement     end ) as DPAAGREEMENT,table3.ExternalAgentReference as 
+EXTERNALAGENTREFERENCE,table3.BarCode as BARCODE,( table4.PreferredEmail ) as PREFERREDEMAIL,( 
+PUT(table4.CustomerStatusKey, DIMCUSTSTAT_STATUSDESCORIG.)  ) as CUSTOMER_STATUS,table9.County 
+as COUNTY_1,table9.Country as COUNTRY,( '' ) as HISTORIC_DCA_REFERENCE,( '' ) as 
+HISTORIC_DCA_TELEPHONE_NUMBER,table4.CustomerID as CUSTOMERID,( case when table7.ClientID=1107 
+then table4.SourceSystemID     else table7.AccountNumber     end ) as 
+ACCOUNT_NUMBER_2,table7.AgentReference as AGENTREFERENCE,( table7.LDMBarclaysDateNextAmountDue 
+) as LDMBARCLAYSDATENEXTAMOUNTDUE_1,( table7.arrearsCalculationStartDate ) as 
+ARREARSCALCULATIONSTARTDATE,table7.ClientID as CLIENTID,( PUT(table7.ClientID,CLIENT_NAME.) ) 
+as CLIENT_NAME,table7.unclearedBalance as UNCLEAREDBALANCE,table3.paymentplanamountarrears as 
+PAYMENTPLANAMOUNTARREARS,( case when     table7.amountInArrears is null  OR  
+table7.amountInArrears <0.00 then 0     else 1     end ) as 
+AMOUNT_IN_ARREARS_2,table7.ContractID as CONTRACTID,( case when table3.CorrespondenceName is 
+null then table4.FullName     else table3.CorrespondenceName     end ) as 
+CORRESPONDENCENAME_2,table4.MiddleName as MIDDLENAME,table4._112__C__Advised_Limit as 
+_112__C__ADVISED_LIMIT,table4._113__C__Current_Balance as 
+_113__C__CURRENT_BALANCE,table4._117__L__Mnthly_Inst_Amnt as 
+_117__L__MNTHLY_INST_AMNT,table4._138_Contractual_Amount as _138_CONTRACTUAL_AMOUNT,( case     
+when table7.ClientID = 1266 then table3.FtypeArrearsAllocation     else 
+table4._150_Gross_Arrears     end ) as _150_GROSS_ARREARS,table4._151_G_tee_Call_up_Amount as 
+_151_G_TEE_CALL_UP_AMOUNT_1,table4._155_Interest_value as 
+_155_INTEREST_VALUE,table4._214_Company_Name as _214_COMPANY_NAME,table4._243_Guarantor_for_ 
+as _243_GUARANTOR_FOR_,table4._247_Insolvency_Firm as 
+_247_INSOLVENCY_FIRM,table4._251_Ltd_Company_Name as 
+_251_LTD_COMPANY_NAME,table4._271_Portfolio_Name as _271_PORTFOLIO_NAME,( 
+table3.LDMSecondLetterSentDate ) as LDMSECONDLETTERSENTDATE,( table3.CurrentDate28 ) as 
+CURRENTDATE28,( table3.CurrentDate21 ) as CURRENTDATE21,( table3.CurrentDate10 ) as 
+CURRENTDATE10,table7.totalExcluded as TOTALEXCLUDED,table7.currentBalance as CURRENTBALANCE,( 
+table4.ClearedBalance * 0.7 ) as CUSTOMER_CLEARED_BALANCE,( table4.ClearedBalance * 0.3 ) as 
+CUSTOMER_CLEARED_BALANCE_2,( PUT(table7.ContractID, CONTRACTID_HOD.) ) as 
+LDM_CONTRACTID_DISCOUNT,( case     when table9.Location = 'England & Wales' then case          
+when table4.UnclearedBalance >=5000 then 'England Wales and NI > 5K'          else 'England 
+Wales and NI < 5K'          end     else  table9.Location     end ) as 
+LDM_LOCATION_VAL,table9.Location as LOCATION,( 
+PUT(table7.ClientID,CLIENTID_COURTFEESSOLICITORSCOST.) ) as CLIENT_ID_2,( 
+PUT(table7.PlacementCategoryID,PLACEMENTCATEGORYID_AGENCIES.) ) as PLACEMENT_CATEGORY_ID,( 
+PUT(table7.ContractID,CONTRACTID_DISCOUNT.) ) as CONTRACT_ID_2,( table4.AssignmentDate ) as 
+ASSIGNMENTDATE,( case     when table7.amountInArrears is null then table4._141_Current_arrears 
+    else table7.amountInArrears     end ) as AMOUNT_IN_ARREARS,( table7.clearedBalance/2 ) as 
+CLEARED_BALANCE,( table3.CurrentBalance ) as CURRENTBALANCE_3,( table3.SettlementFigure ) as 
+5                                       The SAS System              08:27 Monday, June 30, 2014
+
+SETTLEMENTFIGURE,( table7.portfolioCode ) as PORTFOLIOCODE,( 
+PUT(table7.portfolioCode,$PORTFOLIOCODE_LBGHERITAGE.) ) as LBG_HERITAGE,( 
+PUT(table7.portfolioCode,$PORTFOLIOCODE_LBGTYPEOFDEBT.) ) as LBGTYPEOFDEBT,( 
+PUT(table7.funderID,funder_name.) ) as FUNDER_NAME,%sysfunc(datetime()) as CURRENT_TIME,( 
+table7.DateAccountCreated ) as DATEACCOUNTCREATED,( table3.paymentplanlastmissedinstdate ) as 
+PAYMENTPLANLASTMISSEDINSTDATE_1,( table7.preDefaultArrears ) as 
+PREDEFAULTARREARS,table4._327_Freetext_10__Migrated_ as _327_FREETEXT_10__MIGRATED_,( 
+input(table4._326_Freetext_9__Migrated_, yymmdd8.) ) as 
+ORIGINAL_AGREEMENT_DATE,table4._325_Freetext_8__Migrated_ as 
+_325_FREETEXT_8__MIGRATED_,table4._324_Freetext_7__Migrated_ as _324_FREETEXT_7__MIGRATED_,( 
+table4._95_Last_Payment_Date ) as _95_LAST_PAYMENT_DATE,table4.CCATotalPaymentAmount as 
+CCATOTALPAYMENTAMOUNT,table7.AmountOutstanding as AMOUNTOUTSTANDING,( 
+table3.FirstDayOfMonth6MonthsAgo ) as FIRSTDAYOFMONTH6MONTHSAGO,( table3.FirstDayOfPrevMonth ) 
+as FIRSTDAYOFPREVMONTH,table3.DepartmentKey as DEPARTMENTKEY,table8.Amount as AMOUNT_1
+276        %put NOTE: FROM ----------- %superq(f) ;
+NOTE: FROM ----------- ( SELECT  DISTINCT table0.CustomerAccountKey AS CUSTOMERACCOUNTKEY 
+LABEL='Customer Account Key' FORMAT=F11.0 FROM next table1 Inner join sasidm.CustomerAccount 
+table0 on table1.customerAccountID = table0.customerAccountID ) table2 Left join 
+sasidm.CustomerAccount table3 on table2.CUSTOMERACCOUNTKEY = table3.CustomerAccountKey Left 
+join sasidm.Customer table4 on table4.CustomerKey = table3.CustomerKey Left join 
+sasidm.Account table7 on table7.AccountID = table3.AccountID Left join sasidm.PaymentPlan 
+table8 on table8.customerAccountID = table3.CustomerAccountID Left join 
+sasidm.CustomerAccountParty table5 on table3.CustomerAccountKey = table5.CustomerAccountKey 
+Left join sasidm.CustomerAddress table9 on table4.CustomerKey = table9.CustomerKey Left join 
+sasidm.CustomerSundryText table10 on table10.customerID = table4.CustomerID Left join 
+sasidm.Party table6 on table6.IDMPartyID = table5.IDMPartyID Left join sasidm.PartyContact 
+table11 on table6.IDMPartyID = table11.IDMPartyID   left join next table12 on 
+table12.customerAccountID = table3.CustomerAccountID
+277        %put NOTE: WHERE ---------- %superq(w) ;
+NOTE: WHERE ----------                                                                         
+                                                                                               
+                                                                                               
+                                                                                               
+                                                                                               
+                                                                                               
+                                                                                               
+                                                                                               
+                                                                                               
+                                                                                               
+                                                                                               
+  
+278        
+279        
+280        *** Now we actually generate the data which will populate the letter ;
+281        proc sql ;
+282        	create table next as
+283        		select customerID,
+284        				customerAccountID
+285        			from matables.treatmentDaily
+286        				where treatmentCode="&treatmentCode" and
+6                                       The SAS System              08:27 Monday, June 30, 2014
+
+287        					letterCode="&letterCode" ;
+NOTE: Table WORK.NEXT created, with 4 rows and 2 columns.
+
+288        	CREATE TABLE &c AS
+289        			SELECT &s
+290        				FROM &f
+291        					&w ;
+NOTE: Table WORK.LETTERTEST created, with 4 rows and 133 columns.
+
+292        quit ;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           11:59.11
+      cpu time            7:27.84
+      
+
+293        
+294        
+295        /*	Now we export from table to a flat delimited file ;*/
+296        /*	could use SAS code to do this, but SQL/Server probably has a preferred way to do
+296      ! this ;*/
+297        proc export data=&c outfile='c:\users\pmason\test.csv' dbms=csv ;
+298        run ;
+
+299         /**********************************************************************
+300         *   PRODUCT:   SAS
+301         *   VERSION:   9.3
+302         *   CREATOR:   External File Interface
+303         *   DATE:      30JUN14
+304         *   DESC:      Generated SAS Datastep Code
+305         *   TEMPLATE SOURCE:  (None Specified.)
+306         ***********************************************************************/
+307            data _null_;
+308            %let _EFIERR_ = 0; /* set the ERROR detection macro variable */
+309            %let _EFIREC_ = 0;     /* clear export record count macro variable */
+310            file 'c:\users\pmason\test.csv' delimiter=',' DSD DROPOVER lrecl=32767;
+311            if _n_ = 1 then        /* write column names or labels */
+312             do;
+313               put
+314                  "CUSTOMERACCOUNTKEY"
+315               ','
+316                  "DEPARTMENT_2"
+317               ','
+318                  "CUSTOMER_ACCOUNT_POSITION_DESCRI"
+319               ','
+320                  "ACCOUNTNAME"
+321               ','
+322                  "BANKACCOUNTNUMBER"
+323               ','
+324                  "BANKADDRESS1"
+325               ','
+7                                       The SAS System              08:27 Monday, June 30, 2014
+
+326                  "BANKADDRESS2"
+327               ','
+328                  "BANKADDRESS3"
+329               ','
+330                  "BANKTOWN"
+331               ','
+332                  "BANKCOUNTY"
+333               ','
+334                  "BANKNAME"
+335               ','
+336                  "SORTCODE"
+337               ','
+338                  "ADDRESSLINE1"
+339               ','
+340                  "ADDRESSLINE2"
+341               ','
+342                  "ADDRESSLINE3_1"
+343               ','
+344                  "CURRENTTOWN"
+345               ','
+346                  "POSTCODE_2"
+347               ','
+348                  "DATEOFBIRTH_1"
+349               ','
+350                  "FIRSTNAME_1"
+351               ','
+352                  "DESIGNATION_2"
+353               ','
+354                  "LASTNAME_2"
+355               ','
+356                  "DESIGNATION"
+357               ','
+358                  "STATEMENTACCRUEDINTEREST"
+359               ','
+360                  "CCACLOSINGBALANCE_1"
+361               ','
+362                  "STATEMENTDUEDATE"
+363               ','
+364                  "CCAOPENINGBALANCE_1"
+365               ','
+366                  "PREVIOUSSTATEMENTDATE"
+367               ','
+368                  "ACCOUNTNUMBER"
+369               ','
+370                  "CUSTOMERACCOUNTID"
+371               ','
+372                  "_105_REVIEW_DATE"
+373               ','
+374                  "PURCHASEDATE"
+375               ','
+8                                       The SAS System              08:27 Monday, June 30, 2014
+
+376                  "PAYMENTPLANLASTMISSEDINSTDATE_2"
+377               ','
+378                  "DETERMINATIONDATE"
+379               ','
+380                  "SECURE"
+381               ','
+382                  "EXTERNALAGENTID_2"
+383               ','
+384                  "EXTERNAL_AGENT_PHONE"
+385               ','
+386                  "CLAIMNUMBER"
+387               ','
+388                  "CLEAREDBALANCE_1"
+389               ','
+390                  "DEBTAMOUNT"
+391               ','
+392                  "FIRSTINSTALLMENTDATE_1"
+393               ','
+394                  "PLANINSTALLMENTAMOUNT"
+395               ','
+396                  "NEXTINSTALLMENTDATE_1"
+397               ','
+398                  "INTERESTACCRUED"
+399               ','
+400                  "LASTPAYMENTDATE_1"
+401               ','
+402                  "LASTPAYMENTAMOUNT_3"
+403               ','
+404                  "CONSOLIDATEDBALANCE"
+405               ','
+406                  "PREFERREDEMAIL_1"
+407               ','
+408                  "CONTRACTUALINSTALMENTAMOUNT"
+409               ','
+410                  "REBATEAMOUNT"
+411               ','
+412                  "CURRENTINTERESTRATE"
+413               ','
+414                  "PREDEFAULTARREARS_1"
+415               ','
+416                  "DATELATESTCOMPLAINTRECEIVED"
+417               ','
+418                  "PRODUCT_TYPE_DESCRIPTION"
+419               ','
+420                  "ACCOUNTOPENEDDATE_1"
+421               ','
+422                  "LOANTERM"
+423               ','
+424                  "LOANADVANCE"
+425               ','
+9                                       The SAS System              08:27 Monday, June 30, 2014
+
+426                  "CCJAMOUNT"
+427               ','
+428                  "FIRSTNAME"
+429               ','
+430                  "LASTNAME"
+431               ','
+432                  "DATEOFBIRTH"
+433               ','
+434                  "POSTCODE"
+435               ','
+436                  "DPAAGREEMENT"
+437               ','
+438                  "EXTERNALAGENTREFERENCE"
+439               ','
+440                  "BARCODE"
+441               ','
+442                  "PREFERREDEMAIL"
+443               ','
+444                  "CUSTOMER_STATUS"
+445               ','
+446                  "COUNTY_1"
+447               ','
+448                  "COUNTRY"
+449               ','
+450                  "HISTORIC_DCA_REFERENCE"
+451               ','
+452                  "HISTORIC_DCA_TELEPHONE_NUMBER"
+453               ','
+454                  "CUSTOMERID"
+455               ','
+456                  "ACCOUNT_NUMBER_2"
+457               ','
+458                  "AGENTREFERENCE"
+459               ','
+460                  "LDMBARCLAYSDATENEXTAMOUNTDUE_1"
+461               ','
+462                  "ARREARSCALCULATIONSTARTDATE"
+463               ','
+464                  "CLIENTID"
+465               ','
+466                  "CLIENT_NAME"
+467               ','
+468                  "UNCLEAREDBALANCE"
+469               ','
+470                  "PAYMENTPLANAMOUNTARREARS"
+471               ','
+472                  "AMOUNT_IN_ARREARS_2"
+473               ','
+474                  "CONTRACTID"
+475               ','
+10                                      The SAS System              08:27 Monday, June 30, 2014
+
+476                  "CORRESPONDENCENAME_2"
+477               ','
+478                  "MIDDLENAME"
+479               ','
+480                  "_112__C__ADVISED_LIMIT"
+481               ','
+482                  "_113__C__CURRENT_BALANCE"
+483               ','
+484                  "_117__L__MNTHLY_INST_AMNT"
+485               ','
+486                  "_138_CONTRACTUAL_AMOUNT"
+487               ','
+488                  "_150_GROSS_ARREARS"
+489               ','
+490                  "_151_G_TEE_CALL_UP_AMOUNT_1"
+491               ','
+492                  "_155_INTEREST_VALUE"
+493               ','
+494                  "_214_COMPANY_NAME"
+495               ','
+496                  "_243_GUARANTOR_FOR_"
+497               ','
+498                  "_247_INSOLVENCY_FIRM"
+499               ','
+500                  "_251_LTD_COMPANY_NAME"
+501               ','
+502                  "_271_PORTFOLIO_NAME"
+503               ','
+504                  "LDMSECONDLETTERSENTDATE"
+505               ','
+506                  "CURRENTDATE28"
+507               ','
+508                  "CURRENTDATE21"
+509               ','
+510                  "CURRENTDATE10"
+511               ','
+512                  "TOTALEXCLUDED"
+513               ','
+514                  "CURRENTBALANCE"
+515               ','
+516                  "CUSTOMER_CLEARED_BALANCE"
+517               ','
+518                  "CUSTOMER_CLEARED_BALANCE_2"
+519               ','
+520                  "LDM_CONTRACTID_DISCOUNT"
+521               ','
+522                  "LDM_LOCATION_VAL"
+523               ','
+524                  "LOCATION"
+525               ','
+11                                      The SAS System              08:27 Monday, June 30, 2014
+
+526                  "CLIENT_ID_2"
+527               ','
+528                  "PLACEMENT_CATEGORY_ID"
+529               ','
+530                  "CONTRACT_ID_2"
+531               ','
+532                  "ASSIGNMENTDATE"
+533               ','
+534                  "AMOUNT_IN_ARREARS"
+535               ','
+536                  "CLEARED_BALANCE"
+537               ','
+538                  "CURRENTBALANCE_3"
+539               ','
+540                  "SETTLEMENTFIGURE"
+541               ','
+542                  "PORTFOLIOCODE"
+543               ','
+544                  "LBG_HERITAGE"
+545               ','
+546                  "LBGTYPEOFDEBT"
+547               ','
+548                  "FUNDER_NAME"
+549               ','
+550                  "CURRENT_TIME"
+551               ','
+552                  "DATEACCOUNTCREATED"
+553               ','
+554                  "PAYMENTPLANLASTMISSEDINSTDATE_1"
+555               ','
+556                  "PREDEFAULTARREARS"
+557               ','
+558                  "_327_FREETEXT_10__MIGRATED_"
+559               ','
+560                  "ORIGINAL_AGREEMENT_DATE"
+561               ','
+562                  "_325_FREETEXT_8__MIGRATED_"
+563               ','
+564                  "_324_FREETEXT_7__MIGRATED_"
+565               ','
+566                  "_95_LAST_PAYMENT_DATE"
+567               ','
+568                  "CCATOTALPAYMENTAMOUNT"
+569               ','
+570                  "AMOUNTOUTSTANDING"
+571               ','
+572                  "FIRSTDAYOFMONTH6MONTHSAGO"
+573               ','
+574                  "FIRSTDAYOFPREVMONTH"
+575               ','
+12                                      The SAS System              08:27 Monday, June 30, 2014
+
+576                  "DEPARTMENTKEY"
+577               ','
+578                  "AMOUNT_1"
+579               ;
+580             end;
+581           set  LETTERTEST   end=EFIEOD;
+582               format CUSTOMERACCOUNTKEY 11. ;
+583               format DEPARTMENT_2 $25. ;
+584               format CUSTOMER_ACCOUNT_POSITION_DESCRI $38. ;
+585               format ACCOUNTNAME $50. ;
+586               format BANKACCOUNTNUMBER $8. ;
+587               format BANKADDRESS1 $50. ;
+588               format BANKADDRESS2 $50. ;
+589               format BANKADDRESS3 $50. ;
+590               format BANKTOWN $50. ;
+591               format BANKCOUNTY $50. ;
+592               format BANKNAME $50. ;
+593               format SORTCODE $6. ;
+594               format ADDRESSLINE1 $50. ;
+595               format ADDRESSLINE2 $50. ;
+596               format ADDRESSLINE3_1 $50. ;
+597               format CURRENTTOWN $50. ;
+598               format POSTCODE_2 $10. ;
+599               format DATEOFBIRTH_1 date9. ;
+600               format FIRSTNAME_1 $50. ;
+601               format DESIGNATION_2 $9. ;
+602               format LASTNAME_2 $100. ;
+603               format DESIGNATION $14. ;
+604               format STATEMENTACCRUEDINTEREST 20.2 ;
+605               format CCACLOSINGBALANCE_1 12.2 ;
+606               format STATEMENTDUEDATE date9. ;
+607               format CCAOPENINGBALANCE_1 12.2 ;
+608               format PREVIOUSSTATEMENTDATE date9. ;
+609               format ACCOUNTNUMBER $50. ;
+610               format CUSTOMERACCOUNTID 11. ;
+611               format _105_REVIEW_DATE date9. ;
+612               format PURCHASEDATE date9. ;
+613               format PAYMENTPLANLASTMISSEDINSTDATE_2 date9. ;
+614               format DETERMINATIONDATE date9. ;
+615               format SECURE $50. ;
+616               format EXTERNALAGENTID_2 $83. ;
+617               format EXTERNAL_AGENT_PHONE $100. ;
+618               format CLAIMNUMBER $20. ;
+619               format CLEAREDBALANCE_1 20.2 ;
+620               format DEBTAMOUNT 20.2 ;
+621               format FIRSTINSTALLMENTDATE_1 date9. ;
+622               format PLANINSTALLMENTAMOUNT 12.2 ;
+623               format NEXTINSTALLMENTDATE_1 date9. ;
+624               format INTERESTACCRUED 20.2 ;
+625               format LASTPAYMENTDATE_1 date9. ;
+13                                      The SAS System              08:27 Monday, June 30, 2014
+
+626               format LASTPAYMENTAMOUNT_3 20.2 ;
+627               format CONSOLIDATEDBALANCE 20.2 ;
+628               format PREFERREDEMAIL_1 $100. ;
+629               format CONTRACTUALINSTALMENTAMOUNT 20.2 ;
+630               format REBATEAMOUNT 20.2 ;
+631               format CURRENTINTERESTRATE 8.2 ;
+632               format PREDEFAULTARREARS_1 20.2 ;
+633               format DATELATESTCOMPLAINTRECEIVED date9. ;
+634               format PRODUCT_TYPE_DESCRIPTION $32. ;
+635               format ACCOUNTOPENEDDATE_1 date9. ;
+636               format LOANTERM 11. ;
+637               format LOANADVANCE 12.2 ;
+638               format CCJAMOUNT 20.2 ;
+639               format FIRSTNAME $50. ;
+640               format LASTNAME $100. ;
+641               format DATEOFBIRTH date9. ;
+642               format POSTCODE $10. ;
+643               format DPAAGREEMENT $1. ;
+644               format EXTERNALAGENTREFERENCE $50. ;
+645               format BARCODE $24. ;
+646               format PREFERREDEMAIL $100. ;
+647               format CUSTOMER_STATUS $50. ;
+648               format COUNTY_1 $50. ;
+649               format COUNTRY $50. ;
+650               format HISTORIC_DCA_REFERENCE $1. ;
+651               format HISTORIC_DCA_TELEPHONE_NUMBER $1. ;
+652               format CUSTOMERID best12. ;
+653               format ACCOUNT_NUMBER_2 $50. ;
+654               format AGENTREFERENCE $50. ;
+655               format LDMBARCLAYSDATENEXTAMOUNTDUE_1 date9. ;
+656               format ARREARSCALCULATIONSTARTDATE date9. ;
+657               format CLIENTID 11. ;
+658               format CLIENT_NAME $59. ;
+659               format UNCLEAREDBALANCE 20.2 ;
+660               format PAYMENTPLANAMOUNTARREARS 12.2 ;
+661               format AMOUNT_IN_ARREARS_2 best12. ;
+662               format CONTRACTID 11. ;
+663               format CORRESPONDENCENAME_2 $300. ;
+664               format MIDDLENAME $50. ;
+665               format _112__C__ADVISED_LIMIT 20.2 ;
+666               format _113__C__CURRENT_BALANCE 20.2 ;
+667               format _117__L__MNTHLY_INST_AMNT 20.2 ;
+668               format _138_CONTRACTUAL_AMOUNT 20.2 ;
+669               format _150_GROSS_ARREARS best12. ;
+670               format _151_G_TEE_CALL_UP_AMOUNT_1 20.2 ;
+671               format _155_INTEREST_VALUE 20.2 ;
+672               format _214_COMPANY_NAME $100. ;
+673               format _243_GUARANTOR_FOR_ $100. ;
+674               format _247_INSOLVENCY_FIRM $100. ;
+675               format _251_LTD_COMPANY_NAME $100. ;
+14                                      The SAS System              08:27 Monday, June 30, 2014
+
+676               format _271_PORTFOLIO_NAME $100. ;
+677               format LDMSECONDLETTERSENTDATE date9. ;
+678               format CURRENTDATE28 date9. ;
+679               format CURRENTDATE21 date9. ;
+680               format CURRENTDATE10 date9. ;
+681               format TOTALEXCLUDED 20.2 ;
+682               format CURRENTBALANCE 20.2 ;
+683               format CUSTOMER_CLEARED_BALANCE best12. ;
+684               format CUSTOMER_CLEARED_BALANCE_2 best12. ;
+685               format LDM_CONTRACTID_DISCOUNT $32. ;
+686               format LDM_LOCATION_VAL $25. ;
+687               format LOCATION $20. ;
+688               format CLIENT_ID_2 $41. ;
+689               format PLACEMENT_CATEGORY_ID $19. ;
+690               format CONTRACT_ID_2 $3. ;
+691               format ASSIGNMENTDATE date9. ;
+692               format AMOUNT_IN_ARREARS best12. ;
+693               format CLEARED_BALANCE best12. ;
+694               format CURRENTBALANCE_3 11.2 ;
+695               format SETTLEMENTFIGURE 11.2 ;
+696               format PORTFOLIOCODE $50. ;
+697               format LBG_HERITAGE $11. ;
+698               format LBGTYPEOFDEBT $42. ;
+699               format FUNDER_NAME $24. ;
+700               format CURRENT_TIME best12. ;
+701               format DATEACCOUNTCREATED date9. ;
+702               format PAYMENTPLANLASTMISSEDINSTDATE_1 date9. ;
+703               format PREDEFAULTARREARS 20.2 ;
+704               format _327_FREETEXT_10__MIGRATED_ $100. ;
+705               format ORIGINAL_AGREEMENT_DATE best12. ;
+706               format _325_FREETEXT_8__MIGRATED_ $100. ;
+707               format _324_FREETEXT_7__MIGRATED_ $100. ;
+708               format _95_LAST_PAYMENT_DATE date9. ;
+709               format CCATOTALPAYMENTAMOUNT 20.2 ;
+710               format AMOUNTOUTSTANDING 20.2 ;
+711               format FIRSTDAYOFMONTH6MONTHSAGO date9. ;
+712               format FIRSTDAYOFPREVMONTH date9. ;
+713               format DEPARTMENTKEY 11. ;
+714               format AMOUNT_1 12.2 ;
+715             do;
+716               EFIOUT + 1;
+717               put CUSTOMERACCOUNTKEY @;
+718               put DEPARTMENT_2 $ @;
+719               put CUSTOMER_ACCOUNT_POSITION_DESCRI $ @;
+720               put ACCOUNTNAME $ @;
+721               put BANKACCOUNTNUMBER $ @;
+722               put BANKADDRESS1 $ @;
+723               put BANKADDRESS2 $ @;
+724               put BANKADDRESS3 $ @;
+725               put BANKTOWN $ @;
+15                                      The SAS System              08:27 Monday, June 30, 2014
+
+726               put BANKCOUNTY $ @;
+727               put BANKNAME $ @;
+728               put SORTCODE $ @;
+729               put ADDRESSLINE1 $ @;
+730               put ADDRESSLINE2 $ @;
+731               put ADDRESSLINE3_1 $ @;
+732               put CURRENTTOWN $ @;
+733               put POSTCODE_2 $ @;
+734               put DATEOFBIRTH_1 @;
+735               put FIRSTNAME_1 $ @;
+736               put DESIGNATION_2 $ @;
+737               put LASTNAME_2 $ @;
+738               put DESIGNATION $ @;
+739               put STATEMENTACCRUEDINTEREST @;
+740               put CCACLOSINGBALANCE_1 @;
+741               put STATEMENTDUEDATE @;
+742               put CCAOPENINGBALANCE_1 @;
+743               put PREVIOUSSTATEMENTDATE @;
+744               put ACCOUNTNUMBER $ @;
+745               put CUSTOMERACCOUNTID @;
+746               put _105_REVIEW_DATE @;
+747               put PURCHASEDATE @;
+748               put PAYMENTPLANLASTMISSEDINSTDATE_2 @;
+749               put DETERMINATIONDATE @;
+750               put SECURE $ @;
+751               put EXTERNALAGENTID_2 $ @;
+752               put EXTERNAL_AGENT_PHONE $ @;
+753               put CLAIMNUMBER $ @;
+754               put CLEAREDBALANCE_1 @;
+755               put DEBTAMOUNT @;
+756               put FIRSTINSTALLMENTDATE_1 @;
+757               put PLANINSTALLMENTAMOUNT @;
+758               put NEXTINSTALLMENTDATE_1 @;
+759               put INTERESTACCRUED @;
+760               put LASTPAYMENTDATE_1 @;
+761               put LASTPAYMENTAMOUNT_3 @;
+762               put CONSOLIDATEDBALANCE @;
+763               put PREFERREDEMAIL_1 $ @;
+764               put CONTRACTUALINSTALMENTAMOUNT @;
+765               put REBATEAMOUNT @;
+766               put CURRENTINTERESTRATE @;
+767               put PREDEFAULTARREARS_1 @;
+768               put DATELATESTCOMPLAINTRECEIVED @;
+769               put PRODUCT_TYPE_DESCRIPTION $ @;
+770               put ACCOUNTOPENEDDATE_1 @;
+771               put LOANTERM @;
+772               put LOANADVANCE @;
+773               put CCJAMOUNT @;
+774               put FIRSTNAME $ @;
+775               put LASTNAME $ @;
+16                                      The SAS System              08:27 Monday, June 30, 2014
+
+776               put DATEOFBIRTH @;
+777               put POSTCODE $ @;
+778               put DPAAGREEMENT $ @;
+779               put EXTERNALAGENTREFERENCE $ @;
+780               put BARCODE $ @;
+781               put PREFERREDEMAIL $ @;
+782               put CUSTOMER_STATUS $ @;
+783               put COUNTY_1 $ @;
+784               put COUNTRY $ @;
+785               put HISTORIC_DCA_REFERENCE $ @;
+786               put HISTORIC_DCA_TELEPHONE_NUMBER $ @;
+787               put CUSTOMERID @;
+788               put ACCOUNT_NUMBER_2 $ @;
+789               put AGENTREFERENCE $ @;
+790               put LDMBARCLAYSDATENEXTAMOUNTDUE_1 @;
+791               put ARREARSCALCULATIONSTARTDATE @;
+792               put CLIENTID @;
+793               put CLIENT_NAME $ @;
+794               put UNCLEAREDBALANCE @;
+795               put PAYMENTPLANAMOUNTARREARS @;
+796               put AMOUNT_IN_ARREARS_2 @;
+797               put CONTRACTID @;
+798               put CORRESPONDENCENAME_2 $ @;
+799               put MIDDLENAME $ @;
+800               put _112__C__ADVISED_LIMIT @;
+801               put _113__C__CURRENT_BALANCE @;
+802               put _117__L__MNTHLY_INST_AMNT @;
+803               put _138_CONTRACTUAL_AMOUNT @;
+804               put _150_GROSS_ARREARS @;
+805               put _151_G_TEE_CALL_UP_AMOUNT_1 @;
+806               put _155_INTEREST_VALUE @;
+807               put _214_COMPANY_NAME $ @;
+808               put _243_GUARANTOR_FOR_ $ @;
+809               put _247_INSOLVENCY_FIRM $ @;
+810               put _251_LTD_COMPANY_NAME $ @;
+811               put _271_PORTFOLIO_NAME $ @;
+812               put LDMSECONDLETTERSENTDATE @;
+813               put CURRENTDATE28 @;
+814               put CURRENTDATE21 @;
+815               put CURRENTDATE10 @;
+816               put TOTALEXCLUDED @;
+817               put CURRENTBALANCE @;
+818               put CUSTOMER_CLEARED_BALANCE @;
+819               put CUSTOMER_CLEARED_BALANCE_2 @;
+820               put LDM_CONTRACTID_DISCOUNT $ @;
+821               put LDM_LOCATION_VAL $ @;
+822               put LOCATION $ @;
+823               put CLIENT_ID_2 $ @;
+824               put PLACEMENT_CATEGORY_ID $ @;
+825               put CONTRACT_ID_2 $ @;
+17                                      The SAS System              08:27 Monday, June 30, 2014
+
+826               put ASSIGNMENTDATE @;
+827               put AMOUNT_IN_ARREARS @;
+828               put CLEARED_BALANCE @;
+829               put CURRENTBALANCE_3 @;
+830               put SETTLEMENTFIGURE @;
+831               put PORTFOLIOCODE $ @;
+832               put LBG_HERITAGE $ @;
+833               put LBGTYPEOFDEBT $ @;
+834               put FUNDER_NAME $ @;
+835               put CURRENT_TIME @;
+836               put DATEACCOUNTCREATED @;
+837               put PAYMENTPLANLASTMISSEDINSTDATE_1 @;
+838               put PREDEFAULTARREARS @;
+839               put _327_FREETEXT_10__MIGRATED_ $ @;
+840               put ORIGINAL_AGREEMENT_DATE @;
+841               put _325_FREETEXT_8__MIGRATED_ $ @;
+842               put _324_FREETEXT_7__MIGRATED_ $ @;
+843               put _95_LAST_PAYMENT_DATE @;
+844               put CCATOTALPAYMENTAMOUNT @;
+845               put AMOUNTOUTSTANDING @;
+846               put FIRSTDAYOFMONTH6MONTHSAGO @;
+847               put FIRSTDAYOFPREVMONTH @;
+848               put DEPARTMENTKEY @;
+849               put AMOUNT_1 ;
+850               ;
+851             end;
+852            if _ERROR_ then call symputx('_EFIERR_',1);  /* set ERROR detection macro
+852      ! variable */
+853            if EFIEOD then call symputx('_EFIREC_',EFIOUT);
+854            run;
+
+NOTE: The file 'c:\users\pmason\test.csv' is:
+      Filename=c:\users\pmason\test.csv,
+      RECFM=V,LRECL=32767,File Size (bytes)=0,
+      Last Modified=30 June 2014 08:39:55 o'clock,
+      Create Time=30 June 2014 08:39:55 o'clock
+
+NOTE: 5 records were written to the file 'c:\users\pmason\test.csv'.
+      The minimum record length was 724.
+      The maximum record length was 2322.
+NOTE: There were 4 observations read from the data set WORK.LETTERTEST.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+4 records created in c:\users\pmason\test.csv from LETTERTEST.
+  
+  
+NOTE: "c:\users\pmason\test.csv" file was successfully created.
+18                                      The SAS System              08:27 Monday, June 30, 2014
+
+NOTE: PROCEDURE EXPORT used (Total process time):
+      real time           0.17 seconds
+      cpu time            0.12 seconds
+      
+
+855        data _null_ ;
+856        	infile 'c:\users\pmason\test.csv' ;
+857        	input ;
+858        	put _infile_ ;
+859        run ;
+
+NOTE: The infile 'c:\users\pmason\test.csv' is:
+      Filename=c:\users\pmason\test.csv,
+      RECFM=V,LRECL=256,File Size (bytes)=5284,
+      Last Modified=30 June 2014 08:39:55 o'clock,
+      Create Time=30 June 2014 08:39:55 o'clock
+
+CUSTOMERACCOUNTKEY,DEPARTMENT_2,CUSTOMER_ACCOUNT_POSITION_DESCRI,ACCOUNTNAME,BANKACCOUNTNUMBER,
+BANKADDRESS1,BANKADDRESS2,BANKADDRESS3,BANKTOWN,BANKCOUNTY,BANKNAME,SORTCODE,ADDRESSLINE1,ADDRE
+SSLINE2,ADDRESSLINE3_1,CURRENTTOWN,POSTCODE_2,DATEOFBIRTH_1,FIRSTN
+3495893,Debt Collection Agent,End Of Process,,,,,,,,,,1 Fairpark Road,,,Exeter,EX2 4HL,04NOV193
+2,Cyril,Sir,Howard,Mr,,5490.64,07AUG2014,5490.64,07FEB2000,4543051101865706,225264,,07FEB2000,,
+,VISA,,,,5490.64,2504.05,,,,0.00,,,5490.64,,,,0.00,,,Credit Card,1
+3495894,Uncollectible,Hold,,,,,,,,,,18 High Street,Ide,,Exeter,EX2 9RN,27NOV1960,Colin A,Sir,St
+rachan,Mr,,5554.59,07AUG2014,5554.59,07FEB2000,5434801105848754,225265,,07FEB2000,,07FEB2000,Wo
+rldWide,,,,5554.59,2292.41,,,,0.00,,,5554.59,,,,0.00,,,Credit Card
+3495895,Uncollectible,Hold,,,,,,,,,,6 Old Ide Lane,Ide,,Exeter,EX2 9RY,27NOV1960,Colin A,Sir,St
+rachan,Mr,,2993.79,07AUG2014,2993.79,07FEB2000,4543051101232659,225266,,07FEB2000,,,VISA,,,,299
+3.79,2562.71,,,,0.00,,,2993.79,,,,0.00,,,Credit Card,25AUG1989,0,0
+3495896,Debt Collection Agent,End Of Process,,,,,,,,,,17 Bradham Lane,,,Exmouth,EX8 4BG,01OCT19
+53,Lionel D E,Sir,Thomas,Mr,,2388.15,07AUG2014,2388.15,07FEB2000,5434801100735527,225267,,07FEB
+2000,,07FEB2000,WorldWide,,,,2388.15,1159.72,,,,0.00,,,2388.15,,,,
+NOTE: 5 records were read from the infile 'c:\users\pmason\test.csv'.
+      The minimum record length was 256.
+      The maximum record length was 256.
+      One or more lines were truncated.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           12:00.14
+      cpu time            7:28.22
+      
