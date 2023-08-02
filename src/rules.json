@@ -55,6 +55,7 @@
     "ruleType": "startswith",
     "startswith": "Notice: ",
     "prefix": "<span style='background-color: #ccddff; color:#000000'>",
+    "prefix": "<span style='background-color: #ccddff; color:#000000'>",
     "suffix": "</span>",
     "anchor": true,
     "linkColor": "blue",
@@ -238,6 +239,7 @@
     "suffix": "</span>",
     "anchor": true,
     "linkColor": "purple",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -255,8 +257,10 @@
     "ruleType": "regex",
     "regex": "W\\.D format was too small",
     "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
+    "linkColor": "purple",
     "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
@@ -278,6 +282,7 @@
     "suffix": "</span>",
     "anchor": true,
     "linkColor": "purple",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -288,6 +293,7 @@
     "suffix": "</span>",
     "anchor": true,
     "linkColor": "purple",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -295,8 +301,10 @@
     "ruleType": "regex",
     "regex": "was not found or could not be loaded",
     "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
+    "linkColor": "purple",
     "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
@@ -328,6 +336,7 @@
     "suffix": "</span>",
     "anchor": true,
     "linkColor": "purple",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -338,6 +347,7 @@
     "suffix": "</span>",
     "anchor": true,
     "linkColor": "purple",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -345,8 +355,10 @@
     "ruleType": "regex",
     "regex": "variables have conflicting attributes",
     "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
+    "linkColor": "purple",
     "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
@@ -385,8 +397,10 @@
     "ruleType": "regex",
     "regex": "unequal",
     "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
+    "linkColor": "purple",
     "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
@@ -415,8 +429,10 @@
     "ruleType": "regex",
     "regex": "Division by zero detected",
     "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
+    "linkColor": "purple",
     "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
@@ -425,8 +441,10 @@
     "ruleType": "regex",
     "regex": "Mathematical operation could not be performed",
     "prefix": "<span style='color: purple'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
+    "linkColor": "purple",
     "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
@@ -447,6 +465,7 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
+    "linkColor": "purple",
     "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
@@ -536,6 +555,7 @@
     "substitute": true
   },
   {
+    "description": "Look for paths to a file or directory starting with http. Then create a link to it.",
     "description": "Look for paths to a file or directory starting with http. Then create a link to it.",
     "ruleType": "regex",
     "regex": "http[s]?\\:[\\/\\w+|\\-|.]*",

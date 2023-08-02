@@ -251,6 +251,7 @@ function App() {
         tempLinks = [],
         tempLineNumberToLink = [],
         html = lines.map((element, lineNumber) => {
+          // console.log(lineNumber)
           // const lineNumber = ln + 1; // so the first line will be line 1, not line 0
           let matchFound = false;
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
@@ -274,6 +275,9 @@ function App() {
           let preparedToReturn = element;
           // make sure we have rules that handle all the things we might want to link to, so that there will be a link to be used
           rules.forEach((rule) => {
+            // if (id>648) console.log(matchFound,rule.regularExpression,element)
+
+            // if (id>648) {const re= rule.regularExpression.test(element);console.log(re)}
             if (
               !matchFound &&
               ((rule.ruleType === "startswith" &&
@@ -282,6 +286,7 @@ function App() {
                   rule.regularExpression.test(element)))
             ) {
               id++;
+              // console.log('id',id)
               matchFound = true; // set this showing we have matched a rule for this line, so we dont want to match any other rules for this line
               const tag = rule.prefix,
                 prefix = tag.substring(0, tag.length - 1) + ` id='${id}'>`;
@@ -332,7 +337,9 @@ function App() {
                 rule.substitute &&
                 rule.regularExpression.test(element)
               ) {
+                // if (id>648) console.log('-')
                 const matches = element.match(rule.regularExpression);
+                // if (id>648) console.log('-')
                 matches.forEach((match) => {
                   preparedToReturn = element;
                   if (rule.prefix.includes("{{matched}}")) {
@@ -353,6 +360,7 @@ function App() {
               }
             }
           });
+          // console.log('-')
           setLinks(tempLinks);
           return preparedToReturn;
         });
@@ -364,6 +372,7 @@ function App() {
 
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
       setLineNumberToLink(tempLineNumberToLink);
+      // console.log('-')
       return html.filter((element) => element != null).join("<br>");
     },
     selectLog = (index) => {
