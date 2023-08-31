@@ -52,6 +52,8 @@ import {
   Colorize,
   Visibility,
   Publish,
+  Refresh,
+  Email,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 // import Mermaid from "react-mermaid";
@@ -175,26 +177,14 @@ function App() {
         setCheck(newCheck);
       }
     },
-    // [badgeCountError, setBadgeCountError] = useState(0),
-    // [badgeCountWarn, setBadgeCountWarn] = useState(0),
-    // [badgeCountNotice, setBadgeCountNotice] = useState(0),
-    // [badgeCountJob, setBadgeCountJob] = useState(0),
-    // [badgeCountSerious, setBadgeCountSerious] = useState(0),
-    // [badgeCountOther, setBadgeCountOther] = useState(0),
     [currentLine, setCurrentLine] = useState(1),
     [macrosSelected, setMacrosSelected] = useState(null),
     resetCounts = () => {
-      console.log("resetCounts");
-      // setBadgeCountError(0);
-      // setBadgeCountWarn(0);
-      // setBadgeCountNotice(0);
-      // setBadgeCountSerious(0);
-      // setBadgeCountJob(0);
-      // setBadgeCountOther(0);
+      // console.log("resetCounts");
       // TODO: generalise the reset
       const tempBadgeCount = {};
       uniqueTypes.forEach((type) => {
-        console.log(type);
+        // console.log(type);
         tempBadgeCount[type] = 0;
       });
       setBadgeCount(tempBadgeCount);
@@ -244,6 +234,7 @@ function App() {
       setPopUpMessage("SAS code copied to clipboard");
       setOpenPopUp(true);
     },
+    // use rules to analyse text and modify it
     analyse = (text) => {
       let id = 0;
       // console.log("rules", rules);
@@ -275,9 +266,6 @@ function App() {
           let preparedToReturn = element;
           // make sure we have rules that handle all the things we might want to link to, so that there will be a link to be used
           rules.forEach((rule) => {
-            // if (id>648) console.log(matchFound,rule.regularExpression,element)
-
-            // if (id>648) {const re= rule.regularExpression.test(element);console.log(re)}
             if (
               !matchFound &&
               ((rule.ruleType === "startswith" &&
@@ -301,36 +289,7 @@ function App() {
                 });
               tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
               incrementCount(rule.type);
-              // switch (rule.type) {
-              //   case "ERROR":
-              //     setBadgeCountError(count);
-              //     break;
-              //   case "WARN":
-              //     setBadgeCountWarn(count);
-              //     break;
-              //   case "SERIOUS":
-              //     setBadgeCountSerious(count);
-              //     break;
-              //   case "JOB":
-              //     setBadgeCountJob(count);
-              //     break;
-              //   case "NOTICE":
-              //     setBadgeCountNotice(count);
-              //     break;
-              //   case "OTHER":
-              //     setBadgeCountOther(count);
-              //     break;
-              //   default:
-              // }
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
-              // if (rule.linkColor === "red")
-              //   console.log(
-              //     rule,
-              //     rule.ruleType,
-              //     rule.substitute,
-              //     rule.regularExpression?.test(element),
-              //     element
-              //   );
               // handle link creation, where we have a regex and want to make something using the matching text
               if (
                 rule.ruleType === "regex" &&
@@ -372,8 +331,17 @@ function App() {
 
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
       setLineNumberToLink(tempLineNumberToLink);
-      // console.log('-')
-      return html.filter((element) => element != null).join("<br>");
+      // console.log(html);
+
+      const modified = html
+        .filter((element) => element != null)
+        .map((h, hid) => {
+          let extra = "";
+          if (showLineNumbers) extra = zeroPad(hid, 7) + "|" + h;
+          return extra + h;
+        });
+      console.log(showLineNumbers);
+      return modified.join("<br/>");
     },
     selectLog = (index) => {
       setWaitSelectLog(true);
@@ -413,7 +381,7 @@ function App() {
       } else {
         setWaitGetDir(true);
         resetCounts();
-        getWebDav(dirPassed || logDirectory);
+        getLogWebDav(dirPassed || logDirectory);
       }
     },
     [showSource, setShowSource] = useState(true),
@@ -453,8 +421,10 @@ function App() {
     mode = href.startsWith("http://localhost") ? "local" : "remote",
     // server = href.split("//")[1].split("/")[0],
     [rulesDirectory, setRulesDirectory] = useState(
-      navigator.platform.startsWith("Win")
-        ? "C:\\github\\logviewer\\src"
+      navigator.platform.startsWith("Win") && mode === "remote"
+        ? "/general/biostat/tools/logviewer/rules"
+        : navigator.platform.startsWith("Win") && mode === "local"
+        ? "C:/github/logviewer/src"
         : "/Users/philipmason/Documents/GitHub/logviewer/src"
     ),
     [listOfRules, setListOfRules] = useState([]),
@@ -464,10 +434,22 @@ function App() {
     handleCloseRulesMenu = (item) => {
       console.log(item);
       const url =
-        "http://localhost:3001/getfile/" +
-        encodeURIComponent(rulesDirectory) +
-        "/" +
-        item;
+        mode === "local"
+          ? "http://localhost:3001/getfile/" +
+            encodeURIComponent(rulesDirectory) +
+            "/" +
+            item
+          : item;
+      // console.log(
+      //   "webDavPrefix",
+      //   webDavPrefix,
+      //   "rulesDirectory",
+      //   rulesDirectory,
+      //   "item",
+      //   item,
+      //   "url",
+      //   url
+      // );
       fetch(url).then(function (response) {
         response.text().then(function (text) {
           const tempRules = JSON.parse(text);
@@ -482,14 +464,17 @@ function App() {
     [logDirectory, setLogDirectory] = useState(
       "/general/biostat/jobs/gadam_ongoing_studies/dev/logs/"
     ),
-    getWebDav = async (dir) => {
-      // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
-      await getDir(webDavPrefix + dir, 1, processXml);
+    getLogWebDav = async (dir) => {
+      await getDir(webDavPrefix + dir, 1, processLogXml);
+      setWaitGetDir(false);
+    },
+    getRulesWebDav = async (dir) => {
+      await getDir(webDavPrefix + dir, 1, processRulesXml);
       setWaitGetDir(false);
     },
     getLogVersions = async (dir) => {
       // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
-      await getVersions(webDavPrefix + dir, processXml);
+      await getVersions(webDavPrefix + dir, processRulesXml);
       setWaitGetDir(false);
     },
     ColDefnRules = [
@@ -592,7 +577,7 @@ function App() {
     ],
     [symbolgen, setSymbolgen] = useState(null),
     [selectionModel, setSelectionModel] = React.useState([]),
-    processXml = (responseXML) => {
+    processLogXml = (responseXML) => {
       // Here you can use the Data
       let dataXML = responseXML;
       let dataJSON = xmlToJson(dataXML.responseXML);
@@ -635,6 +620,49 @@ function App() {
           })
       );
     },
+    processRulesXml = (responseXML) => {
+      // Here you can use the Data
+      let dataXML = responseXML;
+      let dataJSON = xmlToJson(dataXML.responseXML);
+      const rules = dataJSON["d:multistatus"]["d:response"].map((record) => {
+        let path = record["d:href"]["#text"];
+        let props = record["d:propstat"]["d:prop"];
+        if (props === undefined) return null;
+        const name = props["d:displayname"]["#text"] ?? "",
+          created = props["d:creationdate"]["#text"],
+          modified = props["d:getlastmodified"]["#text"],
+          checkedOut = props["ns1:checkedOut"]["#text"],
+          locked = props["ns1:locked"]["#text"],
+          version = props["ns1:version"]["#text"],
+          fileType = path.split(".").pop(),
+          partOfRule = {
+            value: urlPrefix + path,
+            fileType: fileType,
+            label: name + " [" + modified.trim() + "]",
+            created: created,
+            modified: modified,
+            checkedOut: checkedOut,
+            locked: locked,
+            version: version,
+          };
+        return partOfRule;
+      });
+      setListOfRules(
+        rules
+          .filter((rule) => rule !== null && rule.fileType === "json")
+          .sort((a, b) => {
+            const x = a.label.toLowerCase(),
+              y = b.label.toLowerCase();
+            if (x < y) {
+              return -1;
+            }
+            if (x > y) {
+              return 1;
+            }
+            return 0;
+          })
+      );
+    },
     jumpTo = (id) => {
       const url = window.location.href;
       window.location.href = "#" + id;
@@ -648,7 +676,8 @@ function App() {
     [program, setProgram] = useState(null),
     [submitted, setSubmitted] = useState(null),
     [submitEnd, setSubmitEnd] = useState(null),
-    analyzeLog = () => {
+    [analyseAgain, setAnalyseAgain] = useState(false),
+    analyseLog = () => {
       const logArray = logOriginalText.split("\n"),
         tempMprint = {},
         tempMlogic = {},
@@ -1038,7 +1067,7 @@ function App() {
       setMermaidInfo({ characters: mermaid.length, lines: uniqueDot.length });
     };
 
-  // run once on page load
+  // update when rules change
   useEffect(() => {
     rules.forEach((rule) => {
       if (rule.ruleType === "regex")
@@ -1048,6 +1077,7 @@ function App() {
       (item) => item.type !== null && item.anchor
     );
     setUniqueTypes([...new Set(rulesToProcess.map((item) => item.type))]);
+    // console.log("rules", rules);
   }, [rules]);
 
   // when uniqueTypes changes, run this to update associated data structures
@@ -1061,13 +1091,34 @@ function App() {
     });
     setBadgeCount(tempBadgeCount);
     setCheck(tempCheck);
+    setAnalyseAgain(!analyseAgain);
+    setLogText(logOriginalText);
+    // console.log("uniqueTypes", uniqueTypes);
+    // eslint-disable-next-line
   }, [uniqueTypes]);
 
   useEffect(() => {
     if (!logText || selectedLog === null) return;
-    analyzeLog();
+    analyseLog();
     // eslint-disable-next-line
-  }, [logText]); // logText changes when it has been analyzed and all links and lookups prepared
+  }, [logText]); // logText changes when it has been analysed and all links and lookups prepared
+
+  // analyse text again using current rules, if the flag is set true
+  useEffect(() => {
+    if (!logText) return;
+    // console.log("analyseAgain", analyseAgain);
+    analyseLog();
+    const newText = analyse(logOriginalText);
+    setLogText(newText);
+    // eslint-disable-next-line
+  }, [analyseAgain]);
+
+  // change whether we show line numbers in log
+  useEffect(() => {
+    if (logText === null) return;
+    setLogText(analyse(logOriginalText));
+    // eslint-disable-next-line
+  }, [showLineNumbers]);
 
   useEffect(() => {
     const splitQuestionMarks = href.split("?");
@@ -1139,65 +1190,121 @@ function App() {
     };
   }, [windowDimension]);
 
-  const makeDirListing = (dirsArray) => {
-      // const html = dirsArray.map((dir) => {
-      //   return `<span onClick='
-      //   const newDir=document.getElementById("logDirectory").value+"/${dir}";
-      //   console.log(newDir);
-      //   document.getElementById("logDirectory").value="/Users";
-      //   document.getElementById("readDirectory").click();
-      //   '>${dir}</span>`;
-      // });
-      // setLogText(html.join("\n"));
-      const obj = dirsArray.map((dir, i) => {
-        return (
-          <Box
-            key={dir + i}
-            onClick={() => {
-              // setLogDirectory(logDirectory + "/" + dir);
-              readLocalFiles(logDirectory + "/" + dir);
-            }}
-          >
-            {dir}
-          </Box>
-        );
-      });
-      console.log("obj", obj);
-      setDirListing(obj);
-    },
+  const //  makeDirListing = (dirsArray) => {
+    //          const obj = dirsArray.map((dir, i) => {
+    //       return (
+    //         <Box
+    //           key={dir + i}
+    //           onClick={() => {
+    //             readLocalFiles(logDirectory + "/" + dir);
+    //           }}
+    //         >
+    //           {dir}
+    //         </Box>
+    //       );
+    //     });
+    //     console.log("obj", obj);
+    //     setDirListing(obj);
+    //   },
     readLocalFiles = (localDir) => {
-      const dir = encodeURIComponent(localDir),
+      if (mode === "local") {
+        const dir = encodeURIComponent(localDir),
+          url = "http://localhost:3001/dir/" + dir;
+        setLogDirectory(decodeURIComponent(dir));
+        console.log("url", url);
+        fetch(url).then(function (response) {
+          console.log(response);
+          response.text().then(function (text) {
+            const dirObject = JSON.parse(text);
+            // const { dirs, files } = dirObject;
+            const files = dirObject,
+              dirs = null;
+            // console.log(
+            //   "dirObject",
+            //   dirObject,
+            //   "localDir",
+            //   localDir,
+            //   "dirs",
+            //   dirs,
+            //   "files",
+            //   files
+            // );
+            setSelectedLog(null);
+            setListOfDirs(dirs);
+            setLogOriginalText(text);
+            // makeDirListing(dirs);
+            setListOfLogs(
+              files
+                .filter((log) => {
+                  return log !== null && log.endsWith(".log");
+                })
+                .map((log) => {
+                  return { value: log, label: log };
+                })
+                .sort((a, b) => {
+                  const x = a.label.toLowerCase(),
+                    y = b.label.toLowerCase();
+                  if (x < y) {
+                    return -1;
+                  }
+                  if (x > y) {
+                    return 1;
+                  }
+                  return 0;
+                })
+            );
+          });
+        });
+      }
+    };
+
+  // for remote mode
+  // - get the list of logs by reading directory
+  // - get the list of rules by reading directory
+  useEffect(() => {
+    if (mode === "remote") {
+      const defaultDirectory = navigator.platform.startsWith("Win")
+        ? "/general/biostat/jobs/dashboard/dev/logs"
+        : "/Users/philipmason/Documents/GitHub/logviewer/tests";
+      setLogDirectory(defaultDirectory);
+      getLogWebDav(defaultDirectory);
+
+      getRulesWebDav(rulesDirectory);
+    }
+
+    // eslint-disable-next-line
+  }, []);
+
+  // for local mode
+  // - get the list of logs by reading directory
+  // - get the list of rules by reading directory
+  useEffect(() => {
+    if (mode === "local") {
+      // console.log(navigator);
+      const defaultDirectory = navigator.platform.startsWith("Win")
+        ? "C:/github/logviewer/tests"
+        : "/Users/philipmason/Documents/GitHub/logviewer/tests";
+      setLogDirectory(defaultDirectory);
+      readLocalFiles(defaultDirectory);
+
+      const dir = encodeURIComponent(rulesDirectory),
         url = "http://localhost:3001/dir/" + dir;
-      setLogDirectory(decodeURIComponent(dir));
       console.log("url", url);
+      setRulesDirectory(decodeURIComponent(dir));
       fetch(url).then(function (response) {
-        console.log(response);
         response.text().then(function (text) {
           const dirObject = JSON.parse(text);
           // const { dirs, files } = dirObject;
           const files = dirObject,
             dirs = null;
-          // console.log(
-          //   "dirObject",
-          //   dirObject,
-          //   "localDir",
-          //   localDir,
-          //   "dirs",
-          //   dirs,
-          //   "files",
-          //   files
-          // );
-          setSelectedLog(null);
-          setListOfDirs(dirs);
-          setLogOriginalText(text);
-          // makeDirListing(dirs);
-          setListOfLogs(
+          console.log("dirs", dirs, "files", files);
+          setListOfRules(
             files
-              .filter((log) => {
-                return log !== null && log.endsWith(".log");
+              .filter((ruleFile) => {
+                return ruleFile !== null && ruleFile.endsWith(".json");
               })
-              .map((log) => {
-                return { value: log, label: log };
+              .map((ruleFile) => {
+                return { value: ruleFile, label: ruleFile };
               })
               .sort((a, b) => {
                 const x = a.label.toLowerCase(),
@@ -1213,52 +1320,7 @@ function App() {
           );
         });
       });
-    };
-
-  // for local mode - get the list of logs by reading directory
-  useEffect(() => {
-    // console.log(navigator);
-    const defaultLocalDirectory = navigator.platform.startsWith("Win")
-      ? "C:/github/logviewer/src"
-      : "/Users/philipmason/Documents/GitHub/logviewer/tests";
-    setLogDirectory(defaultLocalDirectory);
-    readLocalFiles(defaultLocalDirectory);
-  }, []);
-
-  // for local mode - get the list of rules by reading directory
-  useEffect(() => {
-    const dir = encodeURIComponent(rulesDirectory),
-      url = "http://localhost:3001/dir/" + dir;
-    setRulesDirectory(decodeURIComponent(dir));
-    fetch(url).then(function (response) {
-      response.text().then(function (text) {
-        const dirObject = JSON.parse(text);
-        // const { dirs, files } = dirObject;
-        const files = dirObject,
-          dirs = null;
-        console.log("dirs", dirs, "files", files);
-        setListOfRules(
-          files
-            .filter((ruleFile) => {
-              return ruleFile !== null && ruleFile.endsWith(".json");
-            })
-            .map((ruleFile) => {
-              return { value: ruleFile, label: ruleFile };
-            })
-            .sort((a, b) => {
-              const x = a.label.toLowerCase(),
-                y = b.label.toLowerCase();
-              if (x < y) {
-                return -1;
-              }
-              if (x > y) {
-                return 1;
-              }
-              return 0;
-            })
-        );
-      });
-    });
+    }
     // eslint-disable-next-line
   }, []);
 
@@ -1362,11 +1424,12 @@ function App() {
                   readLocalFiles(parentDir);
                   setLogText(null);
                   // localFileRef.current.click();
-                  // setLogDirectory(parentDir);
+                  setLogDirectory(parentDir);
                 } else {
                   setWaitGetDir(true);
                   resetCounts();
-                  getWebDav(parentDir);
+                  setLogDirectory(parentDir);
+                  getLogWebDav(parentDir);
                 }
                 // processDirectory();
               }}
@@ -1801,6 +1864,29 @@ function App() {
                 <Colorize fontSize="small" />
               </IconButton>
             </Tooltip>
+            {mode === "local" ? (
+              <Tooltip title="Email (not yet working)">
+                <IconButton
+                  onClick={() => {
+                    console.log("email");
+                  }}
+                  size="small"
+                >
+                  <Email fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : null}
+            <Tooltip title="Refresh view by analysing the log again">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setAnalyseAgain(!analyseAgain);
+                }}
+              >
+                <Refresh fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Snackbar
               open={openPopUp}
               onClose={() => setOpenPopUp(false)}
@@ -1843,34 +1929,10 @@ function App() {
                 onClick={() => {
                   setVerticalSplit(verticalSplit - increment);
                 }}
-                // sx={{
-                //   backgroundColor: buttonBackground,
-                //   color: "yellow",
-                // }}
               >
                 <Expand fontSize="small" />
               </IconButton>
             </Tooltip>
-
-            {mode === "local" ? (
-              <Tooltip title="Test email">
-                <Button
-                  onClick={() => {
-                    console.log("email");
-                  }}
-                  sx={{
-                    minWidth: 0,
-                    fontSize: 8,
-                    p: 1,
-                    border: 0.5,
-                    m: 1,
-                    color: "lightgray",
-                  }}
-                >
-                  3
-                </Button>
-              </Tooltip>
-            ) : null}
           </Box>
           {program && <b>Program:</b>} {program} &nbsp;{" "}
           {submitted && <b>Submitted:</b>} {submitted} &nbsp;{" "}
@@ -1933,7 +1995,7 @@ function App() {
                 if (show) {
                   return (
                     <React.Fragment key={id}>
-                      {showLineNumbers ? zeroPad(link.lineNumber, 6) + " " : ""}
+                      {showLineNumbers ? zeroPad(link.lineNumber, 7) + " " : ""}
                       <a
                         style={{ color: `${link.linkColor}` }}
                         href={`#${link.id}`}

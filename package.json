@@ -2,7 +2,7 @@
   "name": "logviewer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer",
+  "homepage": "https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer/dev",
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
