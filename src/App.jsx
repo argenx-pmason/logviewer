@@ -116,27 +116,40 @@ function App() {
         fetch(localUrl).then(function (response) {
           // console.log(response);
           if (response.type !== "basic") {
-            response.text().then(function (text) {
-              console.log(
-                `${text.length} characters read from file ${localUrl}`
-              );
-              setLogOriginalText(text);
-              const newText = analyse(text); // make the log text with links and lookup for line to link
-              setLogText(newText);
-            });
+            if (response.ok) {
+              response.text().then(function (text) {
+                console.log(
+                  `${text.length} characters read from file ${localUrl}`
+                );
+                setLogOriginalText(text);
+                const newText = analyse(text); // make the log text with links and lookup for line to link
+                setLogText(newText);
+              });
+            } else {
+              const message =
+                "Getting log failed, response = " + response.status;
+              setLogOriginalText(message);
+              setLogText("<p>" + message + "</p>");
+            }
           }
         });
       } else {
-        console.log("getLog ", url);
+        console.log("getLog, url = ", url);
         fetch(url).then(function (response) {
           setLastUrl(url);
           setLastShowMacroLines(showMacroLines);
           setLastShowSource(showSource);
-          response.text().then(function (text) {
-            setLogOriginalText(text);
-            const newText = analyse(text); // make the log text with links and lookup for line to link
-            setLogText(newText);
-          });
+          if (response.ok) {
+            response.text().then(function (text) {
+              setLogOriginalText(text);
+              const newText = analyse(text); // make the log text with links and lookup for line to link
+              setLogText(newText);
+            });
+          } else {
+            const message = "Getting log failed, response = " + response.status;
+            setLogOriginalText(message);
+            setLogText("<p>" + message + "</p>");
+          }
         });
       }
     },
