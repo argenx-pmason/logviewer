@@ -28,8 +28,13 @@
     else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+v);
     else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer/index.html?log=%27+filelink);
     else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
-            " >LSAF🔍</a
-  >
+    " >LSAF🔍</a>
+    <br/
+    <a
+    alt="View LSAF file (experimental)"
+    href="
+    javascript:(function(document) {const iframe=document.getElementById('sasLSAF_iframe'),  iWindow = iframe.contentWindow, iDocument = iWindow.document,repo=iDocument.querySelector('[aria-label="Selected, Workspace"]') ? %27work%27 : %27repo%27,full=repo===%27work%27?%27WORKSPACE%27:%27REPOSITORY%27,  qs=iDocument.getElementById(%27HLS_LSAF_%27+full+%27--navLinkInput-inner%27), v = qs ? qs.value : null, lastPart = v.split(%27/%27).pop(), type=lastPart.split(%27.%27).pop(),{ href, protocol, host } = window.location, urlPrefix = protocol + %27//%27 + host,    filelink=urlPrefix+%27/lsaf/webdav/%27+repo+v;  console.log(window);  if (lastPart===%27documents%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/dashstudy/index.html?file=%27+v+%27/meta/dashstudy.json%27);    else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+v);    else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer/dev/index.html?log=%27+filelink);    else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
+    " >DEV🔍 </a>
   <p>Once that is done you will be able to use it:</p>
   <li>
     go to
@@ -64,13 +69,25 @@ else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/b
 else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);
 else alert(%27Please select a file type that is supported. Or let Phil know if you would like other file types supported.%27);
 })}) (document);"
-    >Clipboard📋</a
+    >Clip📋</a
     <p></p>
     <hr />
     <h2>Prompt the user and search SharePoint for something</h2>
     <a href="
     javascript:void(window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q='+prompt ('Search SharePoint:')));
-">🤓</a>
+">SP🤓</a>
+<p></p>
+<hr />
+<h2>Prompt the user and search Jira for something</h2>
+<a href='
+javascript:void(window.open(%27https://argenx.atlassian.net/issues/?jql=text%20~%20%22%27+prompt%20(%27Search%20Jira:%27)+%27*%22%27));
+'>Jira👽</a>
+<p></p>
+<hr />
+<h2>Prompt the user and search Jira using some JQL</h2>
+<a href="
+javascript:void(window.open(%27https://argenx.atlassian.net/issues/?jql=%27+prompt(%27Enter JQL:%27,%27text ~ gadam%27)));
+">Jira👾</a>
 <p></p>
 <hr />
 <h3>Technology used in our Dashboards and Viewers</h3>
