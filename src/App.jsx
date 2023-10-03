@@ -2298,7 +2298,7 @@ function App() {
                   <RestartAlt fontSize="small" />
                 </IconButton>
               </Tooltip>{" "}
-              <Tooltip title={`Zoom out`}>
+              <Tooltip title={`Zoom in`}>
                 <IconButton
                   size="small"
                   onClick={() => {
