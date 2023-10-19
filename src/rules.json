@@ -23,16 +23,6 @@
   },
   {
     "ruleType": "startswith",
-    "startswith": "NOTE:",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": "NOTE",
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
     "startswith": "MPRINT(",
     "prefix": "<span style='color: darkgray'>",
     "suffix": "</span>",
@@ -578,5 +568,15 @@
     "type": "OTHER",
     "interesting": false,
     "substitute": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "NOTE:",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": "NOTE",
+    "interesting": false
   }
 ]

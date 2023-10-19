@@ -1084,7 +1084,7 @@ function App() {
   useEffect(() => {
     rules.forEach((rule) => {
       if (rule.ruleType === "regex")
-        rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
+        rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones - i means case insensitive
     });
     const rulesToProcess = rules.filter(
       (item) => item.type !== null && item.anchor
