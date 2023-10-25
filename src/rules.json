@@ -22,6 +22,86 @@
     "substitute": true
   },
   {
+    "ruleType": "regex",
+    "regex": "NOTE:.*\\bUNINITIALIZED\\b",
+    "prefix": "<span style='color: orange'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "orange",
+    "type": "SERIOUS",
+    "interesting": true
+  },
+  {
+    "ruleType": "regex",
+    "regex": "NOTE: MISSING",
+    "prefix": "<span style='color: orange'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "orange",
+    "type": "SERIOUS",
+    "interesting": true
+  },
+  {
+    "ruleType": "regex",
+    "regex": "NOTE: AT LEAST ONE W.D FORMAT WAS TOO SMALL FOR THE NUMBER TO BE PRINTED.",
+    "prefix": "<span style='color: orange'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "orange",
+    "type": "SERIOUS",
+    "interesting": true
+  },
+  {
+    "ruleType": "regex",
+    "regex": "NOTE: NUMERIC VALUES HAVE BEEN CONVERTED TO CHARACTER VALUES AT THE PLACES GIVEN BY:",
+    "prefix": "<span style='color: orange'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "orange",
+    "type": "SERIOUS",
+    "interesting": true
+  },
+  {
+    "ruleType": "regex",
+    "regex": "NOTE: THE SAS SYSTEM STOPPED PROCESSING THIS STEP BECAUSE OF ERRORS.",
+    "prefix": "<span style='color: orange'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "orange",
+    "type": "SERIOUS",
+    "interesting": true
+  },
+  {
+    "ruleType": "regex",
+    "regex": "NOTE: ERROR DETECTED",
+    "prefix": "<span style='color: orange'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "orange",
+    "type": "SERIOUS",
+    "interesting": true
+  },
+  {
+    "ruleType": "regex",
+    "regex": "MERGE statement has more than one data set with repeats of BY values",
+    "prefix": "<span style='color: orange'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "orange",
+    "type": "SERIOUS",
+    "interesting": true
+  },
+  {
+    "ruleType": "regex",
+    "regex": "Note: Missing",
+    "prefix": "<span style='color: orange'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "orange",
+    "type": "SERIOUS",
+    "interesting": true
+  },
+  {
     "ruleType": "startswith",
     "startswith": "NOTE:",
     "prefix": "<span style='color: blue'>",
@@ -151,86 +231,7 @@
     "type": "ERROR",
     "interesting": true
   },
-  {
-    "ruleType": "regex",
-    "regex": "NOTE:.*\\bUNINITIALIZED\\b",
-    "prefix": "<span style='color: orange'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "orange",
-    "type": "SERIOUS",
-    "interesting": true
-  },
-  {
-    "ruleType": "regex",
-    "regex": "NOTE: MISSING",
-    "prefix": "<span style='color: orange'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "orange",
-    "type": "SERIOUS",
-    "interesting": true
-  },
-  {
-    "ruleType": "regex",
-    "regex": "NOTE: AT LEAST ONE W.D FORMAT WAS TOO SMALL FOR THE NUMBER TO BE PRINTED.",
-    "prefix": "<span style='color: orange'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "orange",
-    "type": "SERIOUS",
-    "interesting": true
-  },
-  {
-    "ruleType": "regex",
-    "regex": "NOTE: NUMERIC VALUES HAVE BEEN CONVERTED TO CHARACTER VALUES AT THE PLACES GIVEN BY:",
-    "prefix": "<span style='color: orange'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "orange",
-    "type": "SERIOUS",
-    "interesting": true
-  },
-  {
-    "ruleType": "regex",
-    "regex": "NOTE: THE SAS SYSTEM STOPPED PROCESSING THIS STEP BECAUSE OF ERRORS.",
-    "prefix": "<span style='color: orange'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "orange",
-    "type": "SERIOUS",
-    "interesting": true
-  },
-  {
-    "ruleType": "regex",
-    "regex": "NOTE: ERROR DETECTED IN ANNOTATE= DATASET",
-    "prefix": "<span style='color: orange'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "orange",
-    "type": "SERIOUS",
-    "interesting": true
-  },
-  {
-    "ruleType": "regex",
-    "regex": "MERGE statement has more than one data set with repeats of BY values",
-    "prefix": "<span style='color: orange'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "orange",
-    "type": "SERIOUS",
-    "interesting": true
-  },
-  {
-    "ruleType": "regex",
-    "regex": "Note: Missing",
-    "prefix": "<span style='color: orange'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "orange",
-    "type": "SERIOUS",
-    "interesting": true
-  },
+
   {
     "ruleType": "regex",
     "regex": "Note: Invalid",
