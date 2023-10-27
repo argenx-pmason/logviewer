@@ -53,6 +53,7 @@ import {
   Visibility,
   Publish,
   Refresh,
+  Info,
   Email,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
@@ -79,8 +80,10 @@ function App() {
     logRef = createRef(),
     // localFileRef = createRef(),
     iconPadding = 0.1,
+    [openInfo, setOpenInfo] = useState(false),
     // [showFileSelector, setShowFileSelector] = useState(false),
     [lastUrl, setLastUrl] = useState(null),
+    [search, setSearch] = useState(null),
     [lastShowSource, setLastShowSource] = useState(null),
     [lastShowMacroLines, setLastShowMacroLines] = useState(null),
     [uniqueTypes, setUniqueTypes] = useState(null),
@@ -327,7 +330,8 @@ function App() {
                 const matches = element.match(rule.regularExpression);
                 // if (id>648) console.log('-')
                 matches.forEach((match) => {
-                  preparedToReturn = element;
+                  preparedToReturn = "<span>" + element + "</span>";
+                  // preparedToReturn = element;
                   if (rule.prefix.includes("{{matched}}")) {
                     //TODO: if match ends in . then remove it when making link
                     const a = rule.prefix.replace("{{matched}}", match),
@@ -361,14 +365,14 @@ function App() {
           badgeCount[type] = counts[type];
         });
       }
-      console.log(
-        "uniqueTypes",
-        uniqueTypes,
-        "counts",
-        counts,
-        "badgeCount",
-        badgeCount
-      );
+      // console.log(
+      //   "uniqueTypes",
+      //   uniqueTypes,
+      //   "counts",
+      //   counts,
+      //   "badgeCount",
+      //   badgeCount
+      // );
       // const tempBadgeCount = {};
       // if (uniqueTypes) {
       //   uniqueTypes.forEach((type) => {
@@ -380,7 +384,7 @@ function App() {
       // console.log("tempBadgeCount", tempBadgeCount);
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
       setLineNumberToLink(tempLineNumberToLink);
-      // console.log(html);
+      // console.log(tempLineNumberToLink);
 
       const modified = html
         .filter((element) => element != null)
@@ -442,7 +446,7 @@ function App() {
     [lineNumberToLink, setLineNumberToLink] = useState(null),
     [waitGetDir, setWaitGetDir] = useState(false),
     [waitSelectLog, setWaitSelectLog] = useState(false),
-    [useMaxWidth] = useState(false),
+    [useMaxWidth] = useState(true),
     // [checkWarn, setCheckWarn] = useState(true),
     // [checkError, setCheckError] = useState(true),
     // [checkNotice, setCheckNotice] = useState(false),
@@ -862,10 +866,12 @@ function App() {
           });
         }
         // Stats
-        if (line.startsWith("      real time")) {
+        // if (line.startsWith("      real time")) {
+        if (/\breal time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
-            time = split[18],
-            units = split[19],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -876,7 +882,7 @@ function App() {
                 : Number.parseFloat(time),
             link = lineNumberToLink.filter(
               (link) => link.lineNumber === lineNumber
-            )[0].id;
+            )[0]?.id;
           tempRealTime.push({
             id: lineNumber,
             time: time,
@@ -886,10 +892,13 @@ function App() {
             link: link,
           });
         }
-        if (line.startsWith("      cpu time")) {
+        // if (line.startsWith("      cpu time")) {
+        if (/\bcpu time\b\s+\d/i.test(line)) {
+          // console.log(line, line.length, lineNumber);
           const split = line.split(" "),
-            time = split[19],
-            units = split[20],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -910,10 +919,14 @@ function App() {
             link: link,
           });
         }
-        if (line.startsWith("      user cpu time")) {
+        // if (line.startsWith("      user cpu time")) {
+        if (/\buser cpu time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
-            time = split[15],
-            units = split[16],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
+            // time = split[15],
+            // units = split[16],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -934,10 +947,14 @@ function App() {
             link: link,
           });
         }
-        if (line.startsWith("      system cpu time ")) {
+        // if (line.startsWith("      system cpu time ")) {
+        if (/\bsystem time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
-            time = split[13],
-            units = split[14],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
+            //   time = split[13],
+            // units = split[14],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -1135,22 +1152,25 @@ function App() {
       counts = {};
       console.log("tempUniqueTypes", tempUniqueTypes);
     },
-    //  makeDirListing = (dirsArray) => {
-    //          const obj = dirsArray.map((dir, i) => {
-    //       return (
-    //         <Box
-    //           key={dir + i}
-    //           onClick={() => {
-    //             readLocalFiles(logDirectory + "/" + dir);
-    //           }}
-    //         >
-    //           {dir}
-    //         </Box>
-    //       );
-    //     });
-    //     console.log("obj", obj);
-    //     setDirListing(obj);
-    //   },
+    makeDirListing = (dirsArray) => {
+      if (dirsArray === null) return;
+      console.log("dirsArray", dirsArray);
+      const obj = dirsArray.map((dir, i) => {
+        return (
+          <Box
+            key={dir + i}
+            sx={{ color: "blue" }}
+            onClick={() => {
+              readLocalFiles(logDirectory + "/" + dir);
+            }}
+          >
+            {dir}
+          </Box>
+        );
+      });
+      console.log("obj", obj);
+      setDirListing(obj);
+    },
     readLocalFiles = (localDir) => {
       if (mode === "local") {
         const dir = encodeURIComponent(localDir),
@@ -1163,21 +1183,21 @@ function App() {
             const dirObject = JSON.parse(text);
             // const { dirs, files } = dirObject;
             const files = dirObject,
-              dirs = null;
-            // console.log(
-            //   "dirObject",
-            //   dirObject,
-            //   "localDir",
-            //   localDir,
-            //   "dirs",
-            //   dirs,
-            //   "files",
-            //   files
-            // );
+              dirs = dirObject.filter((d) => !d.includes("."));
+            console.log(
+              "dirObject",
+              dirObject,
+              "localDir",
+              localDir,
+              "dirs",
+              dirs,
+              "files",
+              files
+            );
             setSelectedLog(null);
             setListOfDirs(dirs);
             setLogOriginalText(text);
-            // makeDirListing(dirs);
+            makeDirListing(dirs);
             setListOfLogs(
               files
                 .filter((log) => {
@@ -1273,7 +1293,7 @@ function App() {
             : [""],
         a = splitQuestionMarks[1].split("/"),
         logFileName = a.pop();
-      document.title = logFileName;
+      document.title = logFileName.split("#")[0];
       a.pop(); // remove the logFileName so we can work stuff out
       const middlePart = a.join("/") + "/" + logNames[0],
         lastPart = versionNumbers[0] ? "?version=" + versionNumbers[0] : "",
@@ -1326,13 +1346,15 @@ function App() {
   // for remote mode
   useEffect(() => {
     if (mode !== "remote") return;
+    getRulesWebDav(rulesDirectory); // get the list of rules by reading directory
+    const splitQuestionMarks = href.split("?");
+    if (splitQuestionMarks.length > 1) return; // handled in href section since we have a log specified in URL
     console.log("*** remote");
     const defaultDirectory = navigator.platform.startsWith("Win")
       ? "/general/biostat/jobs/dashboard/dev/logs"
       : "/Users/philipmason/Documents/GitHub/logviewer/tests";
     setLogDirectory(defaultDirectory);
     getLogWebDav(defaultDirectory); // get the list of logs by reading directory
-    getRulesWebDav(rulesDirectory); // get the list of rules by reading directory
     setLogText(analyse(logOriginalText));
     // eslint-disable-next-line
   }, []);
@@ -1342,6 +1364,8 @@ function App() {
   // - get the list of rules by reading directory
   useEffect(() => {
     if (mode !== "local") return;
+    const splitQuestionMarks = href.split("?");
+    if (splitQuestionMarks.length > 1) return; // handled in href section since we have a log specified in URL
     console.log("*** local");
     // console.log(navigator);
     const defaultDirectory = navigator.platform.startsWith("Win")
@@ -1758,7 +1782,7 @@ function App() {
                   sx={{
                     padding: iconPadding,
                     backgroundColor: "lightblue",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1784,7 +1808,7 @@ function App() {
                   sx={{
                     padding: iconPadding,
                     backgroundColor: "lightblue",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1811,7 +1835,7 @@ function App() {
                     padding: iconPadding,
                     backgroundColor: "red",
                     color: "white",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1839,7 +1863,7 @@ function App() {
                     padding: iconPadding,
                     backgroundColor: "red",
                     color: "white",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1865,7 +1889,7 @@ function App() {
                   sx={{
                     padding: iconPadding,
                     backgroundColor: "lightgreen",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1892,7 +1916,7 @@ function App() {
                   sx={{
                     padding: iconPadding,
                     backgroundColor: "lightgreen",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1937,10 +1961,16 @@ function App() {
                 <Colorize fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Email (not yet working)">
+            <Tooltip title="Email">
               <IconButton
                 onClick={() => {
-                  console.log("email");
+                  const email =
+                    "mailto:qs_tech_prog@argenx.com?subject=Log Viewer: " +
+                    selection +
+                    "&body=You can open the log in the Log Viewer using this link: " +
+                    encodeURIComponent(href);
+                  console.log("email", email);
+                  window.open(email, "_blank");
                 }}
                 size="small"
               >
@@ -2004,6 +2034,82 @@ function App() {
                 <Expand fontSize="small" />
               </IconButton>
             </Tooltip>
+            <Tooltip title="Information about this screen">
+              <IconButton
+                size="small"
+                // aria-label="account of current user"
+                // aria-controls="menu-appbar"
+                // aria-haspopup="true"
+                onClick={() => {
+                  setOpenInfo(true);
+                }}
+                color="info"
+                // sx={{ mt: 1 }}
+              >
+                <Info />
+              </IconButton>
+            </Tooltip>
+            <TextField
+              label="Search"
+              value={search}
+              size={"small"}
+              inputProps={{ style: { fontSize: 10, height: "1.1em" } }}
+              onChange={(event) => {
+                setSearch(event.target.value);
+              }}
+              sx={{
+                width: 250,
+                mt: 1,
+              }}
+            />
+            <Tooltip title="Next thing">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const found = logText.indexOf(search, currentLine),
+                    { current } = logRef,
+                    { innerText } = current;
+                  // const lineElement = document.querySelector(
+                  //   `.line-numbered > div:nth-child(${lineNum})`
+                  // );
+                  // if (lineElement) {
+                  //   // console.log('Scrolling to line:', lineNum);
+                  //   lineElement.scrollIntoView({
+                  //     behavior: "smooth",
+                  //     block: "start",
+                  //   });
+                  //   return;
+                  // }
+                  console.log(
+                    "found",
+                    found,
+                    "current",
+                    current
+                    // "innerText",
+                    // innerText
+                  );
+                  const loc = logRef.current.innerText.indexOf(search);
+                  console.log(loc);
+                  if (found > 0) {
+                    // jumpTo(last.id);
+                    // logRef.current.scrollBy(0, 33);
+                    setCurrentLine(found);
+                  }
+                }}
+              >
+                <ArrowDownward
+                  fontSize="small"
+                  sx={{
+                    mt: 1,
+                    padding: iconPadding,
+                    backgroundColor: "#e0ccff",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
           </Box>
           {program && <b>Program:</b>} {program} &nbsp;{" "}
           {submitted && <b>Submitted:</b>} {submitted} &nbsp;{" "}
@@ -2047,7 +2153,7 @@ function App() {
           <Box
             placeholder="Empty"
             sx={{
-              border: 1,
+              border: 0.5,
               color: "gray",
               fontSize: fontSize - 1,
               fontFamily: "courier",
@@ -2394,31 +2500,43 @@ function App() {
                 </IconButton>
               </Tooltip>
               {mermaidInfo.lines && (
-                <Chip
-                  label={mermaidInfo.lines.toLocaleString() + " lines"}
-                  sx={{
-                    fontSize: 12,
-                    float: "right",
-                  }}
-                />
+                <Tooltip title={`Copy Mermaid Code `}>
+                  <Chip
+                    label={mermaidInfo.lines.toLocaleString() + " lines"}
+                    sx={{
+                      fontSize: 12,
+                      float: "right",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(chart);
+                    }}
+                  />
+                </Tooltip>
               )}
               {mermaidInfo.characters && (
-                <Chip
-                  label={
-                    mermaidInfo.characters.toLocaleString() + " characters"
-                  }
-                  sx={{
-                    fontSize: 12,
-                    float: "right",
-                  }}
-                />
+                <Tooltip
+                  title={`Copy Mermaid Code (open in https://mermaid.live/)`}
+                >
+                  <Chip
+                    label={
+                      mermaidInfo.characters.toLocaleString() + " characters"
+                    }
+                    sx={{
+                      fontSize: 12,
+                      float: "right",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(chart);
+                    }}
+                  />
+                </Tooltip>
               )}
             </DialogTitle>
             <DialogContent
               sx={{
                 transform: `scale(${scale})`,
                 transformOrigin: "0% 0% 0px;",
-                width: Math.round(windowDimension.winWidth / scale),
+                width: Math.round(windowDimension.winWidth / scale) - 50,
               }}
             >
               <Mermaid chart={chart} useMaxWidth={useMaxWidth} />
@@ -2469,6 +2587,30 @@ function App() {
           </Dialog>
         </Grid>
       </Grid>
+      {/* Dialog with General info about this screen */}
+      <Dialog
+        fullWidth
+        maxWidth="xl"
+        onClose={() => setOpenInfo(false)}
+        open={openInfo}
+      >
+        <DialogTitle>Info about this screen</DialogTitle>
+        <DialogContent>
+          <ul>
+            <li>
+              Code for this app is held{" "}
+              <a
+                href="https://github.com/argenxQuantitativeSciences/logviewer"
+                target="_blank"
+                rel="noreferrer"
+              >
+                here
+              </a>
+              .
+            </li>
+          </ul>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

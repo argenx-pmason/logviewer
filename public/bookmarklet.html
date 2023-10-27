@@ -7,10 +7,10 @@
   <a href="https://en.wikipedia.org/wiki/Bookmarklet">What is a bookmarklet?</a><br/>
   <a href="https://make-bookmarklets.com/">This</a> is a great site if you want to make your own bookmarklets.
   <h1>
-    Drag the link below to your bookmarks or favorites bar in order to use the
+    Drag the link(s) below to your bookmarks or favorites bar in order to use the
     bookmarklet
   </h1>
-  <a
+<b>Production version: </b>  <a
     alt="View LSAF file"
     href="
     javascript:(function(document) {const iframe=document.getElementById('sasLSAF_iframe'),
@@ -30,12 +30,12 @@
     else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer/index.html?log=%27+filelink);
     else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
     " >LSAF🔍</a>
-    <br/
-    <a
-    alt="View LSAF file (experimental)"
+    <br/>
+    <b>Next version (coming soon): </b><a
+    alt="View LSAF file (next version)"
     href="
-    javascript:(function(document) {const iframe=document.getElementById('sasLSAF_iframe'),  iWindow = iframe.contentWindow, iDocument = iWindow.document,repo=iDocument.querySelector('[aria-label="Selected, Workspace"]') ? %27work%27 : %27repo%27,full=repo===%27work%27?%27WORKSPACE%27:%27REPOSITORY%27,  qs=iDocument.getElementById(%27HLS_LSAF_%27+full+%27--navLinkInput-inner%27), v = qs ? qs.value : null, lastPart = v.split(%27/%27).pop(), type=lastPart.split(%27.%27).pop(),{ href, protocol, host } = window.location, urlPrefix = protocol + %27//%27 + host,    filelink=urlPrefix+%27/lsaf/webdav/%27+repo+v;  console.log(window);  if (lastPart===%27documents%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/dashstudy/index.html?file=%27+v+%27/meta/dashstudy.json%27);    else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+v);    else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer/dev/index.html?log=%27+filelink);    else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
-    " >DEV🔍 </a>
+    javascript:(function(document) {const iframe=document.getElementById('sasLSAF_iframe'),  iWindow = iframe.contentWindow, iDocument = iWindow.document,repo=iDocument.querySelector('[aria-label="Selected, Workspace"]') ? %27work%27 : %27repo%27,full=repo===%27work%27?%27WORKSPACE%27:%27REPOSITORY%27,  qs=iDocument.getElementById(%27HLS_LSAF_%27+full+%27--navLinkInput-inner%27), v = qs ? qs.value : null, lastPart = v.split(%27/%27).pop(), type=lastPart.split(%27.%27).pop(),{ href, protocol, host } = window.location, urlPrefix = protocol + %27//%27 + host,    filelink=urlPrefix+%27/lsaf/webdav/%27+repo+v;  console.log(window);  if (lastPart===%27documents%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/dashstudy/index.html?file=%27+v+%27/meta/dashstudy.json%27);    else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+v);    else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer2/index.html?log=%27+filelink);    else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
+    " >View🔍 </a>
   <p>Once that is done you will be able to use it:</p>
   <li>
     go to

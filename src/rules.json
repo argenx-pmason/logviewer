@@ -142,8 +142,8 @@
     "interesting": false
   },
   {
-    "ruleType": "startswith",
-    "startswith": "      real time           ",
+    "ruleType": "regex",
+    "regex": "real time",
     "prefix": "<span style='color: blue'>",
     "suffix": "</span>",
     "anchor": false,
@@ -152,8 +152,8 @@
     "interesting": false
   },
   {
-    "ruleType": "startswith",
-    "startswith": "      cpu time            ",
+    "ruleType": "regex",
+    "regex": "cpu time",
     "prefix": "<span style='color: blue'>",
     "suffix": "</span>",
     "anchor": false,
@@ -162,8 +162,8 @@
     "interesting": false
   },
   {
-    "ruleType": "startswith",
-    "startswith": "      user cpu time ",
+    "ruleType": "regex",
+    "regex": "user cpu time",
     "prefix": "<span style='color: blue'>",
     "suffix": "</span>",
     "anchor": false,
@@ -172,8 +172,8 @@
     "interesting": false
   },
   {
-    "ruleType": "startswith",
-    "startswith": "      system cpu time ",
+    "ruleType": "regex",
+    "regex": "system cpu time",
     "prefix": "<span style='color: blue'>",
     "suffix": "</span>",
     "anchor": false,
@@ -182,8 +182,8 @@
     "interesting": false
   },
   {
-    "ruleType": "startswith",
-    "startswith": "      memory ",
+    "ruleType": "regex",
+    "regex": "memory",
     "prefix": "<span style='color: blue'>",
     "suffix": "</span>",
     "anchor": false,
@@ -192,8 +192,8 @@
     "interesting": false
   },
   {
-    "ruleType": "startswith",
-    "startswith": "      OS Memory ",
+    "ruleType": "regex",
+    "regex": "OS Memory",
     "prefix": "<span style='color: blue'>",
     "suffix": "</span>",
     "anchor": false,
