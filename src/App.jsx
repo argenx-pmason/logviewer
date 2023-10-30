@@ -270,7 +270,7 @@ function App() {
       // console.log("rules", rules);
       const lines = text.split("\n"),
         tempLinks = [],
-        tempLineNumberToLink = [],
+        // tempLineNumberToLink = [],
         html = lines.map((element, lineNumber) => {
           // console.log(lineNumber)
           // const lineNumber = ln + 1; // so the first line will be line 1, not line 0
@@ -295,6 +295,7 @@ function App() {
             return null;
           let preparedToReturn = element;
           // make sure we have rules that handle all the things we might want to link to, so that there will be a link to be used
+          // we only handle the first match to a rule, and then ignore any further ones
           rules.forEach((rule) => {
             if (
               !matchFound &&
@@ -303,7 +304,8 @@ function App() {
                 (rule.ruleType === "regex" &&
                   rule.regularExpression.test(element)))
             ) {
-              id++;
+              // id++;
+              id = lineNumber;
               // console.log('id',id)
               matchFound = true; // set this showing we have matched a rule for this line, so we dont want to match any other rules for this line
               const tag = rule.prefix,
@@ -317,7 +319,7 @@ function App() {
                   type: rule.type,
                   interesting: rule.interesting,
                 });
-              tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
+              // tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
               incrementCount(rule.type);
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
               // handle link creation, where we have a regex and want to make something using the matching text
@@ -330,7 +332,7 @@ function App() {
                 const matches = element.match(rule.regularExpression);
                 // if (id>648) console.log('-')
                 matches.forEach((match) => {
-                  preparedToReturn = "<span>" + element + "</span>";
+                  preparedToReturn = element;
                   // preparedToReturn = element;
                   if (rule.prefix.includes("{{matched}}")) {
                     //TODO: if match ends in . then remove it when making link
@@ -344,7 +346,7 @@ function App() {
                         encodeURI(element)
                       ),
                       d = rule.suffix.replace("{{line}}", element);
-                    preparedToReturn = "<span id=" + id + "></span>" + c + d;
+                    preparedToReturn = c + d;
                   }
                 });
               }
@@ -383,18 +385,21 @@ function App() {
       // }
       // console.log("tempBadgeCount", tempBadgeCount);
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
-      setLineNumberToLink(tempLineNumberToLink);
+      // setLineNumberToLink(tempLineNumberToLink);
       // console.log(tempLineNumberToLink);
 
       const modified = html
-        .filter((element) => element != null)
         .map((h, hid) => {
           let extra = "";
           if (showLineNumbers) extra = zeroPad(hid, 7) + "|" + h;
-          return extra + h;
-        });
+          if (h !== null) return `<span id="${hid}">` + extra + h + "</span>";
+          return null;
+        })
+        .filter((element) => element != null);
+
       // console.log(showLineNumbers);
-      return modified.join("<br/>");
+      // if (mode === "local") return modified.join("\n"); else
+      return modified.join("\n");
     },
     selectLog = (index) => {
       console.log("> selectLog function called", index);
@@ -443,7 +448,7 @@ function App() {
     [selection, setSelection] = useState(""),
     [selectedLog, setSelectedLog] = useState(null),
     [links, setLinks] = useState(null),
-    [lineNumberToLink, setLineNumberToLink] = useState(null),
+    // [lineNumberToLink, setLineNumberToLink] = useState(null),
     [waitGetDir, setWaitGetDir] = useState(false),
     [waitSelectLog, setWaitSelectLog] = useState(false),
     [useMaxWidth] = useState(true),
@@ -746,9 +751,10 @@ function App() {
             dset = split[10],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempInputs.push({
             id: lineNumber,
             libname: libname,
@@ -779,9 +785,10 @@ function App() {
               long.substring(from1).indexOf(",")
             ),
             size = to1 ? long.substring(from1, to1 + from1) : "",
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempFiles.push({
             id: lineNumber,
             type: "In",
@@ -799,9 +806,10 @@ function App() {
             vars = split[9],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempOutputs.push({
             id: lineNumber,
             libname: libname,
@@ -820,9 +828,10 @@ function App() {
             dset = split[1],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id,
+            link = lineNumber,
+            // link = lineNumberToLink.filter(
+            //   (link) => link.lineNumber === lineNumber
+            // )[0].id,
             prev = logArray[lineNumber - 1],
             split2 = prev.split(" "),
             obs = prev.startsWith("NOTE: The import data set has")
@@ -851,9 +860,10 @@ function App() {
             vars = line.includes("been modified") ? split[7] : split[8],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
 
           tempOutputs.push({
             id: lineNumber,
@@ -880,9 +890,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0]?.id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0]?.id;
           tempRealTime.push({
             id: lineNumber,
             time: time,
@@ -907,9 +918,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -935,9 +947,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -963,9 +976,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -1739,6 +1753,118 @@ function App() {
                 }
               />
             </Tooltip>
+            <Tooltip title="Show Chart">
+              <IconButton size="small" onClick={() => setOpenModal(true)}>
+                <BarChart fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Choose rules used to parse logs">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setAnchorEl(e.currentTarget);
+                  setOpenRulesMenu(true);
+                }}
+              >
+                <SquareFoot fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="View rules">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setOpenRulesModal(true);
+                }}
+              >
+                <Visibility fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Extract SAS code (if possible)">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  extractSasCode();
+                }}
+              >
+                <Colorize fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Email">
+              <IconButton
+                onClick={() => {
+                  const email =
+                    "mailto:qs_tech_prog@argenx.com?subject=Log Viewer: " +
+                    selection +
+                    "&body=You can open the log in the Log Viewer using this link: " +
+                    encodeURIComponent(href);
+                  console.log("email", email);
+                  window.open(email, "_blank");
+                }}
+                size="small"
+              >
+                <Email fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Refresh view by analysing the log again">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setAnalyseAgain(!analyseAgain);
+                }}
+              >
+                <Refresh fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Snackbar
+              open={openPopUp}
+              onClose={() => setOpenPopUp(false)}
+              autoHideDuration={3000}
+              message={popUpMessage}
+            />
+            <Menu
+              open={openRulesMenu}
+              onClose={handleCloseRulesMenu}
+              anchorEl={anchorEl}
+            >
+              {listOfRules &&
+                listOfRules.length > 0 &&
+                listOfRules.map((rule, id) => (
+                  <MenuItem
+                    key={id}
+                    onClick={(e) => handleCloseRulesMenu(rule.value)}
+                  >
+                    {rule.label}
+                  </MenuItem>
+                ))}
+            </Menu>
+            <Tooltip title={`Compress by ${increment}`}>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setVerticalSplit(verticalSplit + increment);
+                }}
+                // sx={{
+                //   backgroundColor: buttonBackground,
+                //   color: "yellow",
+                // }}
+              >
+                <Compress fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={`Expand by ${increment}`}>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setVerticalSplit(verticalSplit - increment);
+                }}
+              >
+                <Expand fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Page Down">
               <IconButton
                 size="small"
@@ -1922,133 +2048,6 @@ function App() {
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Show Chart">
-              <IconButton size="small" onClick={() => setOpenModal(true)}>
-                <BarChart fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Choose rules used to parse logs">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={(e) => {
-                  setAnchorEl(e.currentTarget);
-                  setOpenRulesMenu(true);
-                }}
-              >
-                <SquareFoot fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="View rules">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={(e) => {
-                  setOpenRulesModal(true);
-                }}
-              >
-                <Visibility fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Extract SAS code (if possible)">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={(e) => {
-                  extractSasCode();
-                }}
-              >
-                <Colorize fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Email">
-              <IconButton
-                onClick={() => {
-                  const email =
-                    "mailto:qs_tech_prog@argenx.com?subject=Log Viewer: " +
-                    selection +
-                    "&body=You can open the log in the Log Viewer using this link: " +
-                    encodeURIComponent(href);
-                  console.log("email", email);
-                  window.open(email, "_blank");
-                }}
-                size="small"
-              >
-                <Email fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Refresh view by analysing the log again">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={(e) => {
-                  setAnalyseAgain(!analyseAgain);
-                }}
-              >
-                <Refresh fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Snackbar
-              open={openPopUp}
-              onClose={() => setOpenPopUp(false)}
-              autoHideDuration={3000}
-              message={popUpMessage}
-            />
-            <Menu
-              open={openRulesMenu}
-              onClose={handleCloseRulesMenu}
-              anchorEl={anchorEl}
-            >
-              {listOfRules &&
-                listOfRules.length > 0 &&
-                listOfRules.map((rule, id) => (
-                  <MenuItem
-                    key={id}
-                    onClick={(e) => handleCloseRulesMenu(rule.value)}
-                  >
-                    {rule.label}
-                  </MenuItem>
-                ))}
-            </Menu>
-            <Tooltip title={`Compress by ${increment}`}>
-              <IconButton
-                size="small"
-                onClick={() => {
-                  setVerticalSplit(verticalSplit + increment);
-                }}
-                // sx={{
-                //   backgroundColor: buttonBackground,
-                //   color: "yellow",
-                // }}
-              >
-                <Compress fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={`Expand by ${increment}`}>
-              <IconButton
-                size="small"
-                onClick={() => {
-                  setVerticalSplit(verticalSplit - increment);
-                }}
-              >
-                <Expand fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Information about this screen">
-              <IconButton
-                size="small"
-                // aria-label="account of current user"
-                // aria-controls="menu-appbar"
-                // aria-haspopup="true"
-                onClick={() => {
-                  setOpenInfo(true);
-                }}
-                color="info"
-                // sx={{ mt: 1 }}
-              >
-                <Info />
-              </IconButton>
-            </Tooltip>
             <TextField
               label="Search"
               value={search}
@@ -2062,40 +2061,36 @@ function App() {
                 mt: 1,
               }}
             />
-            <Tooltip title="Next thing">
+            <Tooltip title="Next search term">
               <IconButton
                 size="small"
                 sx={{ padding: iconPadding }}
                 onClick={() => {
-                  const found = logText.indexOf(search, currentLine),
-                    { current } = logRef,
-                    { innerText } = current;
-                  // const lineElement = document.querySelector(
-                  //   `.line-numbered > div:nth-child(${lineNum})`
-                  // );
-                  // if (lineElement) {
-                  //   // console.log('Scrolling to line:', lineNum);
-                  //   lineElement.scrollIntoView({
-                  //     behavior: "smooth",
-                  //     block: "start",
-                  //   });
-                  //   return;
-                  // }
+                  const found = logText.indexOf(
+                      search,
+                      currentLine ? currentLine + 1 : 0
+                    ),
+                    id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+                    section = logText.substring(id1, found),
+                    id = /\d+/.exec(section),
+                    { current } = logRef;
+                  window.location.hash = "#" + id;
                   console.log(
+                    "currentLine",
+                    currentLine,
                     "found",
                     found,
+                    "id1",
+                    id1,
+                    "section",
+                    section,
+                    "id",
+                    id,
                     "current",
                     current
-                    // "innerText",
-                    // innerText
                   );
-                  const loc = logRef.current.innerText.indexOf(search);
-                  console.log(loc);
-                  if (found > 0) {
-                    // jumpTo(last.id);
-                    // logRef.current.scrollBy(0, 33);
-                    setCurrentLine(found);
-                  }
+                  if (found > 0) setCurrentLine(found);
+                  else setCurrentLine(0);
                 }}
               >
                 <ArrowDownward
@@ -2108,6 +2103,64 @@ function App() {
                     borderRadius: 3,
                   }}
                 />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous search term">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const found = logText
+                      .substring(0, currentLine ? currentLine - 1 : nLines - 1)
+                      .lastIndexOf(search),
+                    id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+                    section = logText.substring(id1, found),
+                    id = /\d+/.exec(section),
+                    { current } = logRef;
+                  window.location.hash = "#" + id;
+                  console.log(
+                    "currentLine",
+                    currentLine,
+                    "found",
+                    found,
+                    "id1",
+                    id1,
+                    "section",
+                    section,
+                    "id",
+                    id,
+                    "current",
+                    current
+                  );
+                  if (found > 0) setCurrentLine(found);
+                  else setCurrentLine(nLines - 1);
+                }}
+              >
+                <ArrowUpward
+                  fontSize="small"
+                  sx={{
+                    mt: 1,
+                    padding: iconPadding,
+                    backgroundColor: "#e0ccff",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>{" "}
+            <Tooltip title="Information about this screen">
+              <IconButton
+                size="small"
+                // aria-label="account of current user"
+                // aria-controls="menu-appbar"
+                // aria-haspopup="true"
+                onClick={() => {
+                  setOpenInfo(true);
+                }}
+                color="info"
+                sx={{ padding: iconPadding }}
+              >
+                <Info />
               </IconButton>
             </Tooltip>
           </Box>
@@ -2500,7 +2553,7 @@ function App() {
                 </IconButton>
               </Tooltip>
               {mermaidInfo.lines && (
-                <Tooltip title={`Copy Mermaid Code `}>
+                <Tooltip title={`Copy Mermaid Code`}>
                   <Chip
                     label={mermaidInfo.lines.toLocaleString() + " lines"}
                     sx={{
@@ -2514,9 +2567,7 @@ function App() {
                 </Tooltip>
               )}
               {mermaidInfo.characters && (
-                <Tooltip
-                  title={`Copy Mermaid Code (open in https://mermaid.live/)`}
-                >
+                <Tooltip title={`Copy Mermaid Code and open a mermaid editor`}>
                   <Chip
                     label={
                       mermaidInfo.characters.toLocaleString() + " characters"
@@ -2527,6 +2578,9 @@ function App() {
                     }}
                     onClick={() => {
                       navigator.clipboard.writeText(chart);
+                      setTimeout(function () {
+                        window.open("https://mermaid.live/");
+                      }, 500);
                     }}
                   />
                 </Tooltip>
