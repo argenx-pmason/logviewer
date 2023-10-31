@@ -559,5 +559,29 @@
     "type": "OTHER",
     "interesting": false,
     "substitute": false
+  },
+  {
+    "description": "Produced by %log_elapsed_time macro to check performance of code",
+    "ruleType": "startswith",
+    "startswith": "NOW: ",
+    "prefix": "<span style='color: #996633'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "#996633",
+    "type": "INFO",
+    "interesting": false,
+    "substitute": false
+  },
+  {
+    "description": "INFO messages",
+    "ruleType": "startswith",
+    "startswith": "INFO: ",
+    "prefix": "<span style='color: #996633'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "#996633",
+    "type": "INFO",
+    "interesting": false,
+    "substitute": false
   }
 ]
