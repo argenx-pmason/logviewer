@@ -7,7 +7,31 @@
     "suffix": "</span>",
     "anchor": true,
     "linkColor": "purple",
-    "type": "LSAF",
+    "type": "LSAF_RC",
+    "interesting": false,
+    "substitute": false
+  },
+  {
+    "description": "LSAF Messages",
+    "ruleType": "regex",
+    "regex": ".\\*\\s+_lsafMsg_=",
+    "prefix": "<span style='color: darkgreen'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "darkgreen",
+    "type": "LSAF_MSG",
+    "interesting": false,
+    "substitute": false
+  },
+  {
+    "description": "LSAF Notes",
+    "ruleType": "startswith",
+    "startswith": "NOTE: SAS Life Science Analytics Framework Macro",
+    "prefix": "<span style='color: brown'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "brown",
+    "type": "LSAF_NOTES",
     "interesting": false,
     "substitute": false
   },

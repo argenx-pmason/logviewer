@@ -290,7 +290,9 @@ function App() {
           }
           if (
             !showMacroLines &&
-            (element.startsWith("MLOGIC(") || element.startsWith("SYMBOLGEN: "))
+            (element.startsWith("MLOGIC(") ||
+              element.startsWith("SYMBOLGEN: ") ||
+              element.startsWith("MAUTOCOMPLOC: "))
           )
             return null;
           let preparedToReturn = element;
@@ -481,7 +483,7 @@ function App() {
     // server = href.split("//")[1].split("/")[0],
     [rulesDirectory, setRulesDirectory] = useState(
       navigator.platform.startsWith("Win") && mode === "remote"
-        ? "/general/biostat/tools/logviewer/rules"
+        ? "/general/biostat/tools/logviewer2/rules"
         : navigator.platform.startsWith("Win") && mode === "local"
         ? "C:/github/logviewer/src"
         : "/Users/philipmason/Documents/GitHub/logviewer/src"
@@ -1723,7 +1725,7 @@ function App() {
                 }
               />
             </Tooltip>
-            <Tooltip title="Show Mprint/Mlogic/Symbolgen Lines">
+            <Tooltip title="Show Mprint/Mlogic/Symbolgen/Mautocomploc Lines">
               <FormControlLabel
                 sx={{ marginRight: iconPadding }}
                 control={
