@@ -66,7 +66,7 @@ type=lastPart.split(%27.%27).pop(),
 urlPrefix = protocol + %27//%27 + host,
 filelink=urlPrefix+%27/lsaf/filedownload/sdd%27+ encodeURIComponent(%27%3A%27)+%27//%27+v;
 if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+v);
-else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer/index.html?log=%27+filelink);
+else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer2/index.html?log=%27+filelink);
 else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);
 else alert(%27Please select a file type that is supported. Or let Phil know if you would like other file types supported.%27);
 })}) (document);"

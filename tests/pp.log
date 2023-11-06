@@ -18,6 +18,7 @@ real time           10.00 seconds
 
 cpu time            0.01 seconds
 
+NOTE: SAS SET OPTION OBS=0 AND WILL CONTINUE TO CHECK STATEMENTS.
 
 MPRINT(PPMACRO):  *********************************************************************** * Project : /general/biostat/jobs/dashboard/dev/ * Program : getlsaffolderinfo.sas * Author : mbusselen * Creation Date : 2022-03-28 * Purpose : contains supporting
 macros for post-processing dashboard generation ***********************************************************************;
