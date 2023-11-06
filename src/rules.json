@@ -1,153 +1,25 @@
 [
   {
-    "ruleType": "startswith",
-    "startswith": "NOTE:",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": "NOTE",
-    "interesting": false
+    "ruleType": "regex",
+    "regex": "(?:^ERROR:|^\\s*ERROR\\s+)(?!.*\\*\\*\\* PROBLEM: LINE|.*WITHOUT ERROR|.*MPRINT|.*MLOGIC|.*SYMBOLGEN)",
+    "prefix": "<a href='https://communities.sas.com/t5/forums/searchpage/tab/message?q={{line}}' target='_blank' style='color:red'>",
+    "suffix": "{{line}}</a>",
+    "anchor": true,
+    "linkColor": "red",
+    "type": "ERROR",
+    "interesting": true,
+    "substitute": true
   },
   {
     "ruleType": "regex",
-    "regex": "(?:^WARNING:)(?!.*PRODUCT WITH WHICH|.*PRODUCT WITH WHICH|.*IS ASSOCIATED WILL EXPIRE|.*MPRINT|.*MLOGIC|.*SYMBOLGEN|.*IS ASSOCIATED IS SCHEDULED TO EXPIRE|.*YOUR SYSTEM IS SCHEDULED TO EXPIRE)",
-    "prefix": "<span style='color: green'>",
-    "suffix": "</span>",
+    "regex": "(?:^WARNING:|^WARNING\\s)(?!.*PRODUCT WITH WHICH|.*PRODUCT WITH WHICH|.*IS ASSOCIATED WILL EXPIRE|.*MPRINT|.*MLOGIC|.*SYMBOLGEN|.*IS ASSOCIATED IS SCHEDULED TO EXPIRE|.*YOUR SYSTEM IS SCHEDULED TO EXPIRE)",
+    "prefix": "<a href='https://communities.sas.com/t5/forums/searchpage/tab/message?q={{line}}' target='_blank' style='color:green'>",
+    "suffix": "{{line}}</a>",
     "anchor": true,
     "linkColor": "green",
     "type": "WARN",
-    "interesting": true
-  },
-  {
-    "ruleType": "regex",
-    "regex": "(?:^ERROR:|^\\s*ERROR\\s+)(?!.*\\*\\*\\* PROBLEM: LINE|.*WITHOUT ERROR|.*MPRINT|.*MLOGIC|.*SYMBOLGEN)",
-    "prefix": "<span style='color: red'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "red",
-    "type": "ERROR",
-    "interesting": true
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "MPRINT(",
-    "prefix": "<span style='color: darkgray'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": "MPRINT",
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "===",
-    "prefix": "<span style='background-color: Ivory'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "Notice: ",
-    "prefix": "<span style='background-color: Aqua'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "blue",
-    "type": "NOTICE",
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      real time           ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      cpu time            ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      user cpu time ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      system cpu time ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      memory ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      OS Memory ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      Timestamp ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      Step Count ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "regex",
-    "regex": "(?:^\\s*FATAL)",
-    "prefix": "<span style='color: red'>",
-    "suffix": "</span>",
-    "anchor": true,
-    "linkColor": "red",
-    "type": "ERROR",
-    "interesting": true
+    "interesting": true,
+    "substitute": true
   },
   {
     "ruleType": "regex",
@@ -201,7 +73,7 @@
   },
   {
     "ruleType": "regex",
-    "regex": "NOTE: ERROR DETECTED IN ANNOTATE= DATASET",
+    "regex": "NOTE: ERROR DETECTED",
     "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
@@ -230,12 +102,143 @@
     "interesting": true
   },
   {
+    "ruleType": "startswith",
+    "startswith": "NOTE:",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": "NOTE",
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "MPRINT(",
+    "prefix": "<span style='color: darkgray'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": "MPRINT",
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "===",
+    "prefix": "<span style='background-color: Ivory'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "Notice: ",
+    "prefix": "<span style='background-color: #ccddff; color:#000000'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "blue",
+    "type": "NOTICE",
+    "interesting": false
+  },
+  {
+    "ruleType": "regex",
+    "regex": "real time",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "regex",
+    "regex": "cpu time",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "regex",
+    "regex": "user cpu time",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "regex",
+    "regex": "system cpu time",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "regex",
+    "regex": "memory",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "regex",
+    "regex": "OS Memory",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      Timestamp ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      Step Count ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "regex",
+    "regex": "(?:^\\s*FATAL)",
+    "prefix": "<span style='color: red'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "red",
+    "type": "ERROR",
+    "interesting": true
+  },
+
+  {
     "ruleType": "regex",
     "regex": "Note: Invalid",
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -252,10 +255,10 @@
   {
     "ruleType": "regex",
     "regex": "W\\.D format was too small",
-    "prefix": "<span style='color: orange'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -275,7 +278,7 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -285,17 +288,17 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
   {
     "ruleType": "regex",
     "regex": "was not found or could not be loaded",
-    "prefix": "<span style='color: orange'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -325,7 +328,7 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -335,17 +338,17 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
   {
     "ruleType": "regex",
     "regex": "variables have conflicting attributes",
-    "prefix": "<span style='color: orange'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -382,10 +385,10 @@
   {
     "ruleType": "regex",
     "regex": "unequal",
-    "prefix": "<span style='color: orange'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -412,20 +415,20 @@
   {
     "ruleType": "regex",
     "regex": "Division by zero detected",
-    "prefix": "<span style='color: orange'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
   {
     "ruleType": "regex",
     "regex": "Mathematical operation could not be performed",
-    "prefix": "<span style='color: orange'>",
+    "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -445,7 +448,7 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "orange",
+    "linkColor": "purple",
     "type": "OTHER",
     "interesting": true
   },
@@ -534,7 +537,7 @@
     "substitute": true
   },
   {
-    "description": "Look for paths to a file or directory starting with /general. Then create a link to fileviewer.",
+    "description": "Look for paths to a file or directory starting with http. Then create a link to it.",
     "ruleType": "regex",
     "regex": "http[s]?\\:[\\/\\w+|\\-|.]*",
     "prefix": "<a href='{{matched}}' target='_blank'>",
@@ -552,8 +555,32 @@
     "prefix": "<span style='color: purple'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "blue",
+    "linkColor": "purple",
     "type": "OTHER",
+    "interesting": false,
+    "substitute": false
+  },
+  {
+    "description": "Produced by %log_elapsed_time macro to check performance of code",
+    "ruleType": "startswith",
+    "startswith": "NOW: ",
+    "prefix": "<span style='color: #996633'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "#996633",
+    "type": "INFO",
+    "interesting": false,
+    "substitute": false
+  },
+  {
+    "description": "INFO messages",
+    "ruleType": "startswith",
+    "startswith": "INFO: ",
+    "prefix": "<span style='color: #996633'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "#996633",
+    "type": "INFO",
     "interesting": false,
     "substitute": false
   }

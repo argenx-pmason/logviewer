@@ -3,7 +3,6 @@ import Select from "react-select";
 import {
   Box,
   Grid,
-  Typography,
   Badge,
   Tooltip,
   IconButton,
@@ -15,6 +14,15 @@ import {
   CircularProgress,
   Tabs,
   Tab,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Chip,
+  Menu,
+  MenuItem,
+  Snackbar,
+  DialogActions,
+  DialogContentText,
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -23,10 +31,7 @@ import { LicenseInfo } from "@mui/x-data-grid-pro";
 import { getDir, getVersions, xmlToJson } from "./utility";
 import "./App.css";
 // rules are kept on LSAF in /general/biostat/tools/common/metadata/rules.json
-import rules from "./rules.json";
-import sample1 from "./job_adsl.log";
-import sample2 from "./sample.log";
-
+import defaultRules from "./rules.json";
 import {
   Add,
   Remove,
@@ -38,31 +43,63 @@ import {
   ArrowDownward,
   SquareFoot,
   FileDownloadDone,
+  BarChart,
+  Close,
   Compress,
   Expand,
+  ZoomIn,
+  ZoomOut,
+  Colorize,
+  Visibility,
+  Publish,
+  Refresh,
+  Info,
+  Email,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
+// import Mermaid from "react-mermaid";
+import Mermaid from "./Mermaid";
 
 function App() {
   LicenseInfo.setLicenseKey(
-    "5b931c69b031b808de26d5902e04c36fTz00Njk0NyxFPTE2ODg4MDI3MDM3MjAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
+    "369a1eb75b405178b0ae6c2b51263cacTz03MTMzMCxFPTE3MjE3NDE5NDcwMDAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
   );
   const rowHeight = 22,
     increment = 0.25,
+    [chart, setChart] = useState(`flowchart TD
+    Start --> Stop`),
+    [openModal, setOpenModal] = useState(false),
     [verticalSplit, setVerticalSplit] = useState(3),
     urlPrefix = window.location.protocol + "//" + window.location.host,
     filePrefix = "/lsaf/filedownload/sdd%3A//",
     webDavPrefix = urlPrefix + "/lsaf/webdav/repo",
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
+    [showLineNumbers, setshowLineNumbers] = useState(null),
+    [dirListing, setDirListing] = useState(null),
     logRef = createRef(),
-    localFileRef = createRef(),
+    // localFileRef = createRef(),
     iconPadding = 0.1,
+    [openInfo, setOpenInfo] = useState(false),
     // [showFileSelector, setShowFileSelector] = useState(false),
     [lastUrl, setLastUrl] = useState(null),
+    [search, setSearch] = useState(null),
     [lastShowSource, setLastShowSource] = useState(null),
     [lastShowMacroLines, setLastShowMacroLines] = useState(null),
+    [uniqueTypes, setUniqueTypes] = useState(null),
     [nLines, setNLines] = useState(null),
+    [openRulesModal, setOpenRulesModal] = useState(false),
+    // handleClickOpenRulesModal = () => {
+    //   setOpenRulesModal(true);
+    // },
+    handleCloseRulesModal = () => {
+      setOpenRulesModal(false);
+    },
+    [localUrl, setLocalUrl] = useState(null),
+    [scale, setScale] = useState(1),
+    [mermaidInfo, setMermaidInfo] = useState({ characters: null, lines: null }),
+    [rules, setRules] = useState(defaultRules),
+    [anchorEl, setAnchorEl] = useState(null),
     getLog = (url) => {
       // const username = "",
       //   password = "",
@@ -76,19 +113,50 @@ function App() {
         showMacroLines === lastShowMacroLines
       )
         return; // optimise process to avoid loading the same thing multiple times
-      console.log("getLog ", url);
-      fetch(url).then(function (response) {
-        setLastUrl(url);
+      if (mode === "local") {
         setLastShowMacroLines(showMacroLines);
         setLastShowSource(showSource);
-        response.text().then(function (text) {
-          setLogOriginalText(text);
-          const newText = analyse(text); // make the log text with links and lookup for line to link
-          setLogText(newText);
+        fetch(localUrl).then(function (response) {
+          // console.log(response);
+          if (response.type !== "basic") {
+            if (response.ok) {
+              response.text().then(function (text) {
+                console.log(
+                  `${text.length} characters read from file ${localUrl}`
+                );
+                setLogOriginalText(text);
+                setLogText(analyse(text));
+              });
+            } else {
+              const message =
+                "Getting log failed, response = " + response.status;
+              setLogOriginalText(message);
+              setLogText("<p>" + message + "</p>");
+            }
+          }
         });
-      });
+      } else {
+        console.log("getLog:- url = ", url);
+        // updateRules();
+        fetch(url).then(function (response) {
+          setLastUrl(url);
+          setLastShowMacroLines(showMacroLines);
+          setLastShowSource(showSource);
+          if (response.ok) {
+            response.text().then(function (text) {
+              setLogOriginalText(text);
+              setLogText(analyse(text));
+            });
+          } else {
+            const message = "Getting log failed, response = " + response.status;
+            setLogOriginalText(message);
+            setLogText("<p>" + message + "</p>");
+          }
+        });
+      }
     },
     [listOfLogs, setListOfLogs] = useState(null),
+    [listOfDirs, setListOfDirs] = useState(null),
     [fontSize, setFontSize] = useState(12),
     [leftPanelWidth, setLeftPanelWidth] = useState(6),
     [rightPanelWidth, setRightPanelWidth] = useState(6),
@@ -102,7 +170,8 @@ function App() {
         winHeight: window.innerHeight,
       });
     },
-    counts = {},
+    zeroPad = (num, places) => String(num).padStart(places, "0"),
+    // [counts, setCounts] = useState({}),
     [selectedLocalFile, setSelectedLocalFile] = useState(""),
     incrementCount = (type) => {
       if (!counts.hasOwnProperty(type)) counts[type] = 0;
@@ -110,28 +179,45 @@ function App() {
       return counts[type];
     },
     [tabValue, changeTabValue] = useState(0),
-    [badgeCountError, setBadgeCountError] = useState(0),
-    [badgeCountWarn, setBadgeCountWarn] = useState(0),
-    [badgeCountNotice, setBadgeCountNotice] = useState(0),
-    [badgeCountJob, setBadgeCountJob] = useState(0),
-    [badgeCountSerious, setBadgeCountSerious] = useState(0),
-    [badgeCountOther, setBadgeCountOther] = useState(0),
+    [badgeCount, setBadgeCount] = useState({}),
+    [check, setCheck] = useState({}),
+    changeCheck = (type) => {
+      if (check.hasOwnProperty(type)) {
+        const newCheck = { ...check };
+        newCheck[type] = !newCheck[type];
+        setCheck(newCheck);
+      } else {
+        const newCheck = { ...check };
+        newCheck[type] = true;
+        setCheck(newCheck);
+      }
+    },
     [currentLine, setCurrentLine] = useState(1),
     [macrosSelected, setMacrosSelected] = useState(null),
     resetCounts = () => {
-      setBadgeCountError(0);
-      setBadgeCountWarn(0);
-      setBadgeCountNotice(0);
-      setBadgeCountSerious(0);
-      setBadgeCountJob(0);
-      setBadgeCountOther(0);
+      console.log("resetCounts");
+      // const tempBadgeCount = {},
+      //   tempCheck = {};
+      // uniqueTypes.forEach((type) => {
+      //   tempBadgeCount[type] = 0;
+      // tempBadgeCheck[type] = 0;
+      // });
+      // setBadgeCount(tempBadgeCount);
+      // setCheck(tempCheck);
+      if (!uniqueTypes) return;
+      uniqueTypes.forEach((type) => {
+        badgeCount[type] = 0;
+        check[type] = true;
+        counts[type] = 0;
+      });
+      counts = {};
     },
     selectStyles = {
       control: (baseStyles, state) => ({
         ...baseStyles,
         fontSize: "12px",
         marginLeft: 3,
-        background: "#eaf3d8",
+        background: "#c5e1c5",
         border: state.isFocused ? "1px solid #0000ff" : "2px solid #00ffff",
         // borderColor: state.isFocused ? "green" : "red",
         // "&:hover": {
@@ -148,16 +234,45 @@ function App() {
       //   border: "2px solid #ff8b67",
       // }),
     },
+    [popUpMessage, setPopUpMessage] = useState(null),
+    [openPopUp, setOpenPopUp] = useState(false),
+    extractSasCode = (text) => {
+      if (!logOriginalText) return;
+      let lastLineNumber = null;
+      const sasCode = logOriginalText
+        .split("\n")
+        .filter((element) => /^(\d+ )/.test(element))
+        .map((line) => {
+          const lineNumber = line.split(" ")[0],
+            content = line.replace(/\d+\s+[\\+|\\!]?([^\n]*)/, "$1"),
+            actual = lineNumber.Number;
+          if (!lastLineNumber || actual > lastLineNumber) {
+            lastLineNumber = actual;
+            return content;
+          } else return null;
+        })
+        .filter((element) => element != null);
+
+      navigator.clipboard.writeText(sasCode.join("\n"));
+      setPopUpMessage("SAS code copied to clipboard");
+      setOpenPopUp(true);
+    },
+    // use rules to analyse text and modify it
     analyse = (text) => {
+      if (text === null || text.length === 0) return;
+      console.log("analyse", text.length);
+      resetCounts();
+      // Object.keys(badgeCount).forEach((key) => {
+      //   badgeCount[key] = 0;
+      //   counts[key] = 0;
+      // });
       let id = 0;
-      rules.forEach((rule) => {
-        if (rule.ruleType === "regex")
-          rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
-      });
+      // console.log("rules", rules);
       const lines = text.split("\n"),
         tempLinks = [],
-        tempLineNumberToLink = [],
+        // tempLineNumberToLink = [],
         html = lines.map((element, lineNumber) => {
+          // console.log(lineNumber)
           // const lineNumber = ln + 1; // so the first line will be line 1, not line 0
           let matchFound = false;
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
@@ -175,11 +290,14 @@ function App() {
           }
           if (
             !showMacroLines &&
-            (element.startsWith("MLOGIC(") || element.startsWith("SYMBOLGEN: "))
+            (element.startsWith("MLOGIC(") ||
+              element.startsWith("SYMBOLGEN: ") ||
+              element.startsWith("MAUTOCOMPLOC: "))
           )
             return null;
           let preparedToReturn = element;
           // make sure we have rules that handle all the things we might want to link to, so that there will be a link to be used
+          // we only handle the first match to a rule, and then ignore any further ones
           rules.forEach((rule) => {
             if (
               !matchFound &&
@@ -188,7 +306,9 @@ function App() {
                 (rule.ruleType === "regex" &&
                   rule.regularExpression.test(element)))
             ) {
-              id++;
+              // id++;
+              id = lineNumber;
+              // console.log('id',id)
               matchFound = true; // set this showing we have matched a rule for this line, so we dont want to match any other rules for this line
               const tag = rule.prefix,
                 prefix = tag.substring(0, tag.length - 1) + ` id='${id}'>`;
@@ -201,29 +321,8 @@ function App() {
                   type: rule.type,
                   interesting: rule.interesting,
                 });
-              tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
-              const count = incrementCount(rule.type);
-              switch (rule.type) {
-                case "ERROR":
-                  setBadgeCountError(count);
-                  break;
-                case "WARN":
-                  setBadgeCountWarn(count);
-                  break;
-                case "SERIOUS":
-                  setBadgeCountSerious(count);
-                  break;
-                case "JOB":
-                  setBadgeCountJob(count);
-                  break;
-                case "NOTICE":
-                  setBadgeCountNotice(count);
-                  break;
-                case "OTHER":
-                  setBadgeCountOther(count);
-                  break;
-                default:
-              }
+              // tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
+              incrementCount(rule.type);
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
               // handle link creation, where we have a regex and want to make something using the matching text
               if (
@@ -231,36 +330,98 @@ function App() {
                 rule.substitute &&
                 rule.regularExpression.test(element)
               ) {
+                // if (id>648) console.log('-')
                 const matches = element.match(rule.regularExpression);
+                // if (id>648) console.log('-')
                 matches.forEach((match) => {
-                  //TODO: if match ends in . then remove it when making link
-                  const a = rule.prefix.replace("{{matched}}", match),
-                    b = rule.suffix.replace("{{matched}}", match);
-                  preparedToReturn = element.replace(match, a + b);
-                  if (match.startsWith("/general/biostat")) {
-                    //TODO - add some code to put in auto links
+                  preparedToReturn = element;
+                  // preparedToReturn = element;
+                  if (rule.prefix.includes("{{matched}}")) {
+                    //TODO: if match ends in . then remove it when making link
+                    const a = rule.prefix.replace("{{matched}}", match),
+                      b = rule.suffix.replace("{{matched}}", match);
+                    preparedToReturn = element.replace(match, a + b);
+                  }
+                  if (rule.prefix.includes("{{line}}")) {
+                    const c = rule.prefix.replace(
+                        "{{line}}",
+                        encodeURI(element)
+                      ),
+                      d = rule.suffix.replace("{{line}}", element);
+                    preparedToReturn = c + d;
                   }
                 });
               }
             }
           });
+          // console.log("-");
           setLinks(tempLinks);
           return preparedToReturn;
         });
+
+      // resetCounts();
+      if (uniqueTypes) {
+        uniqueTypes.forEach((type) => {
+          badgeCount[type] = counts[type];
+        });
+      } else {
+        Object.keys(counts).forEach((type) => {
+          badgeCount[type] = counts[type];
+        });
+      }
+      // console.log(
+      //   "uniqueTypes",
+      //   uniqueTypes,
+      //   "counts",
+      //   counts,
+      //   "badgeCount",
+      //   badgeCount
+      // );
+      // const tempBadgeCount = {};
+      // if (uniqueTypes) {
+      //   uniqueTypes.forEach((type) => {
+      //     // if (counts.hasOwnProperty(type)) tempBadgeCount[type] = counts[type];
+      //     if (counts.hasOwnProperty(type)) badgeCount[type] = counts[type];
+      //   });
+      //   // setBadgeCount(tempBadgeCount);
+      // }
+      // console.log("tempBadgeCount", tempBadgeCount);
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
-      setLineNumberToLink(tempLineNumberToLink);
-      return html.filter((element) => element != null).join("<br>");
+      // setLineNumberToLink(tempLineNumberToLink);
+      // console.log(tempLineNumberToLink);
+
+      const modified = html
+        .map((h, hid) => {
+          let extra = "";
+          if (showLineNumbers) extra = zeroPad(hid, 7) + "|" + h;
+          if (h !== null) return `<span id="${hid}">` + extra + h + "</span>";
+          return null;
+        })
+        .filter((element) => element != null);
+
+      // console.log(showLineNumbers);
+      // if (mode === "local") return modified.join("\n"); else
+      return modified.join("\n");
     },
     selectLog = (index) => {
+      console.log("> selectLog function called", index);
       setWaitSelectLog(true);
       const { value } = index;
-      // eslint-disable-next-line
-      getLog(value);
-      document.title = value.split("/").pop();
-      resetCounts();
-      setSelectedLog(index);
-      setSelection(value);
-
+      // resetCounts();
+      if (mode !== "local") {
+        // eslint-disable-next-line
+        getLog(value);
+        document.title = value.split("/").pop();
+        setSelectedLog(index);
+        setSelection(value);
+      } else {
+        // handle selecting a local file
+        // console.log(index);
+        // document.title = value.split("/").pop();
+        setSelectedLocalFile(value);
+        setSelectedLog(index);
+        // setSelection(value);
+      }
       setWaitSelectLog(false);
     },
     handleNewLog = (newLog) => {
@@ -293,54 +454,122 @@ function App() {
       const win = window.open(url, "_blank");
       win.focus();
     },
-    [showSource, setShowSource] = useState(true),
-    [showMacroLines, setshowMacroLines] = useState(true),
+    processDirectory = (dirPassed) => {
+      if (mode === "local") {
+        // localFileRef.current.click();
+        readLocalFiles(dirPassed || logDirectory);
+      } else {
+        setWaitGetDir(true);
+        // resetCounts();
+        getLogWebDav(dirPassed || logDirectory);
+      }
+    },
+    [showSource, setShowSource] = useState(null),
+    [showMacroLines, setshowMacroLines] = useState(null),
     [selection, setSelection] = useState(""),
     [selectedLog, setSelectedLog] = useState(null),
     [links, setLinks] = useState(null),
-    [lineNumberToLink, setLineNumberToLink] = useState(null),
-    [checkWarn, setCheckWarn] = useState(true),
+    // [lineNumberToLink, setLineNumberToLink] = useState(null),
     [waitGetDir, setWaitGetDir] = useState(false),
     [waitSelectLog, setWaitSelectLog] = useState(false),
-    [checkError, setCheckError] = useState(true),
-    [checkNotice, setCheckNotice] = useState(false),
-    [checkSerious, setCheckSerious] = useState(true),
-    [checkJob, setCheckJob] = useState(true),
-    [checkOther, setCheckOther] = useState(false),
-    changeCheckWarn = (event) => {
-      setCheckWarn(event.target.checked);
-    },
-    changeCheckError = (event) => {
-      setCheckError(event.target.checked);
-    },
-    changeCheckNotice = (event) => {
-      setCheckNotice(event.target.checked);
-    },
-    changeCheckJob = (event) => {
-      setCheckJob(event.target.checked);
-    },
-    changeCheckSerious = (event) => {
-      setCheckSerious(event.target.checked);
-    },
-    changeCheckOther = (event) => {
-      setCheckOther(event.target.checked);
-    },
+    [useMaxWidth] = useState(true),
+    // [checkWarn, setCheckWarn] = useState(true),
+    // [checkError, setCheckError] = useState(true),
+    // [checkNotice, setCheckNotice] = useState(false),
+    // [checkSerious, setCheckSerious] = useState(true),
+    // [checkJob, setCheckJob] = useState(true),
+    // [checkOther, setCheckOther] = useState(false),
+    // changeCheckWarn = (event) => {
+    //   setCheckWarn(event.target.checked);
+    // },
+    // changeCheckError = (event) => {
+    //   setCheckError(event.target.checked);
+    // },
+    // changeCheckNotice = (event) => {
+    //   setCheckNotice(event.target.checked);
+    // },
+    // changeCheckJob = (event) => {
+    //   setCheckJob(event.target.checked);
+    // },
+    // changeCheckSerious = (event) => {
+    //   setCheckSerious(event.target.checked);
+    // },
+    // changeCheckOther = (event) => {
+    //   setCheckOther(event.target.checked);
+    // },
     { href } = window.location,
     mode = href.startsWith("http://localhost") ? "local" : "remote",
-    server = href.split("//")[1].split("/")[0],
+    // server = href.split("//")[1].split("/")[0],
+    [rulesDirectory, setRulesDirectory] = useState(
+      navigator.platform.startsWith("Win") && mode === "remote"
+        ? "/general/biostat/tools/logviewer2/rules"
+        : navigator.platform.startsWith("Win") && mode === "local"
+        ? "C:/github/logviewer/src"
+        : "/Users/philipmason/Documents/GitHub/logviewer/src"
+    ),
+    [listOfRules, setListOfRules] = useState([]),
+    [openRulesMenu, setOpenRulesMenu] = useState(false),
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Ftests/a.log
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Fsrc%2Flogs.json
+    handleCloseRulesMenu = (item) => {
+      console.log(item);
+      const url =
+        mode === "local"
+          ? "http://localhost:3001/getfile/" +
+            encodeURIComponent(rulesDirectory) +
+            "/" +
+            item
+          : item;
+      // console.log(
+      //   "webDavPrefix",
+      //   webDavPrefix,
+      //   "rulesDirectory",
+      //   rulesDirectory,
+      //   "item",
+      //   item,
+      //   "url",
+      //   url
+      // );
+      fetch(url).then(function (response) {
+        response.text().then(function (text) {
+          const tempRules = JSON.parse(text);
+          console.log(
+            `${tempRules.length} rules were read from rules file: ${url}`
+          );
+          setRules(tempRules);
+        });
+      });
+      setOpenRulesMenu(false);
+    },
     [logDirectory, setLogDirectory] = useState(
       "/general/biostat/jobs/gadam_ongoing_studies/dev/logs/"
     ),
-    getWebDav = async (dir) => {
-      // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
-      await getDir(webDavPrefix + dir, 1, processXml);
+    getLogWebDav = async (dir) => {
+      await getDir(webDavPrefix + dir, 1, processLogXml);
+      setWaitGetDir(false);
+    },
+    getRulesWebDav = async (dir) => {
+      await getDir(webDavPrefix + dir, 1, processRulesXml);
       setWaitGetDir(false);
     },
     getLogVersions = async (dir) => {
       // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
-      await getVersions(webDavPrefix + dir, processXml);
+      await getVersions(webDavPrefix + dir, processRulesXml);
       setWaitGetDir(false);
     },
+    ColDefnRules = [
+      { field: "id", headerName: "ID", width: 90, hide: true },
+      { field: "type", headerName: "type", width: 80 },
+      { field: "ruleType", headerName: "ruleType", width: 80 },
+      { field: "startswith", headerName: "startswith", width: 100 },
+      { field: "regex", headerName: "regex", width: 400 },
+      { field: "prefix", headerName: "prefix", width: 400 },
+      { field: "suffix", headerName: "suffix", width: 90 },
+      { field: "anchor", headerName: "anchor", width: 50 },
+      { field: "linkColor", headerName: "linkColor", width: 50 },
+      { field: "interesting", headerName: "interesting", width: 50 },
+      { field: "substitute", headerName: "substitute", width: 50 },
+    ],
     ColDefnOutputs = [
       { field: "id", headerName: "ID", width: 90, hide: true },
       { field: "lineNumber", headerName: "Line", width: 90 },
@@ -428,7 +657,7 @@ function App() {
     ],
     [symbolgen, setSymbolgen] = useState(null),
     [selectionModel, setSelectionModel] = React.useState([]),
-    processXml = (responseXML) => {
+    processLogXml = (responseXML) => {
       // Here you can use the Data
       let dataXML = responseXML;
       let dataJSON = xmlToJson(dataXML.responseXML);
@@ -471,6 +700,49 @@ function App() {
           })
       );
     },
+    processRulesXml = (responseXML) => {
+      // Here you can use the Data
+      let dataXML = responseXML;
+      let dataJSON = xmlToJson(dataXML.responseXML);
+      const rules = dataJSON["d:multistatus"]["d:response"].map((record) => {
+        let path = record["d:href"]["#text"];
+        let props = record["d:propstat"]["d:prop"];
+        if (props === undefined) return null;
+        const name = props["d:displayname"]["#text"] ?? "",
+          created = props["d:creationdate"]["#text"],
+          modified = props["d:getlastmodified"]["#text"],
+          checkedOut = props["ns1:checkedOut"]["#text"],
+          locked = props["ns1:locked"]["#text"],
+          version = props["ns1:version"]["#text"],
+          fileType = path.split(".").pop(),
+          partOfRule = {
+            value: urlPrefix + path,
+            fileType: fileType,
+            label: name + " [" + modified.trim() + "]",
+            created: created,
+            modified: modified,
+            checkedOut: checkedOut,
+            locked: locked,
+            version: version,
+          };
+        return partOfRule;
+      });
+      setListOfRules(
+        rules
+          .filter((rule) => rule !== null && rule.fileType === "json")
+          .sort((a, b) => {
+            const x = a.label.toLowerCase(),
+              y = b.label.toLowerCase();
+            if (x < y) {
+              return -1;
+            }
+            if (x > y) {
+              return 1;
+            }
+            return 0;
+          })
+      );
+    },
     jumpTo = (id) => {
       const url = window.location.href;
       window.location.href = "#" + id;
@@ -484,11 +756,14 @@ function App() {
     [program, setProgram] = useState(null),
     [submitted, setSubmitted] = useState(null),
     [submitEnd, setSubmitEnd] = useState(null),
-    analyzeLog = () => {
+    [analyseAgain, setAnalyseAgain] = useState(null),
+    analyseLog = () => {
+      // extracts info for tables in the bottom left of screen
       const logArray = logOriginalText.split("\n"),
         tempMprint = {},
         tempMlogic = {},
         tempSymbolgen = {};
+      // console.log("logArray", logArray);
       logArray.forEach((line, lineNumber) => {
         // Inputs
         if (line.startsWith("NOTE: There were ")) {
@@ -497,9 +772,10 @@ function App() {
             dset = split[10],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempInputs.push({
             id: lineNumber,
             libname: libname,
@@ -530,9 +806,10 @@ function App() {
               long.substring(from1).indexOf(",")
             ),
             size = to1 ? long.substring(from1, to1 + from1) : "",
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempFiles.push({
             id: lineNumber,
             type: "In",
@@ -550,9 +827,10 @@ function App() {
             vars = split[9],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempOutputs.push({
             id: lineNumber,
             libname: libname,
@@ -571,9 +849,10 @@ function App() {
             dset = split[1],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id,
+            link = lineNumber,
+            // link = lineNumberToLink.filter(
+            //   (link) => link.lineNumber === lineNumber
+            // )[0].id,
             prev = logArray[lineNumber - 1],
             split2 = prev.split(" "),
             obs = prev.startsWith("NOTE: The import data set has")
@@ -602,9 +881,10 @@ function App() {
             vars = line.includes("been modified") ? split[7] : split[8],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
 
           tempOutputs.push({
             id: lineNumber,
@@ -617,10 +897,12 @@ function App() {
           });
         }
         // Stats
-        if (line.startsWith("      real time")) {
+        // if (line.startsWith("      real time")) {
+        if (/\breal time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
-            time = split[18],
-            units = split[19],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -629,9 +911,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0]?.id;
           tempRealTime.push({
             id: lineNumber,
             time: time,
@@ -641,10 +924,13 @@ function App() {
             link: link,
           });
         }
-        if (line.startsWith("      cpu time")) {
+        // if (line.startsWith("      cpu time")) {
+        if (/\bcpu time\b\s+\d/i.test(line)) {
+          // console.log(line, line.length, lineNumber);
           const split = line.split(" "),
-            time = split[19],
-            units = split[20],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -653,9 +939,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -665,10 +952,14 @@ function App() {
             link: link,
           });
         }
-        if (line.startsWith("      user cpu time")) {
+        // if (line.startsWith("      user cpu time")) {
+        if (/\buser cpu time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
-            time = split[15],
-            units = split[16],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
+            // time = split[15],
+            // units = split[16],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -677,9 +968,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -689,10 +981,14 @@ function App() {
             link: link,
           });
         }
-        if (line.startsWith("      system cpu time ")) {
+        // if (line.startsWith("      system cpu time ")) {
+        if (/\bsystem time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
-            time = split[13],
-            units = split[14],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
+            //   time = split[13],
+            // units = split[14],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -701,9 +997,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -782,15 +1079,234 @@ function App() {
       setSelectionModel(tempSelectionModel);
       setMlogic(tempMlogic0);
       setSymbolgen(tempSymbolgen0);
+      makeDiagram(tempInputs, tempOutputs, tempRealTime);
+    },
+    makeDiagram = (inputs, outputs, real) => {
+      let step = 0;
+      const all = inputs
+        .map((item) => {
+          return {
+            type: "input",
+            ...item,
+          };
+        })
+        .concat(
+          outputs.map((item) => {
+            return {
+              type: "output",
+              ...item,
+            };
+          })
+        )
+        .concat(
+          real.map((item) => {
+            return {
+              type: "real",
+              ...item,
+            };
+          })
+        )
+        .sort((a, b) => (a.lineNumber < b.lineNumber ? -1 : 1))
+        .map((item, id) => {
+          if (item.type === "real") step++;
+          return { step: item.type === "real" ? step - 1 : step, ...item };
+        });
+      const inputRows = all.filter((item) => item.type === "input"),
+        outputRows = all.filter((item) => item.type === "output"),
+        realRows = all.filter((item) => item.type === "real");
+      const mappings = inputRows.map((i) => {
+        const outputsForInputs = outputRows
+          .filter((o) => o.step === i.step)
+          .map((o) => {
+            return { table: o.libname + "." + o.dataset, step: o.step };
+          });
+        return {
+          i: i.libname + "." + i.dataset,
+          outputsForInputs: outputsForInputs,
+        };
+      });
+      let dot = [];
+      // add dot commands for outputs that have no inputs
+      outputRows.forEach((o) => {
+        const inputsForOutputs = inputRows.filter((i) => o.step === i.step);
+        if (inputsForOutputs.length === 0)
+          dot.push(
+            o.libname +
+              "." +
+              o.dataset +
+              "[[" +
+              o.libname +
+              "." +
+              o.dataset +
+              "]]"
+          );
+      });
+      // add dot commands for inputs
+      mappings.forEach((item) => {
+        if (item.outputsForInputs.length === 0)
+          dot.push(item.i + "([" + item.i + "])");
+        else {
+          item.outputsForInputs.forEach((o, oIndex) => {
+            const stepInfo = realRows.filter((r) => r.step === o.step);
+            const seconds =
+              stepInfo.length > 0 ? " |" + stepInfo[0].seconds + "| " : null;
+            dot.push(
+              item.i +
+                "([" +
+                item.i +
+                "]) -->" +
+                seconds +
+                o.table +
+                "[[" +
+                o.table +
+                "]]"
+            );
+          });
+        }
+      });
+      const uniqueDot = [...new Set(dot)],
+        mermaid = `flowchart TB\n${uniqueDot.join("\n")}`;
+      setChart(mermaid);
+      setMermaidInfo({ characters: mermaid.length, lines: uniqueDot.length });
+    },
+    updateRules = () => {
+      rules.forEach((rule) => {
+        if (rule.ruleType === "regex")
+          rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones - i means case insensitive
+      });
+      const rulesToProcess = rules.filter(
+          (item) => item.type !== null && item.anchor
+        ),
+        tempUniqueTypes = [...new Set(rulesToProcess.map((item) => item.type))];
+      // tempCounts = {};
+      setUniqueTypes(tempUniqueTypes);
+      // tempUniqueTypes.forEach((type) => {
+      //   tempCounts[type] = 0;
+      // });
+      // setCounts(tempCounts);
+      counts = {};
+      console.log("tempUniqueTypes", tempUniqueTypes);
+    },
+    makeDirListing = (dirsArray) => {
+      if (dirsArray === null) return;
+      console.log("dirsArray", dirsArray);
+      const obj = dirsArray.map((dir, i) => {
+        return (
+          <Box
+            key={dir + i}
+            sx={{ color: "blue" }}
+            onClick={() => {
+              readLocalFiles(logDirectory + "/" + dir);
+            }}
+          >
+            {dir}
+          </Box>
+        );
+      });
+      console.log("obj", obj);
+      setDirListing(obj);
+    },
+    readLocalFiles = (localDir) => {
+      if (mode === "local") {
+        const dir = encodeURIComponent(localDir),
+          url = "http://localhost:3001/dir/" + dir;
+        setLogDirectory(decodeURIComponent(dir));
+        console.log("url", url);
+        fetch(url).then(function (response) {
+          console.log(response);
+          response.text().then(function (text) {
+            const dirObject = JSON.parse(text);
+            // const { dirs, files } = dirObject;
+            const files = dirObject,
+              dirs = dirObject.filter((d) => !d.includes("."));
+            console.log(
+              "dirObject",
+              dirObject,
+              "localDir",
+              localDir,
+              "dirs",
+              dirs,
+              "files",
+              files
+            );
+            setSelectedLog(null);
+            setListOfDirs(dirs);
+            setLogOriginalText(text);
+            makeDirListing(dirs);
+            setListOfLogs(
+              files
+                .filter((log) => {
+                  return log !== null && log.endsWith(".log");
+                })
+                .map((log) => {
+                  return { value: log, label: log };
+                })
+                .sort((a, b) => {
+                  const x = a.label.toLowerCase(),
+                    y = b.label.toLowerCase();
+                  if (x < y) {
+                    return -1;
+                  }
+                  if (x > y) {
+                    return 1;
+                  }
+                  return 0;
+                })
+            );
+          });
+        });
+      }
     };
+  let counts = {};
 
+  // update when rules change
   useEffect(() => {
-    if (!logText) return;
-    analyzeLog();
+    console.log("*** rules", rules.length);
+    updateRules();
     // eslint-disable-next-line
-  }, [logText]); // logText changes when it has been analyzed and all links and lookups prepared
+  }, [rules]);
+
+  // when uniqueTypes changes, run this to update associated data structures
+  useEffect(() => {
+    if (!uniqueTypes) return;
+    console.log("*** uniqueTypes", uniqueTypes);
+    const tempBadgeCount = {},
+      tempCheck = {};
+    uniqueTypes.forEach((type) => {
+      tempBadgeCount[type] = 0;
+      tempCheck[type] = true;
+    });
+    setBadgeCount(tempBadgeCount);
+    setCheck(tempCheck);
+    setAnalyseAgain(!analyseAgain);
+    setLogText(logOriginalText);
+    // eslint-disable-next-line
+  }, [uniqueTypes]);
+
+  // analyse text again using current rules, if the flag is set true
+  useEffect(() => {
+    if (!logOriginalText || analyseAgain === null) return;
+    console.log("*** analyseAgain", analyseAgain, logOriginalText.length);
+    // resetCounts();
+    // Object.keys(badgeCount).forEach((key) => {
+    //   badgeCount[key] = 0;
+    // });
+    analyseLog(); // populate tables in bottom left of screen
+    setLogText(analyse(logOriginalText));
+    // eslint-disable-next-line
+  }, [analyseAgain, logOriginalText]);
+
+  // change whether we show line numbers in log
+  useEffect(() => {
+    if (logOriginalText === null || showLineNumbers === null) return;
+    console.log("*** showLineNumbers", showLineNumbers);
+    setLogText(analyse(logOriginalText));
+    // eslint-disable-next-line
+  }, [showLineNumbers]);
 
   useEffect(() => {
+    console.log("*** href", href);
+    document.title = "Log Viewer";
     const splitQuestionMarks = href.split("?");
     // if a log was passed in then extract log and logDir
     if (splitQuestionMarks.length > 1) {
@@ -812,7 +1328,7 @@ function App() {
             : [""],
         a = splitQuestionMarks[1].split("/"),
         logFileName = a.pop();
-      document.title = logFileName;
+      document.title = logFileName.split("#")[0];
       a.pop(); // remove the logFileName so we can work stuff out
       const middlePart = a.join("/") + "/" + logNames[0],
         lastPart = versionNumbers[0] ? "?version=" + versionNumbers[0] : "",
@@ -848,24 +1364,131 @@ function App() {
         logDir = logDir0.startsWith("lsaf/webdav/")
           ? logDir0.substring(17)
           : logDir0;
+      console.log("logDir", logDir);
       setLogDirectory("/" + logDir);
     }
     // eslint-disable-next-line
   }, [href]);
 
   useEffect(() => {
+    console.log("*** windowDimension", windowDimension);
     window.addEventListener("resize", detectSize);
     return () => {
       window.removeEventListener("resize", detectSize);
     };
   }, [windowDimension]);
 
+  // for remote mode
   useEffect(() => {
-    if (!localFileRef && mode === "local") return;
-  });
+    if (mode !== "remote") return;
+    getRulesWebDav(rulesDirectory); // get the list of rules by reading directory
+    const splitQuestionMarks = href.split("?");
+    if (splitQuestionMarks.length > 1) return; // handled in href section since we have a log specified in URL
+    console.log("*** remote");
+    const defaultDirectory = navigator.platform.startsWith("Win")
+      ? "/general/biostat/jobs/dashboard/dev/logs"
+      : "/Users/philipmason/Documents/GitHub/logviewer/tests";
+    setLogDirectory(defaultDirectory);
+    getLogWebDav(defaultDirectory); // get the list of logs by reading directory
+    setLogText(analyse(logOriginalText));
+    // eslint-disable-next-line
+  }, []);
+
+  // for local mode
+  // - get the list of logs by reading directory
+  // - get the list of rules by reading directory
+  useEffect(() => {
+    if (mode !== "local") return;
+    const splitQuestionMarks = href.split("?");
+    if (splitQuestionMarks.length > 1) return; // handled in href section since we have a log specified in URL
+    console.log("*** local");
+    // console.log(navigator);
+    const defaultDirectory = navigator.platform.startsWith("Win")
+      ? "C:/github/logviewer/tests"
+      : "/Users/philipmason/Documents/GitHub/logviewer/tests";
+    setLogDirectory(defaultDirectory);
+    readLocalFiles(defaultDirectory);
+
+    const dir = encodeURIComponent(rulesDirectory),
+      url = "http://localhost:3001/dir/" + dir;
+    console.log("url", url);
+    setRulesDirectory(decodeURIComponent(dir));
+    fetch(url).then(function (response) {
+      response.text().then(function (text) {
+        const dirObject = JSON.parse(text);
+        // const { dirs, files } = dirObject;
+        const files = dirObject,
+          dirs = null;
+        console.log("dirs", dirs, "files", files);
+        setListOfRules(
+          files
+            .filter((ruleFile) => {
+              return ruleFile !== null && ruleFile.endsWith(".json");
+            })
+            .map((ruleFile) => {
+              return { value: ruleFile, label: ruleFile };
+            })
+            .sort((a, b) => {
+              const x = a.label.toLowerCase(),
+                y = b.label.toLowerCase();
+              if (x < y) {
+                return -1;
+              }
+              if (x > y) {
+                return 1;
+              }
+              return 0;
+            })
+        );
+      });
+    });
+    // eslint-disable-next-line
+  }, []);
+
+  // for local mode - get the log file
+  useEffect(() => {
+    if (selectedLocalFile === "") return;
+    console.log("*** selectedLocalFile", selectedLocalFile);
+    // const dir = encodeURIComponent(
+    //     "/Users/philipmason/Documents/GitHub/logviewer/src"
+    //   ),
+    //   file = "sample.log",
+    //   url = "http://localhost:3001/getfile/" + dir + "/" + file;
+    const file = selectedLocalFile.split("/").pop(),
+      dir = encodeURIComponent(logDirectory),
+      url = "http://localhost:3001/getfile/" + dir + "/" + file;
+    setLocalUrl(url);
+    // console.log(
+    //   "selectedLocalFile",
+    //   selectedLocalFile,
+    //   "\nfile",
+    //   file,
+    //   "\ndir",
+    //   dir,
+    //   "\nfile",
+    //   file,
+    //   "\nurl",
+    //   url
+    // );
+    fetch(url).then(function (response) {
+      response.text().then(function (text) {
+        console.log(`${text.length} characters were read from file ${url}`);
+        // setAnalyseAgain(!analyseAgain);
+        setLogOriginalText(text);
+        setLogText(analyse(text));
+      });
+    });
+    // eslint-disable-next-line
+  }, [selectedLocalFile]);
 
   useEffect(() => {
-    if (selection === null) return;
+    if (showSource === null && showMacroLines === null) return;
+    console.log(
+      "*** showSource, showMacroLines, selectionModel",
+      showSource,
+      showMacroLines,
+      selectionModel
+    );
     const tempMacrosSelected = [];
     selectionModel.forEach((item) => {
       tempMacrosSelected.push(mprint[item - 1].name);
@@ -874,17 +1497,18 @@ function App() {
     // eslint-disable-next-line
   }, [showSource, showMacroLines, selectionModel]);
 
-  useEffect(() => {
-    if (macrosSelected === null) return;
-    getLog(selection);
-    // eslint-disable-next-line
-  }, [macrosSelected]);
+  // useEffect(() => {
+  //   console.log("macrosSelected changed", macrosSelected);
+  //   if (macrosSelected === null) return;
+  //   getLog(selection);
+  //   // eslint-disable-next-line
+  // }, [macrosSelected]);
 
   return (
     <Box>
       <Grid container spacing={1}>
         <Grid item xs={leftPanelWidth} sx={{ mt: 1 }}>
-          {logDirectory && mode === "remote" ? (
+          {logDirectory ? (
             <TextField
               id="logDirectory"
               label="Directory containing logs"
@@ -893,23 +1517,46 @@ function App() {
               onChange={(e) => setLogDirectory(e.target.value)}
               inputProps={{ style: { fontSize: 14 } }}
               sx={{
-                width: (windowDimension.winWidth * leftPanelWidth) / 12 - 140,
+                width: (windowDimension.winWidth * leftPanelWidth) / 12 - 200,
                 mt: 1,
                 ml: 1,
               }}
             />
           ) : null}
-          {!waitGetDir && mode !== "local" ? (
-            <Tooltip title="Read directory and show a list of logs to select from">
-              <Button
+          {!waitGetDir ? (
+            <Tooltip title="Go up to parent directory">
+              <IconButton
+                size="small"
                 onClick={() => {
+                  const parentDir = logDirectory
+                    .split("/")
+                    .slice(0, -1)
+                    .join("/");
                   if (mode === "local") {
-                    localFileRef.current.click();
+                    readLocalFiles(parentDir);
+                    setLogText(null);
+                    // localFileRef.current.click();
+                    setLogDirectory(parentDir);
                   } else {
                     setWaitGetDir(true);
-                    resetCounts();
-                    getWebDav(logDirectory);
+                    // resetCounts();
+                    setLogDirectory(parentDir);
+                    getLogWebDav(parentDir);
                   }
+                  // processDirectory();
+                }}
+                sx={{ mt: 1, color: "green" }}
+              >
+                <Publish fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {!waitGetDir ? (
+            <Tooltip title="Read directory and show a list of logs to select from">
+              <Button
+                id="readDirectory"
+                onClick={() => {
+                  processDirectory();
                 }}
                 sx={{
                   m: 2,
@@ -922,35 +1569,24 @@ function App() {
               </Button>
             </Tooltip>
           ) : null}
+
           {waitGetDir ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
           {!waitSelectLog && listOfLogs ? (
             <Select
-              placeholder="Choose a log"
+              placeholder={
+                listOfLogs.length > 0
+                  ? "Choose a log (" + listOfLogs.length + " found)"
+                  : "No logs found"
+              }
               options={listOfLogs}
               value={selectedLog}
               onChange={selectLog}
               styles={selectStyles}
             />
           ) : null}
-          {mode === "local" ? (
-            <TextField
-              type="file"
-              ref={localFileRef}
-              value={selectedLocalFile}
-              onChange={(e) => {
-                setSelectedLocalFile(e.target.current);
-              }}
-            />
-          ) : null}
           {waitSelectLog ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
         </Grid>
         <Grid item xs={rightPanelWidth}>
-          {/* <Typography
-            variant="h6"
-            sx={{ fontSize: { fontSize }, color: "black", mt: 1 }}
-          >
-            {selection}
-          </Typography> */}
           <Box
             variant={"dense"}
             sx={{
@@ -985,7 +1621,7 @@ function App() {
                 size="small"
                 onClick={() => {
                   setWaitGetDir(true);
-                  resetCounts();
+                  // resetCounts();
                   getLogVersions(logDirectory);
                 }}
                 sx={{ mt: 1, color: "green" }}
@@ -1108,7 +1744,7 @@ function App() {
                 }
               />
             </Tooltip>
-            <Tooltip title="Show Mprint/Mlogic/Symbolgen Lines">
+            <Tooltip title="Show Mprint/Mlogic/Symbolgen/Mautocomploc Lines">
               <FormControlLabel
                 sx={{ marginRight: iconPadding }}
                 control={
@@ -1122,6 +1758,133 @@ function App() {
                   />
                 }
               />
+            </Tooltip>
+            <Tooltip title="Show Line numbers">
+              <FormControlLabel
+                sx={{ marginRight: iconPadding }}
+                control={
+                  <Switch
+                    checked={showLineNumbers}
+                    onChange={() => {
+                      setshowLineNumbers(!showLineNumbers);
+                    }}
+                    name="mprint"
+                    size="small"
+                  />
+                }
+              />
+            </Tooltip>
+            <Tooltip title="Show Chart">
+              <IconButton size="small" onClick={() => setOpenModal(true)}>
+                <BarChart fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Choose rules used to parse logs">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setAnchorEl(e.currentTarget);
+                  setOpenRulesMenu(true);
+                }}
+              >
+                <SquareFoot fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="View rules">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setOpenRulesModal(true);
+                }}
+              >
+                <Visibility fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Extract SAS code (if possible)">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  extractSasCode();
+                }}
+              >
+                <Colorize fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Email">
+              <IconButton
+                onClick={() => {
+                  const email =
+                    "mailto:qs_tech_prog@argenx.com?subject=Log Viewer: " +
+                    selection +
+                    "&body=You can open the log in the Log Viewer using this link: " +
+                    encodeURIComponent(href);
+                  console.log("email", email);
+                  window.open(email, "_blank");
+                }}
+                size="small"
+              >
+                <Email fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Refresh view by analysing the log again">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setAnalyseAgain(!analyseAgain);
+                }}
+              >
+                <Refresh fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Snackbar
+              open={openPopUp}
+              onClose={() => setOpenPopUp(false)}
+              autoHideDuration={3000}
+              message={popUpMessage}
+            />
+            <Menu
+              open={openRulesMenu}
+              onClose={handleCloseRulesMenu}
+              anchorEl={anchorEl}
+            >
+              {listOfRules &&
+                listOfRules.length > 0 &&
+                listOfRules.map((rule, id) => (
+                  <MenuItem
+                    key={id}
+                    onClick={(e) => handleCloseRulesMenu(rule.value)}
+                  >
+                    {rule.label}
+                  </MenuItem>
+                ))}
+            </Menu>
+            <Tooltip title={`Compress by ${increment}`}>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setVerticalSplit(verticalSplit + increment);
+                }}
+                // sx={{
+                //   backgroundColor: buttonBackground,
+                //   color: "yellow",
+                // }}
+              >
+                <Compress fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={`Expand by ${increment}`}>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setVerticalSplit(verticalSplit - increment);
+                }}
+              >
+                <Expand fontSize="small" />
+              </IconButton>
             </Tooltip>
             <Tooltip title="Page Down">
               <IconButton
@@ -1166,7 +1929,7 @@ function App() {
                   sx={{
                     padding: iconPadding,
                     backgroundColor: "lightblue",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1181,8 +1944,9 @@ function App() {
                     (link) => link.interesting && link.lineNumber < currentLine
                   );
                   if (interesting.length > 0) {
-                    jumpTo(interesting[0].id);
-                    setCurrentLine(interesting[0].lineNumber);
+                    const last = interesting.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
                   }
                 }}
               >
@@ -1191,7 +1955,7 @@ function App() {
                   sx={{
                     padding: iconPadding,
                     backgroundColor: "lightblue",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1218,7 +1982,7 @@ function App() {
                     padding: iconPadding,
                     backgroundColor: "red",
                     color: "white",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1234,8 +1998,9 @@ function App() {
                       link.type === "ERROR" && link.lineNumber < currentLine
                   );
                   if (errors.length > 0) {
-                    jumpTo(errors[0].id);
-                    setCurrentLine(errors[0].lineNumber);
+                    const last = errors.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
                   }
                 }}
               >
@@ -1245,7 +2010,7 @@ function App() {
                     padding: iconPadding,
                     backgroundColor: "red",
                     color: "white",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1271,7 +2036,7 @@ function App() {
                   sx={{
                     padding: iconPadding,
                     backgroundColor: "lightgreen",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
@@ -1287,8 +2052,9 @@ function App() {
                       link.type === "WARN" && link.lineNumber < currentLine
                   );
                   if (warnings.length > 0) {
-                    jumpTo(warnings[0].id);
-                    setCurrentLine(warnings[0].lineNumber);
+                    const last = warnings.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
                   }
                 }}
               >
@@ -1297,185 +2063,171 @@ function App() {
                   sx={{
                     padding: iconPadding,
                     backgroundColor: "lightgreen",
-                    border: 1,
+                    border: 0.5,
                     borderRadius: 3,
                   }}
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="View rules used to parse logs">
+            <TextField
+              label="Search"
+              value={search}
+              size={"small"}
+              inputProps={{ style: { fontSize: 10, height: "1.1em" } }}
+              onChange={(event) => {
+                setSearch(event.target.value);
+              }}
+              sx={{
+                width: 250,
+                mt: 1,
+              }}
+            />
+            <Tooltip title="Next search term">
               <IconButton
                 size="small"
                 sx={{ padding: iconPadding }}
                 onClick={() => {
-                  window.open(
-                    `https://${server}/lsaf/filedownload/sdd:/general/biostat/tools/fileviewer/index.html?file=https://${server}/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer/rules.json`,
-                    "_blank"
+                  const found = logText.indexOf(
+                      search,
+                      currentLine ? currentLine + 1 : 0
+                    ),
+                    id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+                    section = logText.substring(id1, found),
+                    id = /\d+/.exec(section),
+                    { current } = logRef;
+                  window.location.hash = "#" + id;
+                  console.log(
+                    "currentLine",
+                    currentLine,
+                    "found",
+                    found,
+                    "id1",
+                    id1,
+                    "section",
+                    section,
+                    "id",
+                    id,
+                    "current",
+                    current
                   );
+                  if (found > 0) setCurrentLine(found);
+                  else setCurrentLine(0);
                 }}
               >
-                <SquareFoot fontSize="small" />
+                <ArrowDownward
+                  fontSize="small"
+                  sx={{
+                    mt: 1,
+                    padding: iconPadding,
+                    backgroundColor: "#e0ccff",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
               </IconButton>
             </Tooltip>
-            <Tooltip title={`Compress by ${increment}`}>
+            <Tooltip title="Previous search term">
               <IconButton
                 size="small"
+                sx={{ padding: iconPadding }}
                 onClick={() => {
-                  setVerticalSplit(verticalSplit + increment);
+                  const found = logText
+                      .substring(0, currentLine ? currentLine - 1 : nLines - 1)
+                      .lastIndexOf(search),
+                    id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+                    section = logText.substring(id1, found),
+                    id = /\d+/.exec(section),
+                    { current } = logRef;
+                  window.location.hash = "#" + id;
+                  console.log(
+                    "currentLine",
+                    currentLine,
+                    "found",
+                    found,
+                    "id1",
+                    id1,
+                    "section",
+                    section,
+                    "id",
+                    id,
+                    "current",
+                    current
+                  );
+                  if (found > 0) setCurrentLine(found);
+                  else setCurrentLine(nLines - 1);
                 }}
-                // sx={{
-                //   backgroundColor: buttonBackground,
-                //   color: "yellow",
-                // }}
               >
-                <Compress fontSize="small" />
+                <ArrowUpward
+                  fontSize="small"
+                  sx={{
+                    mt: 1,
+                    padding: iconPadding,
+                    backgroundColor: "#e0ccff",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
               </IconButton>
-            </Tooltip>
-            <Tooltip title={`Expand by ${increment}`}>
+            </Tooltip>{" "}
+            <Tooltip title="Information about this screen">
               <IconButton
                 size="small"
+                // aria-label="account of current user"
+                // aria-controls="menu-appbar"
+                // aria-haspopup="true"
                 onClick={() => {
-                  setVerticalSplit(verticalSplit - increment);
+                  setOpenInfo(true);
                 }}
-                // sx={{
-                //   backgroundColor: buttonBackground,
-                //   color: "yellow",
-                // }}
+                color="info"
+                sx={{ padding: iconPadding }}
               >
-                <Expand fontSize="small" />
+                <Info />
               </IconButton>
             </Tooltip>
-            {mode === "local" ? (
-              <Tooltip title="Constructed sample from source directory (for testing)">
-                <Button
-                  onClick={() => {
-                    resetCounts();
-                    getLog(sample2);
-                    setSelection(sample2);
-                  }}
-                  sx={{
-                    minWidth: 0,
-                    fontSize: 8,
-                    p: 1,
-                    border: 1,
-                    m: 0.5,
-                    color: "lightgray",
-                  }}
-                >
-                  1
-                </Button>
-              </Tooltip>
-            ) : null}
-            {mode === "local" ? (
-              <Tooltip title="Log file from source directory (for testing)">
-                <Button
-                  onClick={() => {
-                    resetCounts();
-                    getLog(sample1);
-                    setSelection(sample1);
-                  }}
-                  sx={{
-                    minWidth: 0,
-                    fontSize: 8,
-                    p: 1,
-                    border: 0.5,
-                    m: 1,
-                    color: "lightgray",
-                  }}
-                >
-                  2
-                </Button>
-              </Tooltip>
-            ) : null}
-            {mode === "local" ? (
-              <Tooltip title="LSAF version of a log from webdav">
-                <Button
-                  onClick={() => {
-                    resetCounts();
-                    getLog(
-                      urlPrefix +
-                        "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                    );
-                    setSelection(
-                      urlPrefix +
-                        "/lsaf/webdav/repo/general/biostat/jobs/gadam_ongoing_studies/dev/logs/job_gadam_ongoing_studies.log?version=120.0"
-                    );
-                  }}
-                  sx={{
-                    minWidth: 0,
-                    fontSize: 8,
-                    p: 1,
-                    border: 0.5,
-                    m: 1,
-                    color: "lightgray",
-                  }}
-                >
-                  3
-                </Button>
-              </Tooltip>
-            ) : null}
           </Box>
-          <b>Program:</b> {program}, <b>Submitted:</b> {submitted},{" "}
-          <b>Ended:</b> {submitEnd}, <b>Lines:</b> {nLines}
+          {program && <b>Program:</b>} {program} &nbsp;{" "}
+          {submitted && <b>Submitted:</b>} {submitted} &nbsp;{" "}
+          {submitEnd && <b>Ended:</b>} {submitEnd} &nbsp;{" "}
+          {nLines && <b>Lines:</b>} {nLines}
         </Grid>
         <Grid item xs={leftPanelWidth}>
-          <FormControlLabel
-            label="Errors"
-            control={
-              <Badge color="info" badgeContent={badgeCountError}>
-                <Checkbox checked={checkError} onChange={changeCheckError} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            sx={{ ml: 1 }}
-            label="Warnings"
-            control={
-              <Badge color="info" badgeContent={badgeCountWarn}>
-                <Checkbox checked={checkWarn} onChange={changeCheckWarn} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Serious"
-            control={
-              <Badge color="info" badgeContent={badgeCountSerious}>
-                <Checkbox
-                  checked={checkSerious}
-                  onChange={changeCheckSerious}
-                />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Job"
-            control={
-              <Badge color="info" badgeContent={badgeCountJob}>
-                <Checkbox checked={checkJob} onChange={changeCheckJob} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Notice"
-            control={
-              <Badge color="info" badgeContent={badgeCountNotice}>
-                <Checkbox checked={checkNotice} onChange={changeCheckNotice} />
-              </Badge>
-            }
-          />
-          <FormControlLabel
-            label="Other"
-            control={
-              <Badge color="info" badgeContent={badgeCountOther}>
-                <Checkbox checked={checkOther} onChange={changeCheckOther} />
-              </Badge>
-            }
-          />
+          {uniqueTypes &&
+            // uniqueTypes.length === badgeCount.length &&
+            uniqueTypes.map((t) => {
+              // console.log(
+              //   "t",
+              //   t,
+              //   // badgeCount,
+              //   "badgeCount[t]",
+              //   badgeCount[t],
+              //   "uniqueTypes.length",
+              //   uniqueTypes.length,
+              //   "Object.keys(badgeCount).length",
+              //   Object.keys(badgeCount).length
+              // );
+              if (uniqueTypes.length >= Object.keys(badgeCount).length)
+                return (
+                  <FormControlLabel
+                    key={t}
+                    label={t}
+                    control={
+                      <Badge color="info" badgeContent={badgeCount[t]}>
+                        <Checkbox
+                          checked={check[t] === undefined ? true : check[t]}
+                          onChange={() => changeCheck(t)}
+                          inputProps={{ "aria-label": "controlled" }}
+                        />
+                      </Badge>
+                    }
+                  />
+                );
+              else return null;
+            })}
           <p />
           <Box
             placeholder="Empty"
             sx={{
-              border: 1,
+              border: 0.5,
               color: "gray",
               fontSize: fontSize - 1,
               fontFamily: "courier",
@@ -1488,26 +2240,24 @@ function App() {
               links.map((link, id) => {
                 // should we show a link?
                 let show = true;
-                if (!checkWarn && link.type === "WARN") show = false;
-                if (!checkError && link.type === "ERROR") show = false;
-                if (!checkNotice && link.type === "NOTICE") show = false;
-                if (!checkSerious && link.type === "SERIOUS") show = false;
-                if (!checkJob && link.type === "JOB") show = false;
-                if (!checkOther && link.type === "OTHER") show = false;
+                uniqueTypes.forEach((t) => {
+                  if (!check[t] && link.type === t) show = false;
+                });
                 if (show) {
                   return (
                     <React.Fragment key={id}>
+                      {showLineNumbers ? zeroPad(link.lineNumber, 7) + " " : ""}
                       <a
                         style={{ color: `${link.linkColor}` }}
                         href={`#${link.id}`}
                         onClick={() => {
                           setTimeout(function () {
                             logRef.current.scrollBy({
-                              top: -20,
+                              top: -33,
                               left: 0,
                               behavior: "smooth",
                             });
-                          }, 1000);
+                          }, 500);
                         }}
                       >
                         {link.text}
@@ -1703,6 +2453,7 @@ function App() {
           )}
         </Grid>
         <Grid item xs={rightPanelWidth}>
+          {dirListing}
           {logText && (
             <Box
               placeholder="Empty"
@@ -1710,7 +2461,7 @@ function App() {
                 border: 2,
                 fontSize: fontSize,
                 fontFamily: "courier",
-                maxHeight: windowDimension.winHeight - 38 * verticalSplit,
+                maxHeight: windowDimension.winHeight - 50 * verticalSplit,
                 maxWidth:
                   (windowDimension.winWidth / 12) * rightPanelWidth - 25,
                 overflow: "auto",
@@ -1727,9 +2478,214 @@ function App() {
               ></pre>
             </Box>
           )}
-          {!logText && <Typography>Log will be displayed here.</Typography>}
+          {!logText && listOfDirs ? (
+            listOfDirs.map((dir, id) => {
+              return (
+                <Box
+                  key={"dir" + id}
+                  onClick={() => {
+                    setLogDirectory(logDirectory + "/" + dir);
+                    processDirectory(logDirectory + "/" + dir);
+                  }}
+                  sx={{ color: "blue", cursor: "pointer" }}
+                >
+                  {dir}
+                </Box>
+              );
+            })
+          ) : !logText ? (
+            <Box sx={{ m: 10, fontSize: 20, color: "red" }}>
+              Log will be displayed here.
+            </Box>
+          ) : null}
+          <Dialog
+            open={openModal}
+            onClose={() => setOpenModal(false)}
+            scroll={"paper"}
+            fullScreen
+            style={{ backdropFilter: "blur(5px" }}
+          >
+            <DialogTitle>
+              <Tooltip title={`Zoom out`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setScale(scale > 0.25 ? scale - 0.25 : 0.125);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "blue",
+                    float: "left",
+                  }}
+                >
+                  <ZoomOut fontSize="small" />
+                </IconButton>
+              </Tooltip>{" "}
+              <Tooltip title={`Reset`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setScale(1);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "blue",
+                    float: "left",
+                  }}
+                >
+                  <RestartAlt fontSize="small" />
+                </IconButton>
+              </Tooltip>{" "}
+              <Tooltip title={`Zoom in`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setScale(scale + 0.5);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "blue",
+                    float: "left",
+                  }}
+                >
+                  <ZoomIn fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Button
+                onClick={() => {
+                  setOpenModal(false);
+                }}
+              >
+                Close
+              </Button>
+              <Tooltip title={`Close Dialog`}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setOpenModal(false);
+                  }}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "red",
+                    float: "right",
+                  }}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {mermaidInfo.lines && (
+                <Tooltip title={`Copy Mermaid Code`}>
+                  <Chip
+                    label={mermaidInfo.lines.toLocaleString() + " lines"}
+                    sx={{
+                      fontSize: 12,
+                      float: "right",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(chart);
+                    }}
+                  />
+                </Tooltip>
+              )}
+              {mermaidInfo.characters && (
+                <Tooltip title={`Copy Mermaid Code and open a mermaid editor`}>
+                  <Chip
+                    label={
+                      mermaidInfo.characters.toLocaleString() + " characters"
+                    }
+                    sx={{
+                      fontSize: 12,
+                      float: "right",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(chart);
+                      setTimeout(function () {
+                        window.open("https://mermaid.live/");
+                      }, 500);
+                    }}
+                  />
+                </Tooltip>
+              )}
+            </DialogTitle>
+            <DialogContent
+              sx={{
+                transform: `scale(${scale})`,
+                transformOrigin: "0% 0% 0px;",
+                width: Math.round(windowDimension.winWidth / scale) - 50,
+              }}
+            >
+              <Mermaid chart={chart} useMaxWidth={useMaxWidth} />
+            </DialogContent>
+          </Dialog>
+          <Dialog
+            fullScreen
+            open={openRulesModal}
+            onClose={handleCloseRulesModal}
+          >
+            <DialogTitle>Rules Admin</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Table will be editable soon. New rules will be able to be added
+                too.
+              </DialogContentText>
+              {rules && (
+                <DataGridPro
+                  rows={rules.map((rule, id) => {
+                    return { id: id, ...rule };
+                  })}
+                  rowHeight={rowHeight}
+                  columns={ColDefnRules}
+                  density="compact"
+                  hideFooter={true}
+                  sx={{
+                    height: windowDimension.winHeight - 100,
+                    fontWeight: "fontSize=5",
+                    fontSize: "0.7em",
+                  }}
+                  // onRowClick={(e) => {
+                  //   window.location.hash = e.row.link;
+                  // }}
+                  // components={{ Toolbar: GridToolbar }}
+                />
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseRulesModal}>Cancel</Button>
+              <Button
+                onClick={() => {
+                  alert("coming soon");
+                }}
+              >
+                Add a new rule
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Grid>
       </Grid>
+      {/* Dialog with General info about this screen */}
+      <Dialog
+        fullWidth
+        maxWidth="xl"
+        onClose={() => setOpenInfo(false)}
+        open={openInfo}
+      >
+        <DialogTitle>Info about this screen</DialogTitle>
+        <DialogContent>
+          <ul>
+            <li>
+              Code for this app is held{" "}
+              <a
+                href="https://github.com/argenxQuantitativeSciences/logviewer"
+                target="_blank"
+                rel="noreferrer"
+              >
+                here
+              </a>
+              .
+            </li>
+          </ul>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }
