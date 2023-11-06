@@ -1,0 +1,24 @@
+ERROR: abc def
+WARNING: Libname USER is not assigned.
+WARNING: Truncated record.
+
+NOTE: Variable customerID is uninitialized.
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      1 at 240:4
+NOTE: At least one W.D format was too small for the number to be printed. The decimal may be shifted by the "BEST"
+      format.
+NOTE: Numeric values have been converted to character values at the places given by: (Line):(Column).
+      240:4
+NOTE: The SAS System stopped processing this step because of errors.
+NOTE: Error detected in the WHERE clause at line 240 column 4.
+NOTE: Error detected in ANNOTATE= data set MATABLES._SQLCREATE at observation 1.
+NOTE: Merge statement has more than one data set with repeats of BY values.
+NOTE: Something I dont care about
+
+101! where=(scope='GLOBAL' & name ne 'RUN_LOCATION')); run;
+
+MPRINT(macro-name):  proc sql;
+
+======================== Special note ========================
+Notice: This is a user message

@@ -14,7 +14,7 @@ mermaid.initialize({
     g.classGroup rect {
       fill: #282a36;
       stroke: #6272a4;
-    } 
+    }
     g.classGroup text {
       fill: #f8f8f2;
     }
@@ -49,7 +49,7 @@ mermaid.initialize({
       fill: #00bcd4;
       stroke: #00bcd4;
       stroke-width: 1;
-    } 
+    }
     #extensionStart, #extensionEnd {
       fill: #f8f8f2;
       stroke: #f8f8f2;
