@@ -397,9 +397,29 @@ function App() {
       setWaitSelectLog(false);
     },
     handleNewLog = (newLog) => {
+      console.log('(handleNewLog) newLog:',newLog, ', selection:', selection);
+      console.log('newLog.nativeEvent.view.location.search:', newLog.nativeEvent.view.location.search)
+      const locSearch = newLog.nativeEvent.view.location.search;
+      let logPrefix = null;
+      if (locSearch) {
+        let logParam = locSearch.split(/[\\?\\&]log=/)[1].split(/[\\?\\&]/)[0];
+        let logParamArray = logParam.split("://");
+        logPrefix = logParamArray[0]+"://"+logParamArray[1].split("/").slice(0,4).join("/");
+        console.log('logPrefix:', logPrefix)
+      }
       resetCounts();
-      if (selection.substring(0, 1) === "/") getLog(webDavPrefix + selection);
-      else getLog(selection);
+      if (selection.substring(0, 1) === "/") {
+        if (logPrefix) {
+          getLog(logPrefix + selection);
+          setSelection(logPrefix + selection);  // added  
+        } else {
+        console.log('webDavPrefix:', webDavPrefix);
+        getLog(webDavPrefix + selection);
+        setSelection(webDavPrefix + selection);  // added
+      }
+      } else {
+        getLog(selection);
+      }
       document.title = selection.split("/").pop();
     },
     openInNewTab = (url) => {
