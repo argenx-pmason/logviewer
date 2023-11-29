@@ -425,26 +425,32 @@ function App() {
       setWaitSelectLog(false);
     },
     handleNewLog = (newLog) => {
-      console.log('(handleNewLog) newLog:',newLog, ', selection:', selection);
-      console.log('newLog.nativeEvent.view.location.search:', newLog.nativeEvent.view.location.search)
+      console.log("(handleNewLog) newLog:", newLog, ", selection:", selection);
+      console.log(
+        "newLog.nativeEvent.view.location.search:",
+        newLog.nativeEvent.view.location.search
+      );
       const locSearch = newLog.nativeEvent.view.location.search;
       let logPrefix = null;
       if (locSearch) {
         let logParam = locSearch.split(/[\\?\\&]log=/)[1].split(/[\\?\\&]/)[0];
         let logParamArray = logParam.split("://");
-        logPrefix = logParamArray[0]+"://"+logParamArray[1].split("/").slice(0,4).join("/");
-        console.log('logPrefix:', logPrefix)
+        logPrefix =
+          logParamArray[0] +
+          "://" +
+          logParamArray[1].split("/").slice(0, 4).join("/");
+        console.log("logPrefix:", logPrefix);
       }
       resetCounts();
       if (selection.substring(0, 1) === "/") {
         if (logPrefix) {
           getLog(logPrefix + selection);
-          setSelection(logPrefix + selection);  // added  
+          setSelection(logPrefix + selection); // added
         } else {
-        console.log('webDavPrefix:', webDavPrefix);
-        getLog(webDavPrefix + selection);
-        setSelection(webDavPrefix + selection);  // added
-      }
+          console.log("webDavPrefix:", webDavPrefix);
+          getLog(webDavPrefix + selection);
+          setSelection(webDavPrefix + selection); // added
+        }
       } else {
         getLog(selection);
       }
@@ -464,8 +470,8 @@ function App() {
         getLogWebDav(dirPassed || logDirectory);
       }
     },
-    [showSource, setShowSource] = useState(null),
-    [showMacroLines, setshowMacroLines] = useState(null),
+    [showSource, setShowSource] = useState(true),
+    [showMacroLines, setshowMacroLines] = useState(true),
     [selection, setSelection] = useState(""),
     [selectedLog, setSelectedLog] = useState(null),
     [links, setLinks] = useState(null),
@@ -1494,6 +1500,7 @@ function App() {
       tempMacrosSelected.push(mprint[item - 1].name);
     });
     setMacrosSelected(tempMacrosSelected);
+    // setAnalyseAgain(!analyseAgain);
     // eslint-disable-next-line
   }, [showSource, showMacroLines, selectionModel]);
 
@@ -1737,6 +1744,7 @@ function App() {
                     checked={showSource}
                     onChange={() => {
                       setShowSource(!showSource);
+                      setAnalyseAgain(!analyseAgain);
                     }}
                     name="source"
                     size="small"
@@ -1752,6 +1760,7 @@ function App() {
                     checked={showMacroLines}
                     onChange={() => {
                       setshowMacroLines(!showMacroLines);
+                      setAnalyseAgain(!analyseAgain);
                     }}
                     name="mprint"
                     size="small"
