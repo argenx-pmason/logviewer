@@ -2,14 +2,14 @@
   {
     "description": "Procedures used",
     "ruleType": "regex",
-    "regex": "NOTE: PROCEDURE .+ used ",
-    "prefix": "<span style='border-style: solid;color:brown;background-color: lightyellow'>",
-    "suffix": "</span>",
+    "regex": "NOTE: PROCEDURE (.+) used ",
+    "prefix": "<a href='https://support.sas.com/en/search.html?q={{line}}&fq=siteArea%3A%22Documentation%22' target='_blank' style='border-style: solid;color:brown;background-color: lightyellow'>",
+    "suffix": "{{line}}</a>",
     "anchor": true,
     "linkColor": "brown",
     "type": "PROCS",
     "interesting": false,
-    "substitute": false
+    "substitute": true
   },
   {
     "ruleType": "regex",
