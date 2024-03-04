@@ -2692,6 +2692,28 @@ function App() {
               </a>
               .
             </li>
+            <li>
+              Take a look at this document that explains this screen some more:{" "}
+              <a
+                href={`https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/doc.aspx?sourcedoc={ca0a4288-847f-4f24-8829-c17c1611c347}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Log Viewer User Guide
+              </a>
+            </li>
+            <li>
+              Take a look at this presentation that explains how log checking
+              works with the log viewer or SAS macro which both use JSON files
+              with rules defined:{" "}
+              <a
+                href={`https://argenxbvba.sharepoint.com/:p:/r/sites/Biostatistics/Shared%20Documents/STAR%20processes/Checking%20your%20SAS%20log.pptx?d=w234104b39bfb408caaef918708059768&csf=1&web=1&e=xAb0I9`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Checking your SAS log
+              </a>
+            </li>
           </ul>
         </DialogContent>
       </Dialog>
