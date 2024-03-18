@@ -55,6 +55,7 @@ import {
   Refresh,
   Info,
   Email,
+  ContentPaste,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 // import Mermaid from "react-mermaid";
@@ -256,6 +257,35 @@ function App() {
       navigator.clipboard.writeText(sasCode.join("\n"));
       setPopUpMessage("SAS code copied to clipboard");
       setOpenPopUp(true);
+    },
+    // paste the contents of clipboard in as a new log
+    pasteClipboard = async () => {
+      const text = await navigator.clipboard.readText();
+      if (text.length > 100) {
+        text.replace(/\r\n/g, "\n");
+        // text.replace(/\r/g, "");
+        const lines = text.split("\n");
+        // show first element of lines in hex
+        let hex,
+          i,
+          result = "",
+          l1 = lines[0];
+        for (i = 0; i < l1.length; i++) {
+          hex = l1.charCodeAt(i).toString(16);
+          result += ("000" + hex).slice(-4);
+        }
+        console.log("lines[0]", lines[0], "result", result);
+
+        setOpenPopUp(true);
+        setPopUpMessage("Pasting contents of clipboard");
+        setLogOriginalText(text);
+        setLogText(analyse(text));
+      } else {
+        setOpenPopUp(true);
+        setPopUpMessage(
+          "Length of clipboard text is less than 100 characters, so not pasting it"
+        );
+      }
     },
     // use rules to analyse text and modify it
     analyse = (text) => {
@@ -1315,7 +1345,7 @@ function App() {
     document.title = "Log Viewer";
     const splitQuestionMarks = href.split("?");
     // if a log was passed in then extract log and logDir
-    if (splitQuestionMarks.length > 1) {
+    if (splitQuestionMarks.length > 1 && href.includes("log=")) {
       const splitEquals = splitQuestionMarks[1].split("="),
         partialFile = splitEquals[1].startsWith("http")
           ? splitEquals[1]
@@ -1372,6 +1402,13 @@ function App() {
           : logDir0;
       console.log("logDir", logDir);
       setLogDirectory("/" + logDir);
+    } else if (splitQuestionMarks.length > 1 && href.includes("paste=")) {
+      const paste = splitQuestionMarks[1].split("=");
+      if (paste[1] === "1") {
+        setTimeout(() => {
+          pasteClipboard();
+        }, 1000);
+      }
     }
     // eslint-disable-next-line
   }, [href]);
@@ -1820,6 +1857,17 @@ function App() {
                 }}
               >
                 <Colorize fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Paste Clipboard as new contents of Log">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  pasteClipboard();
+                }}
+              >
+                <ContentPaste fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Email">
@@ -2682,30 +2730,39 @@ function App() {
         <DialogContent>
           <ul>
             <li>
-              Code for this app is held{" "}
               <a
                 href="https://github.com/argenxQuantitativeSciences/logviewer"
                 target="_blank"
                 rel="noreferrer"
               >
-                here
-              </a>
-              .
+                App source code
+              </a>{" "}
+              {" - "}code for this app is held on GitHub.
             </li>
             <li>
-              Take a look at this document that explains this screen some more:{" "}
               <a
                 href={`https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/doc.aspx?sourcedoc={ca0a4288-847f-4f24-8829-c17c1611c347}`}
                 target="_blank"
                 rel="noreferrer"
               >
+                Log Analysis at argenx
+              </a>
+              {" - "}this document gives an overview and explains what is
+              available for viewing logs at argenx.
+            </li>
+
+            <li>
+              <a
+                href={`https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/doc.aspx?sourcedoc=%7be15cda2c-7a82-4301-b1bf-8fbaec90b5b0%7d`}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Log Viewer User Guide
               </a>
+              {" - "}this document explains more about how to use this Log
+              Viewer web application.
             </li>
             <li>
-              Take a look at this presentation that explains how log checking
-              works with the log viewer or SAS macro which both use JSON files
-              with rules defined:{" "}
               <a
                 href={`https://argenxbvba.sharepoint.com/:p:/r/sites/Biostatistics/Shared%20Documents/STAR%20processes/Checking%20your%20SAS%20log.pptx?d=w234104b39bfb408caaef918708059768&csf=1&web=1&e=xAb0I9`}
                 target="_blank"
@@ -2713,6 +2770,9 @@ function App() {
               >
                 Checking your SAS log
               </a>
+              {" - "}take a look at this presentation that explains how log
+              checking works with the log viewer or SAS macro which both use
+              JSON files with rules defined.
             </li>
           </ul>
         </DialogContent>

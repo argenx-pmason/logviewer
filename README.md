@@ -30,3 +30,24 @@ Your app is ready to be deployed!
 - Use the **Upload and expand** tool from the LSAF toolbar to upload the build zip file and expand the contents. This will overwrite the previous app with the uploaded one.
 - Click on **index.html** to open the application.
 -
+
+## Building for use on SharePoint
+
+- To build app for SharePoint we need to use this as the homepage in package.json
+  "homepage": "<https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared%20Documents/Log%20Viewer>",
+
+## Building for use on LSAF
+
+- To build app for LSAF we need to use this as the homepage in package.json
+  "homepage": "/lsaf/webdav/repo/general/biostat/tools/logviewer2",
+
+## Setup tools in PC SAS to use Log Viewer
+
+- You can define a tool in PC SAS using the following command
+  - submit 'filename clipper clipbrd;'; LOG ; FILE clipper REPLACE ;wbrowse "<https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared%20Documents/Log%20Viewer/index.aspx?paste=1>"
+
+- This will do the following:
+  - defines a fileref using the clipboard
+  - switches to LOG window
+  - copies the contents of log window to clipboard
+  - starts the log viewer web app on SharePoint with a parameter that causes it to paste the clipboard in
