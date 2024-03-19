@@ -1,8 +1,8 @@
 {
   "name": "logviewer",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
-  "homepage": "https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer",
+  "homepage": "https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared%20Documents/Log%20Viewer",
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",

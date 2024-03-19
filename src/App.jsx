@@ -52,6 +52,10 @@ import {
   Colorize,
   Visibility,
   Publish,
+  Refresh,
+  Info,
+  Email,
+  ContentPaste,
 } from "@mui/icons-material";
 // import { Routes, Route, useNavigate } from "react-router-dom";
 // import Mermaid from "react-mermaid";
@@ -72,13 +76,15 @@ function App() {
     webDavPrefix = urlPrefix + "/lsaf/webdav/repo",
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
-    [showLineNumbers, setshowLineNumbers] = useState(false),
+    [showLineNumbers, setshowLineNumbers] = useState(null),
     [dirListing, setDirListing] = useState(null),
     logRef = createRef(),
     // localFileRef = createRef(),
     iconPadding = 0.1,
+    [openInfo, setOpenInfo] = useState(false),
     // [showFileSelector, setShowFileSelector] = useState(false),
     [lastUrl, setLastUrl] = useState(null),
+    [search, setSearch] = useState(null),
     [lastShowSource, setLastShowSource] = useState(null),
     [lastShowMacroLines, setLastShowMacroLines] = useState(null),
     [uniqueTypes, setUniqueTypes] = useState(null),
@@ -114,27 +120,39 @@ function App() {
         fetch(localUrl).then(function (response) {
           // console.log(response);
           if (response.type !== "basic") {
-            response.text().then(function (text) {
-              console.log(
-                `${text.length} characters read from file ${localUrl}`
-              );
-              setLogOriginalText(text);
-              const newText = analyse(text); // make the log text with links and lookup for line to link
-              setLogText(newText);
-            });
+            if (response.ok) {
+              response.text().then(function (text) {
+                console.log(
+                  `${text.length} characters read from file ${localUrl}`
+                );
+                setLogOriginalText(text);
+                setLogText(analyse(text));
+              });
+            } else {
+              const message =
+                "Getting log failed, response = " + response.status;
+              setLogOriginalText(message);
+              setLogText("<p>" + message + "</p>");
+            }
           }
         });
       } else {
-        console.log("getLog ", url);
+        console.log("getLog:- url = ", url);
+        // updateRules();
         fetch(url).then(function (response) {
           setLastUrl(url);
           setLastShowMacroLines(showMacroLines);
           setLastShowSource(showSource);
-          response.text().then(function (text) {
-            setLogOriginalText(text);
-            const newText = analyse(text); // make the log text with links and lookup for line to link
-            setLogText(newText);
-          });
+          if (response.ok) {
+            response.text().then(function (text) {
+              setLogOriginalText(text);
+              setLogText(analyse(text));
+            });
+          } else {
+            const message = "Getting log failed, response = " + response.status;
+            setLogOriginalText(message);
+            setLogText("<p>" + message + "</p>");
+          }
         });
       }
     },
@@ -154,7 +172,7 @@ function App() {
       });
     },
     zeroPad = (num, places) => String(num).padStart(places, "0"),
-    counts = {},
+    // [counts, setCounts] = useState({}),
     [selectedLocalFile, setSelectedLocalFile] = useState(""),
     incrementCount = (type) => {
       if (!counts.hasOwnProperty(type)) counts[type] = 0;
@@ -175,29 +193,25 @@ function App() {
         setCheck(newCheck);
       }
     },
-    // [badgeCountError, setBadgeCountError] = useState(0),
-    // [badgeCountWarn, setBadgeCountWarn] = useState(0),
-    // [badgeCountNotice, setBadgeCountNotice] = useState(0),
-    // [badgeCountJob, setBadgeCountJob] = useState(0),
-    // [badgeCountSerious, setBadgeCountSerious] = useState(0),
-    // [badgeCountOther, setBadgeCountOther] = useState(0),
     [currentLine, setCurrentLine] = useState(1),
     [macrosSelected, setMacrosSelected] = useState(null),
     resetCounts = () => {
       console.log("resetCounts");
-      // setBadgeCountError(0);
-      // setBadgeCountWarn(0);
-      // setBadgeCountNotice(0);
-      // setBadgeCountSerious(0);
-      // setBadgeCountJob(0);
-      // setBadgeCountOther(0);
-      // TODO: generalise the reset
-      const tempBadgeCount = {};
+      // const tempBadgeCount = {},
+      //   tempCheck = {};
+      // uniqueTypes.forEach((type) => {
+      //   tempBadgeCount[type] = 0;
+      // tempBadgeCheck[type] = 0;
+      // });
+      // setBadgeCount(tempBadgeCount);
+      // setCheck(tempCheck);
+      if (!uniqueTypes) return;
       uniqueTypes.forEach((type) => {
-        console.log(type);
-        tempBadgeCount[type] = 0;
+        badgeCount[type] = 0;
+        check[type] = true;
+        counts[type] = 0;
       });
-      setBadgeCount(tempBadgeCount);
+      counts = {};
     },
     selectStyles = {
       control: (baseStyles, state) => ({
@@ -244,12 +258,49 @@ function App() {
       setPopUpMessage("SAS code copied to clipboard");
       setOpenPopUp(true);
     },
+    // paste the contents of clipboard in as a new log
+    pasteClipboard = async () => {
+      const text = await navigator.clipboard.readText();
+      if (text.length > 100) {
+        text.replace(/\r\n/g, "\n");
+        // text.replace(/\r/g, "");
+        const lines = text.split("\n");
+        // show first element of lines in hex
+        let hex,
+          i,
+          result = "",
+          l1 = lines[0];
+        for (i = 0; i < l1.length; i++) {
+          hex = l1.charCodeAt(i).toString(16);
+          result += ("000" + hex).slice(-4);
+        }
+        console.log("lines[0]", lines[0], "result", result);
+
+        setOpenPopUp(true);
+        setPopUpMessage("Pasting contents of clipboard");
+        setLogOriginalText(text);
+        setLogText(analyse(text));
+      } else {
+        setOpenPopUp(true);
+        setPopUpMessage(
+          "Length of clipboard text is less than 100 characters, so not pasting it"
+        );
+      }
+    },
+    // use rules to analyse text and modify it
     analyse = (text) => {
+      if (text === null || text.length === 0) return;
+      console.log("analyse", text.length);
+      resetCounts();
+      // Object.keys(badgeCount).forEach((key) => {
+      //   badgeCount[key] = 0;
+      //   counts[key] = 0;
+      // });
       let id = 0;
       // console.log("rules", rules);
       const lines = text.split("\n"),
         tempLinks = [],
-        tempLineNumberToLink = [],
+        // tempLineNumberToLink = [],
         html = lines.map((element, lineNumber) => {
           // console.log(lineNumber)
           // const lineNumber = ln + 1; // so the first line will be line 1, not line 0
@@ -269,15 +320,15 @@ function App() {
           }
           if (
             !showMacroLines &&
-            (element.startsWith("MLOGIC(") || element.startsWith("SYMBOLGEN: "))
+            (element.startsWith("MLOGIC(") ||
+              element.startsWith("SYMBOLGEN: ") ||
+              element.startsWith("MAUTOCOMPLOC: "))
           )
             return null;
           let preparedToReturn = element;
           // make sure we have rules that handle all the things we might want to link to, so that there will be a link to be used
+          // we only handle the first match to a rule, and then ignore any further ones
           rules.forEach((rule) => {
-            // if (id>648) console.log(matchFound,rule.regularExpression,element)
-
-            // if (id>648) {const re= rule.regularExpression.test(element);console.log(re)}
             if (
               !matchFound &&
               ((rule.ruleType === "startswith" &&
@@ -285,7 +336,8 @@ function App() {
                 (rule.ruleType === "regex" &&
                   rule.regularExpression.test(element)))
             ) {
-              id++;
+              // id++;
+              id = lineNumber;
               // console.log('id',id)
               matchFound = true; // set this showing we have matched a rule for this line, so we dont want to match any other rules for this line
               const tag = rule.prefix,
@@ -299,38 +351,9 @@ function App() {
                   type: rule.type,
                   interesting: rule.interesting,
                 });
-              tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
+              // tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
               incrementCount(rule.type);
-              // switch (rule.type) {
-              //   case "ERROR":
-              //     setBadgeCountError(count);
-              //     break;
-              //   case "WARN":
-              //     setBadgeCountWarn(count);
-              //     break;
-              //   case "SERIOUS":
-              //     setBadgeCountSerious(count);
-              //     break;
-              //   case "JOB":
-              //     setBadgeCountJob(count);
-              //     break;
-              //   case "NOTICE":
-              //     setBadgeCountNotice(count);
-              //     break;
-              //   case "OTHER":
-              //     setBadgeCountOther(count);
-              //     break;
-              //   default:
-              // }
               preparedToReturn = prefix + preparedToReturn + rule.suffix;
-              // if (rule.linkColor === "red")
-              //   console.log(
-              //     rule,
-              //     rule.ruleType,
-              //     rule.substitute,
-              //     rule.regularExpression?.test(element),
-              //     element
-              //   );
               // handle link creation, where we have a regex and want to make something using the matching text
               if (
                 rule.ruleType === "regex" &&
@@ -342,6 +365,7 @@ function App() {
                 // if (id>648) console.log('-')
                 matches.forEach((match) => {
                   preparedToReturn = element;
+                  // preparedToReturn = element;
                   if (rule.prefix.includes("{{matched}}")) {
                     //TODO: if match ends in . then remove it when making link
                     const a = rule.prefix.replace("{{matched}}", match),
@@ -354,42 +378,76 @@ function App() {
                         encodeURI(element)
                       ),
                       d = rule.suffix.replace("{{line}}", element);
-                    preparedToReturn = "<span id=" + id + "></span>" + c + d;
+                    preparedToReturn = c + d;
                   }
                 });
               }
             }
           });
-          // console.log('-')
+          // console.log("-");
           setLinks(tempLinks);
           return preparedToReturn;
         });
-      const tempBadgeCount = {};
-      uniqueTypes.forEach((type) => {
-        if (counts.hasOwnProperty(type)) tempBadgeCount[type] = counts[type];
-      });
-      setBadgeCount(tempBadgeCount);
 
+      // resetCounts();
+      if (uniqueTypes) {
+        uniqueTypes.forEach((type) => {
+          badgeCount[type] = counts[type];
+        });
+      } else {
+        Object.keys(counts).forEach((type) => {
+          badgeCount[type] = counts[type];
+        });
+      }
+      // console.log(
+      //   "uniqueTypes",
+      //   uniqueTypes,
+      //   "counts",
+      //   counts,
+      //   "badgeCount",
+      //   badgeCount
+      // );
+      // const tempBadgeCount = {};
+      // if (uniqueTypes) {
+      //   uniqueTypes.forEach((type) => {
+      //     // if (counts.hasOwnProperty(type)) tempBadgeCount[type] = counts[type];
+      //     if (counts.hasOwnProperty(type)) badgeCount[type] = counts[type];
+      //   });
+      //   // setBadgeCount(tempBadgeCount);
+      // }
+      // console.log("tempBadgeCount", tempBadgeCount);
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
-      setLineNumberToLink(tempLineNumberToLink);
-      // console.log('-')
-      return html.filter((element) => element != null).join("<br>");
+      // setLineNumberToLink(tempLineNumberToLink);
+      // console.log(tempLineNumberToLink);
+
+      const modified = html
+        .map((h, hid) => {
+          let extra = "";
+          if (showLineNumbers) extra = zeroPad(hid, 7) + "|" + h;
+          if (h !== null) return `<span id="${hid}">` + extra + h + "</span>";
+          return null;
+        })
+        .filter((element) => element != null);
+
+      // console.log(showLineNumbers);
+      // if (mode === "local") return modified.join("\n"); else
+      return modified.join("\n");
     },
     selectLog = (index) => {
+      console.log("> selectLog function called", index);
       setWaitSelectLog(true);
       const { value } = index;
+      // resetCounts();
       if (mode !== "local") {
         // eslint-disable-next-line
         getLog(value);
         document.title = value.split("/").pop();
-        resetCounts();
         setSelectedLog(index);
         setSelection(value);
       } else {
         // handle selecting a local file
         // console.log(index);
         // document.title = value.split("/").pop();
-        // resetCounts();
         setSelectedLocalFile(value);
         setSelectedLog(index);
         // setSelection(value);
@@ -397,26 +455,32 @@ function App() {
       setWaitSelectLog(false);
     },
     handleNewLog = (newLog) => {
-      console.log('(handleNewLog) newLog:',newLog, ', selection:', selection);
-      console.log('newLog.nativeEvent.view.location.search:', newLog.nativeEvent.view.location.search)
+      console.log("(handleNewLog) newLog:", newLog, ", selection:", selection);
+      console.log(
+        "newLog.nativeEvent.view.location.search:",
+        newLog.nativeEvent.view.location.search
+      );
       const locSearch = newLog.nativeEvent.view.location.search;
       let logPrefix = null;
       if (locSearch) {
         let logParam = locSearch.split(/[\\?\\&]log=/)[1].split(/[\\?\\&]/)[0];
         let logParamArray = logParam.split("://");
-        logPrefix = logParamArray[0]+"://"+logParamArray[1].split("/").slice(0,4).join("/");
-        console.log('logPrefix:', logPrefix)
+        logPrefix =
+          logParamArray[0] +
+          "://" +
+          logParamArray[1].split("/").slice(0, 4).join("/");
+        console.log("logPrefix:", logPrefix);
       }
       resetCounts();
       if (selection.substring(0, 1) === "/") {
         if (logPrefix) {
           getLog(logPrefix + selection);
-          setSelection(logPrefix + selection);  // added  
+          setSelection(logPrefix + selection); // added
         } else {
-        console.log('webDavPrefix:', webDavPrefix);
-        getLog(webDavPrefix + selection);
-        setSelection(webDavPrefix + selection);  // added
-      }
+          console.log("webDavPrefix:", webDavPrefix);
+          getLog(webDavPrefix + selection);
+          setSelection(webDavPrefix + selection); // added
+        }
       } else {
         getLog(selection);
       }
@@ -432,8 +496,8 @@ function App() {
         readLocalFiles(dirPassed || logDirectory);
       } else {
         setWaitGetDir(true);
-        resetCounts();
-        getWebDav(dirPassed || logDirectory);
+        // resetCounts();
+        getLogWebDav(dirPassed || logDirectory);
       }
     },
     [showSource, setShowSource] = useState(true),
@@ -441,10 +505,10 @@ function App() {
     [selection, setSelection] = useState(""),
     [selectedLog, setSelectedLog] = useState(null),
     [links, setLinks] = useState(null),
-    [lineNumberToLink, setLineNumberToLink] = useState(null),
+    // [lineNumberToLink, setLineNumberToLink] = useState(null),
     [waitGetDir, setWaitGetDir] = useState(false),
     [waitSelectLog, setWaitSelectLog] = useState(false),
-    [useMaxWidth] = useState(false),
+    [useMaxWidth] = useState(true),
     // [checkWarn, setCheckWarn] = useState(true),
     // [checkError, setCheckError] = useState(true),
     // [checkNotice, setCheckNotice] = useState(false),
@@ -473,8 +537,10 @@ function App() {
     mode = href.startsWith("http://localhost") ? "local" : "remote",
     // server = href.split("//")[1].split("/")[0],
     [rulesDirectory, setRulesDirectory] = useState(
-      navigator.platform.startsWith("Win")
-        ? "C:\\github\\logviewer\\src"
+      navigator.platform.startsWith("Win") && mode === "remote"
+        ? "/general/biostat/tools/logviewer2/rules"
+        : navigator.platform.startsWith("Win") && mode === "local"
+        ? "C:/github/logviewer/src"
         : "/Users/philipmason/Documents/GitHub/logviewer/src"
     ),
     [listOfRules, setListOfRules] = useState([]),
@@ -484,10 +550,22 @@ function App() {
     handleCloseRulesMenu = (item) => {
       console.log(item);
       const url =
-        "http://localhost:3001/getfile/" +
-        encodeURIComponent(rulesDirectory) +
-        "/" +
-        item;
+        mode === "local"
+          ? "http://localhost:3001/getfile/" +
+            encodeURIComponent(rulesDirectory) +
+            "/" +
+            item
+          : item;
+      // console.log(
+      //   "webDavPrefix",
+      //   webDavPrefix,
+      //   "rulesDirectory",
+      //   rulesDirectory,
+      //   "item",
+      //   item,
+      //   "url",
+      //   url
+      // );
       fetch(url).then(function (response) {
         response.text().then(function (text) {
           const tempRules = JSON.parse(text);
@@ -502,14 +580,17 @@ function App() {
     [logDirectory, setLogDirectory] = useState(
       "/general/biostat/jobs/gadam_ongoing_studies/dev/logs/"
     ),
-    getWebDav = async (dir) => {
-      // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
-      await getDir(webDavPrefix + dir, 1, processXml);
+    getLogWebDav = async (dir) => {
+      await getDir(webDavPrefix + dir, 1, processLogXml);
+      setWaitGetDir(false);
+    },
+    getRulesWebDav = async (dir) => {
+      await getDir(webDavPrefix + dir, 1, processRulesXml);
       setWaitGetDir(false);
     },
     getLogVersions = async (dir) => {
       // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
-      await getVersions(webDavPrefix + dir, processXml);
+      await getVersions(webDavPrefix + dir, processRulesXml);
       setWaitGetDir(false);
     },
     ColDefnRules = [
@@ -612,7 +693,7 @@ function App() {
     ],
     [symbolgen, setSymbolgen] = useState(null),
     [selectionModel, setSelectionModel] = React.useState([]),
-    processXml = (responseXML) => {
+    processLogXml = (responseXML) => {
       // Here you can use the Data
       let dataXML = responseXML;
       let dataJSON = xmlToJson(dataXML.responseXML);
@@ -655,6 +736,49 @@ function App() {
           })
       );
     },
+    processRulesXml = (responseXML) => {
+      // Here you can use the Data
+      let dataXML = responseXML;
+      let dataJSON = xmlToJson(dataXML.responseXML);
+      const rules = dataJSON["d:multistatus"]["d:response"].map((record) => {
+        let path = record["d:href"]["#text"];
+        let props = record["d:propstat"]["d:prop"];
+        if (props === undefined) return null;
+        const name = props["d:displayname"]["#text"] ?? "",
+          created = props["d:creationdate"]["#text"],
+          modified = props["d:getlastmodified"]["#text"],
+          checkedOut = props["ns1:checkedOut"]["#text"],
+          locked = props["ns1:locked"]["#text"],
+          version = props["ns1:version"]["#text"],
+          fileType = path.split(".").pop(),
+          partOfRule = {
+            value: urlPrefix + path,
+            fileType: fileType,
+            label: name + " [" + modified.trim() + "]",
+            created: created,
+            modified: modified,
+            checkedOut: checkedOut,
+            locked: locked,
+            version: version,
+          };
+        return partOfRule;
+      });
+      setListOfRules(
+        rules
+          .filter((rule) => rule !== null && rule.fileType === "json")
+          .sort((a, b) => {
+            const x = a.label.toLowerCase(),
+              y = b.label.toLowerCase();
+            if (x < y) {
+              return -1;
+            }
+            if (x > y) {
+              return 1;
+            }
+            return 0;
+          })
+      );
+    },
     jumpTo = (id) => {
       const url = window.location.href;
       window.location.href = "#" + id;
@@ -668,7 +792,9 @@ function App() {
     [program, setProgram] = useState(null),
     [submitted, setSubmitted] = useState(null),
     [submitEnd, setSubmitEnd] = useState(null),
-    analyzeLog = () => {
+    [analyseAgain, setAnalyseAgain] = useState(null),
+    analyseLog = () => {
+      // extracts info for tables in the bottom left of screen
       const logArray = logOriginalText.split("\n"),
         tempMprint = {},
         tempMlogic = {},
@@ -682,9 +808,10 @@ function App() {
             dset = split[10],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempInputs.push({
             id: lineNumber,
             libname: libname,
@@ -715,9 +842,10 @@ function App() {
               long.substring(from1).indexOf(",")
             ),
             size = to1 ? long.substring(from1, to1 + from1) : "",
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempFiles.push({
             id: lineNumber,
             type: "In",
@@ -735,9 +863,10 @@ function App() {
             vars = split[9],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempOutputs.push({
             id: lineNumber,
             libname: libname,
@@ -756,9 +885,10 @@ function App() {
             dset = split[1],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id,
+            link = lineNumber,
+            // link = lineNumberToLink.filter(
+            //   (link) => link.lineNumber === lineNumber
+            // )[0].id,
             prev = logArray[lineNumber - 1],
             split2 = prev.split(" "),
             obs = prev.startsWith("NOTE: The import data set has")
@@ -787,9 +917,10 @@ function App() {
             vars = line.includes("been modified") ? split[7] : split[8],
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
 
           tempOutputs.push({
             id: lineNumber,
@@ -802,10 +933,12 @@ function App() {
           });
         }
         // Stats
-        if (line.startsWith("      real time")) {
+        // if (line.startsWith("      real time")) {
+        if (/\breal time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
-            time = split[18],
-            units = split[19],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -814,9 +947,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0]?.id;
           tempRealTime.push({
             id: lineNumber,
             time: time,
@@ -826,10 +960,13 @@ function App() {
             link: link,
           });
         }
-        if (line.startsWith("      cpu time")) {
+        // if (line.startsWith("      cpu time")) {
+        if (/\bcpu time\b\s+\d/i.test(line)) {
+          // console.log(line, line.length, lineNumber);
           const split = line.split(" "),
-            time = split[19],
-            units = split[20],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -838,9 +975,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -850,10 +988,14 @@ function App() {
             link: link,
           });
         }
-        if (line.startsWith("      user cpu time")) {
+        // if (line.startsWith("      user cpu time")) {
+        if (/\buser cpu time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
-            time = split[15],
-            units = split[16],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
+            // time = split[15],
+            // units = split[16],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -862,9 +1004,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -874,10 +1017,14 @@ function App() {
             link: link,
           });
         }
-        if (line.startsWith("      system cpu time ")) {
+        // if (line.startsWith("      system cpu time ")) {
+        if (/\bsystem time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
-            time = split[13],
-            units = split[14],
+            len = split.length,
+            time = split[len - 2],
+            units = split[len - 1],
+            //   time = split[13],
+            // units = split[14],
             hms = time.split(":"),
             countColons = hms.length - 1,
             seconds =
@@ -886,9 +1033,10 @@ function App() {
                 : countColons === 1
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
-            link = lineNumberToLink.filter(
-              (link) => link.lineNumber === lineNumber
-            )[0].id;
+            link = lineNumber;
+          // link = lineNumberToLink.filter(
+          //   (link) => link.lineNumber === lineNumber
+          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -1056,23 +1204,108 @@ function App() {
         mermaid = `flowchart TB\n${uniqueDot.join("\n")}`;
       setChart(mermaid);
       setMermaidInfo({ characters: mermaid.length, lines: uniqueDot.length });
+    },
+    updateRules = () => {
+      rules.forEach((rule) => {
+        if (rule.ruleType === "regex")
+          rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones - i means case insensitive
+      });
+      const rulesToProcess = rules.filter(
+          (item) => item.type !== null && item.anchor
+        ),
+        tempUniqueTypes = [...new Set(rulesToProcess.map((item) => item.type))];
+      // tempCounts = {};
+      setUniqueTypes(tempUniqueTypes);
+      // tempUniqueTypes.forEach((type) => {
+      //   tempCounts[type] = 0;
+      // });
+      // setCounts(tempCounts);
+      counts = {};
+      console.log("tempUniqueTypes", tempUniqueTypes);
+    },
+    makeDirListing = (dirsArray) => {
+      if (dirsArray === null) return;
+      console.log("dirsArray", dirsArray);
+      const obj = dirsArray.map((dir, i) => {
+        return (
+          <Box
+            key={dir + i}
+            sx={{ color: "blue" }}
+            onClick={() => {
+              readLocalFiles(logDirectory + "/" + dir);
+            }}
+          >
+            {dir}
+          </Box>
+        );
+      });
+      console.log("obj", obj);
+      setDirListing(obj);
+    },
+    readLocalFiles = (localDir) => {
+      if (mode === "local") {
+        const dir = encodeURIComponent(localDir),
+          url = "http://localhost:3001/dir/" + dir;
+        setLogDirectory(decodeURIComponent(dir));
+        console.log("url", url);
+        fetch(url).then(function (response) {
+          console.log(response);
+          response.text().then(function (text) {
+            const dirObject = JSON.parse(text);
+            // const { dirs, files } = dirObject;
+            const files = dirObject,
+              dirs = dirObject.filter((d) => !d.includes("."));
+            console.log(
+              "dirObject",
+              dirObject,
+              "localDir",
+              localDir,
+              "dirs",
+              dirs,
+              "files",
+              files
+            );
+            setSelectedLog(null);
+            setListOfDirs(dirs);
+            setLogOriginalText(text);
+            makeDirListing(dirs);
+            setListOfLogs(
+              files
+                .filter((log) => {
+                  return log !== null && log.endsWith(".log");
+                })
+                .map((log) => {
+                  return { value: log, label: log };
+                })
+                .sort((a, b) => {
+                  const x = a.label.toLowerCase(),
+                    y = b.label.toLowerCase();
+                  if (x < y) {
+                    return -1;
+                  }
+                  if (x > y) {
+                    return 1;
+                  }
+                  return 0;
+                })
+            );
+          });
+        });
+      }
     };
+  let counts = {};
 
-  // run once on page load
+  // update when rules change
   useEffect(() => {
-    rules.forEach((rule) => {
-      if (rule.ruleType === "regex")
-        rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones
-    });
-    const rulesToProcess = rules.filter(
-      (item) => item.type !== null && item.anchor
-    );
-    setUniqueTypes([...new Set(rulesToProcess.map((item) => item.type))]);
+    console.log("*** rules", rules.length);
+    updateRules();
+    // eslint-disable-next-line
   }, [rules]);
 
   // when uniqueTypes changes, run this to update associated data structures
   useEffect(() => {
     if (!uniqueTypes) return;
+    console.log("*** uniqueTypes", uniqueTypes);
     const tempBadgeCount = {},
       tempCheck = {};
     uniqueTypes.forEach((type) => {
@@ -1081,18 +1314,38 @@ function App() {
     });
     setBadgeCount(tempBadgeCount);
     setCheck(tempCheck);
+    setAnalyseAgain(!analyseAgain);
+    setLogText(logOriginalText);
+    // eslint-disable-next-line
   }, [uniqueTypes]);
 
+  // analyse text again using current rules, if the flag is set true
   useEffect(() => {
-    if (!logText || selectedLog === null) return;
-    analyzeLog();
+    if (!logOriginalText || analyseAgain === null) return;
+    console.log("*** analyseAgain", analyseAgain, logOriginalText.length);
+    // resetCounts();
+    // Object.keys(badgeCount).forEach((key) => {
+    //   badgeCount[key] = 0;
+    // });
+    analyseLog(); // populate tables in bottom left of screen
+    setLogText(analyse(logOriginalText));
     // eslint-disable-next-line
-  }, [logText]); // logText changes when it has been analyzed and all links and lookups prepared
+  }, [analyseAgain, logOriginalText]);
+
+  // change whether we show line numbers in log
+  useEffect(() => {
+    if (logOriginalText === null || showLineNumbers === null) return;
+    console.log("*** showLineNumbers", showLineNumbers);
+    setLogText(analyse(logOriginalText));
+    // eslint-disable-next-line
+  }, [showLineNumbers]);
 
   useEffect(() => {
+    console.log("*** href", href);
+    document.title = "Log Viewer";
     const splitQuestionMarks = href.split("?");
     // if a log was passed in then extract log and logDir
-    if (splitQuestionMarks.length > 1) {
+    if (splitQuestionMarks.length > 1 && href.includes("log=")) {
       const splitEquals = splitQuestionMarks[1].split("="),
         partialFile = splitEquals[1].startsWith("http")
           ? splitEquals[1]
@@ -1111,7 +1364,7 @@ function App() {
             : [""],
         a = splitQuestionMarks[1].split("/"),
         logFileName = a.pop();
-      document.title = logFileName;
+      document.title = logFileName.split("#")[0];
       a.pop(); // remove the logFileName so we can work stuff out
       const middlePart = a.join("/") + "/" + logNames[0],
         lastPart = versionNumbers[0] ? "?version=" + versionNumbers[0] : "",
@@ -1147,108 +1400,61 @@ function App() {
         logDir = logDir0.startsWith("lsaf/webdav/")
           ? logDir0.substring(17)
           : logDir0;
+      console.log("logDir", logDir);
       setLogDirectory("/" + logDir);
+    } else if (splitQuestionMarks.length > 1 && href.includes("paste=")) {
+      const paste = splitQuestionMarks[1].split("=");
+      if (paste[1] === "1") {
+        setTimeout(() => {
+          pasteClipboard();
+        }, 1000);
+      }
     }
     // eslint-disable-next-line
   }, [href]);
 
   useEffect(() => {
+    console.log("*** windowDimension", windowDimension);
     window.addEventListener("resize", detectSize);
     return () => {
       window.removeEventListener("resize", detectSize);
     };
   }, [windowDimension]);
 
-  const makeDirListing = (dirsArray) => {
-      // const html = dirsArray.map((dir) => {
-      //   return `<span onClick='
-      //   const newDir=document.getElementById("logDirectory").value+"/${dir}";
-      //   console.log(newDir);
-      //   document.getElementById("logDirectory").value="/Users";
-      //   document.getElementById("readDirectory").click();
-      //   '>${dir}</span>`;
-      // });
-      // setLogText(html.join("\n"));
-      const obj = dirsArray.map((dir, i) => {
-        return (
-          <Box
-            key={dir + i}
-            onClick={() => {
-              // setLogDirectory(logDirectory + "/" + dir);
-              readLocalFiles(logDirectory + "/" + dir);
-            }}
-          >
-            {dir}
-          </Box>
-        );
-      });
-      console.log("obj", obj);
-      setDirListing(obj);
-    },
-    readLocalFiles = (localDir) => {
-      const dir = encodeURIComponent(localDir),
-        url = "http://localhost:3001/dir/" + dir;
-      setLogDirectory(decodeURIComponent(dir));
-      console.log("url", url);
-      fetch(url).then(function (response) {
-        console.log(response);
-        response.text().then(function (text) {
-          const dirObject = JSON.parse(text);
-          // const { dirs, files } = dirObject;
-          const files = dirObject,
-            dirs = null;
-          // console.log(
-          //   "dirObject",
-          //   dirObject,
-          //   "localDir",
-          //   localDir,
-          //   "dirs",
-          //   dirs,
-          //   "files",
-          //   files
-          // );
-          setSelectedLog(null);
-          setListOfDirs(dirs);
-          setLogOriginalText(text);
-          // makeDirListing(dirs);
-          setListOfLogs(
-            files
-              .filter((log) => {
-                return log !== null && log.endsWith(".log");
-              })
-              .map((log) => {
-                return { value: log, label: log };
-              })
-              .sort((a, b) => {
-                const x = a.label.toLowerCase(),
-                  y = b.label.toLowerCase();
-                if (x < y) {
-                  return -1;
-                }
-                if (x > y) {
-                  return 1;
-                }
-                return 0;
-              })
-          );
-        });
-      });
-    };
-
-  // for local mode - get the list of logs by reading directory
+  // for remote mode
   useEffect(() => {
-    // console.log(navigator);
-    const defaultLocalDirectory = navigator.platform.startsWith("Win")
-      ? "C:/github/logviewer/src"
+    if (mode !== "remote") return;
+    getRulesWebDav(rulesDirectory); // get the list of rules by reading directory
+    const splitQuestionMarks = href.split("?");
+    if (splitQuestionMarks.length > 1) return; // handled in href section since we have a log specified in URL
+    console.log("*** remote");
+    const defaultDirectory = navigator.platform.startsWith("Win")
+      ? "/general/biostat/jobs/dashboard/dev/logs"
       : "/Users/philipmason/Documents/GitHub/logviewer/tests";
-    setLogDirectory(defaultLocalDirectory);
-    readLocalFiles(defaultLocalDirectory);
+    setLogDirectory(defaultDirectory);
+    getLogWebDav(defaultDirectory); // get the list of logs by reading directory
+    setLogText(analyse(logOriginalText));
+    // eslint-disable-next-line
   }, []);
 
-  // for local mode - get the list of rules by reading directory
+  // for local mode
+  // - get the list of logs by reading directory
+  // - get the list of rules by reading directory
   useEffect(() => {
+    if (mode !== "local") return;
+    const splitQuestionMarks = href.split("?");
+    if (splitQuestionMarks.length > 1) return; // handled in href section since we have a log specified in URL
+    console.log("*** local");
+    // console.log(navigator);
+    const defaultDirectory = navigator.platform.startsWith("Win")
+      ? "C:/github/logviewer/tests"
+      : "/Users/philipmason/Documents/GitHub/logviewer/tests";
+    setLogDirectory(defaultDirectory);
+    readLocalFiles(defaultDirectory);
+
     const dir = encodeURIComponent(rulesDirectory),
       url = "http://localhost:3001/dir/" + dir;
+    console.log("url", url);
     setRulesDirectory(decodeURIComponent(dir));
     fetch(url).then(function (response) {
       response.text().then(function (text) {
@@ -1284,12 +1490,13 @@ function App() {
 
   // for local mode - get the log file
   useEffect(() => {
+    if (selectedLocalFile === "") return;
+    console.log("*** selectedLocalFile", selectedLocalFile);
     // const dir = encodeURIComponent(
     //     "/Users/philipmason/Documents/GitHub/logviewer/src"
     //   ),
     //   file = "sample.log",
     //   url = "http://localhost:3001/getfile/" + dir + "/" + file;
-    if (selectedLocalFile === "") return;
     const file = selectedLocalFile.split("/").pop(),
       dir = encodeURIComponent(logDirectory),
       url = "http://localhost:3001/getfile/" + dir + "/" + file;
@@ -1309,29 +1516,37 @@ function App() {
     fetch(url).then(function (response) {
       response.text().then(function (text) {
         console.log(`${text.length} characters were read from file ${url}`);
+        // setAnalyseAgain(!analyseAgain);
         setLogOriginalText(text);
-        const newText = analyse(text); // make the log text with links and lookup for line to link
-        setLogText(newText);
+        setLogText(analyse(text));
       });
     });
     // eslint-disable-next-line
-  }, [selectedLocalFile, rules]);
+  }, [selectedLocalFile]);
 
   useEffect(() => {
-    if (selection === null) return;
+    if (showSource === null && showMacroLines === null) return;
+    console.log(
+      "*** showSource, showMacroLines, selectionModel",
+      showSource,
+      showMacroLines,
+      selectionModel
+    );
     const tempMacrosSelected = [];
     selectionModel.forEach((item) => {
       tempMacrosSelected.push(mprint[item - 1].name);
     });
     setMacrosSelected(tempMacrosSelected);
+    // setAnalyseAgain(!analyseAgain);
     // eslint-disable-next-line
   }, [showSource, showMacroLines, selectionModel]);
 
-  useEffect(() => {
-    if (macrosSelected === null) return;
-    getLog(selection);
-    // eslint-disable-next-line
-  }, [macrosSelected]);
+  // useEffect(() => {
+  //   console.log("macrosSelected changed", macrosSelected);
+  //   if (macrosSelected === null) return;
+  //   getLog(selection);
+  //   // eslint-disable-next-line
+  // }, [macrosSelected]);
 
   return (
     <Box>
@@ -1346,11 +1561,39 @@ function App() {
               onChange={(e) => setLogDirectory(e.target.value)}
               inputProps={{ style: { fontSize: 14 } }}
               sx={{
-                width: (windowDimension.winWidth * leftPanelWidth) / 12 - 140,
+                width: (windowDimension.winWidth * leftPanelWidth) / 12 - 200,
                 mt: 1,
                 ml: 1,
               }}
             />
+          ) : null}
+          {!waitGetDir ? (
+            <Tooltip title="Go up to parent directory">
+              <IconButton
+                size="small"
+                onClick={() => {
+                  const parentDir = logDirectory
+                    .split("/")
+                    .slice(0, -1)
+                    .join("/");
+                  if (mode === "local") {
+                    readLocalFiles(parentDir);
+                    setLogText(null);
+                    // localFileRef.current.click();
+                    setLogDirectory(parentDir);
+                  } else {
+                    setWaitGetDir(true);
+                    // resetCounts();
+                    setLogDirectory(parentDir);
+                    getLogWebDav(parentDir);
+                  }
+                  // processDirectory();
+                }}
+                sx={{ mt: 1, color: "green" }}
+              >
+                <Publish fontSize="small" />
+              </IconButton>
+            </Tooltip>
           ) : null}
           {!waitGetDir ? (
             <Tooltip title="Read directory and show a list of logs to select from">
@@ -1370,31 +1613,7 @@ function App() {
               </Button>
             </Tooltip>
           ) : null}
-          <Tooltip title="Go up to parent directory">
-            <IconButton
-              size="small"
-              onClick={() => {
-                const parentDir = logDirectory
-                  .split("/")
-                  .slice(0, -1)
-                  .join("/");
-                if (mode === "local") {
-                  readLocalFiles(parentDir);
-                  setLogText(null);
-                  // localFileRef.current.click();
-                  // setLogDirectory(parentDir);
-                } else {
-                  setWaitGetDir(true);
-                  resetCounts();
-                  getWebDav(parentDir);
-                }
-                // processDirectory();
-              }}
-              sx={{ mt: 1, color: "green" }}
-            >
-              <Publish fontSize="small" />
-            </IconButton>
-          </Tooltip>
+
           {waitGetDir ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
           {!waitSelectLog && listOfLogs ? (
             <Select
@@ -1446,7 +1665,7 @@ function App() {
                 size="small"
                 onClick={() => {
                   setWaitGetDir(true);
-                  resetCounts();
+                  // resetCounts();
                   getLogVersions(logDirectory);
                 }}
                 sx={{ mt: 1, color: "green" }}
@@ -1562,6 +1781,7 @@ function App() {
                     checked={showSource}
                     onChange={() => {
                       setShowSource(!showSource);
+                      setAnalyseAgain(!analyseAgain);
                     }}
                     name="source"
                     size="small"
@@ -1569,7 +1789,7 @@ function App() {
                 }
               />
             </Tooltip>
-            <Tooltip title="Show Mprint/Mlogic/Symbolgen Lines">
+            <Tooltip title="Show Mprint/Mlogic/Symbolgen/Mautocomploc Lines">
               <FormControlLabel
                 sx={{ marginRight: iconPadding }}
                 control={
@@ -1577,6 +1797,7 @@ function App() {
                     checked={showMacroLines}
                     onChange={() => {
                       setshowMacroLines(!showMacroLines);
+                      setAnalyseAgain(!analyseAgain);
                     }}
                     name="mprint"
                     size="small"
@@ -1599,189 +1820,6 @@ function App() {
                 }
               />
             </Tooltip>
-            <Tooltip title="Page Down">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const clientHeight = logRef.current.clientHeight;
-                  logRef.current.scrollBy(0, clientHeight - 20);
-                }}
-              >
-                <ArrowDownward fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Page Up">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const clientHeight = logRef.current.clientHeight;
-                  logRef.current.scrollBy(0, -(clientHeight - 10));
-                }}
-              >
-                <ArrowUpward fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Next Interesting thing">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const interesting = links.filter(
-                    (link) => link.interesting && link.lineNumber > currentLine
-                  );
-                  if (interesting.length > 0) {
-                    jumpTo(interesting[0].id);
-                    setCurrentLine(interesting[0].lineNumber);
-                  }
-                }}
-              >
-                <ArrowDownward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "lightblue",
-                    border: 1,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Previous Interesting thing">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const interesting = links.filter(
-                    (link) => link.interesting && link.lineNumber < currentLine
-                  );
-                  if (interesting.length > 0) {
-                    const last = interesting.pop();
-                    jumpTo(last.id);
-                    setCurrentLine(last.lineNumber);
-                  }
-                }}
-              >
-                <ArrowUpward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "lightblue",
-                    border: 1,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Next Error">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const errors = links.filter(
-                    (link) =>
-                      link.type === "ERROR" && link.lineNumber > currentLine
-                  );
-                  if (errors.length > 0) {
-                    jumpTo(errors[0].id);
-                    setCurrentLine(errors[0].lineNumber);
-                  }
-                }}
-              >
-                <ArrowDownward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "red",
-                    color: "white",
-                    border: 1,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Previous Error">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const errors = links.filter(
-                    (link) =>
-                      link.type === "ERROR" && link.lineNumber < currentLine
-                  );
-                  if (errors.length > 0) {
-                    const last = errors.pop();
-                    jumpTo(last.id);
-                    setCurrentLine(last.lineNumber);
-                  }
-                }}
-              >
-                <ArrowUpward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "red",
-                    color: "white",
-                    border: 1,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Next Warning">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const warnings = links.filter(
-                    (link) =>
-                      link.type === "WARN" && link.lineNumber > currentLine
-                  );
-                  if (warnings.length > 0) {
-                    jumpTo(warnings[0].id);
-                    setCurrentLine(warnings[0].lineNumber);
-                  }
-                }}
-              >
-                <ArrowDownward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "lightgreen",
-                    border: 1,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Previous Warning">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const warnings = links.filter(
-                    (link) =>
-                      link.type === "WARN" && link.lineNumber < currentLine
-                  );
-                  if (warnings.length > 0) {
-                    const last = warnings.pop();
-                    jumpTo(last.id);
-                    setCurrentLine(last.lineNumber);
-                  }
-                }}
-              >
-                <ArrowUpward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "lightgreen",
-                    border: 1,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
             <Tooltip title="Show Chart">
               <IconButton size="small" onClick={() => setOpenModal(true)}>
                 <BarChart fontSize="small" />
@@ -1799,7 +1837,7 @@ function App() {
                 <SquareFoot fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="View (edit) rules">
+            <Tooltip title="View rules">
               <IconButton
                 size="small"
                 sx={{ padding: iconPadding }}
@@ -1819,6 +1857,44 @@ function App() {
                 }}
               >
                 <Colorize fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Paste Clipboard as new contents of Log">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  pasteClipboard();
+                }}
+              >
+                <ContentPaste fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Email">
+              <IconButton
+                onClick={() => {
+                  const email =
+                    "mailto:qs_tech_prog@argenx.com?subject=Log Viewer: " +
+                    selection +
+                    "&body=You can open the log in the Log Viewer using this link: " +
+                    encodeURIComponent(href);
+                  console.log("email", email);
+                  window.open(email, "_blank");
+                }}
+                size="small"
+              >
+                <Email fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Refresh view by analysing the log again">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={(e) => {
+                  setAnalyseAgain(!analyseAgain);
+                }}
+              >
+                <Refresh fontSize="small" />
               </IconButton>
             </Tooltip>
             <Snackbar
@@ -1863,34 +1939,308 @@ function App() {
                 onClick={() => {
                   setVerticalSplit(verticalSplit - increment);
                 }}
-                // sx={{
-                //   backgroundColor: buttonBackground,
-                //   color: "yellow",
-                // }}
               >
                 <Expand fontSize="small" />
               </IconButton>
             </Tooltip>
-
-            {mode === "local" ? (
-              <Tooltip title="Test email">
-                <Button
-                  onClick={() => {
-                    console.log("email");
-                  }}
+            <Tooltip title="Page Down">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const clientHeight = logRef.current.clientHeight;
+                  logRef.current.scrollBy(0, clientHeight - 20);
+                }}
+              >
+                <ArrowDownward fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Page Up">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const clientHeight = logRef.current.clientHeight;
+                  logRef.current.scrollBy(0, -(clientHeight - 10));
+                }}
+              >
+                <ArrowUpward fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Next Interesting thing">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const interesting = links.filter(
+                    (link) => link.interesting && link.lineNumber > currentLine
+                  );
+                  if (interesting.length > 0) {
+                    jumpTo(interesting[0].id);
+                    setCurrentLine(interesting[0].lineNumber);
+                  }
+                }}
+              >
+                <ArrowDownward
+                  fontSize="small"
                   sx={{
-                    minWidth: 0,
-                    fontSize: 8,
-                    p: 1,
+                    padding: iconPadding,
+                    backgroundColor: "lightblue",
                     border: 0.5,
-                    m: 1,
-                    color: "lightgray",
+                    borderRadius: 3,
                   }}
-                >
-                  3
-                </Button>
-              </Tooltip>
-            ) : null}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous Interesting thing">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const interesting = links.filter(
+                    (link) => link.interesting && link.lineNumber < currentLine
+                  );
+                  if (interesting.length > 0) {
+                    const last = interesting.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
+                  }
+                }}
+              >
+                <ArrowUpward
+                  fontSize="small"
+                  sx={{
+                    padding: iconPadding,
+                    backgroundColor: "lightblue",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Next Error">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const errors = links.filter(
+                    (link) =>
+                      link.type === "ERROR" && link.lineNumber > currentLine
+                  );
+                  if (errors.length > 0) {
+                    jumpTo(errors[0].id);
+                    setCurrentLine(errors[0].lineNumber);
+                  }
+                }}
+              >
+                <ArrowDownward
+                  fontSize="small"
+                  sx={{
+                    padding: iconPadding,
+                    backgroundColor: "red",
+                    color: "white",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous Error">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const errors = links.filter(
+                    (link) =>
+                      link.type === "ERROR" && link.lineNumber < currentLine
+                  );
+                  if (errors.length > 0) {
+                    const last = errors.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
+                  }
+                }}
+              >
+                <ArrowUpward
+                  fontSize="small"
+                  sx={{
+                    padding: iconPadding,
+                    backgroundColor: "red",
+                    color: "white",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Next Warning">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const warnings = links.filter(
+                    (link) =>
+                      link.type === "WARN" && link.lineNumber > currentLine
+                  );
+                  if (warnings.length > 0) {
+                    jumpTo(warnings[0].id);
+                    setCurrentLine(warnings[0].lineNumber);
+                  }
+                }}
+              >
+                <ArrowDownward
+                  fontSize="small"
+                  sx={{
+                    padding: iconPadding,
+                    backgroundColor: "lightgreen",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous Warning">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const warnings = links.filter(
+                    (link) =>
+                      link.type === "WARN" && link.lineNumber < currentLine
+                  );
+                  if (warnings.length > 0) {
+                    const last = warnings.pop();
+                    jumpTo(last.id);
+                    setCurrentLine(last.lineNumber);
+                  }
+                }}
+              >
+                <ArrowUpward
+                  fontSize="small"
+                  sx={{
+                    padding: iconPadding,
+                    backgroundColor: "lightgreen",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <TextField
+              label="Search"
+              value={search}
+              size={"small"}
+              inputProps={{ style: { fontSize: 10, height: "1.1em" } }}
+              onChange={(event) => {
+                setSearch(event.target.value);
+              }}
+              sx={{
+                width: 250,
+                mt: 1,
+              }}
+            />
+            <Tooltip title="Next search term">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const found = logText.indexOf(
+                      search,
+                      currentLine ? currentLine + 1 : 0
+                    ),
+                    id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+                    section = logText.substring(id1, found),
+                    id = /\d+/.exec(section),
+                    { current } = logRef;
+                  window.location.hash = "#" + id;
+                  console.log(
+                    "currentLine",
+                    currentLine,
+                    "found",
+                    found,
+                    "id1",
+                    id1,
+                    "section",
+                    section,
+                    "id",
+                    id,
+                    "current",
+                    current
+                  );
+                  if (found > 0) setCurrentLine(found);
+                  else setCurrentLine(0);
+                }}
+              >
+                <ArrowDownward
+                  fontSize="small"
+                  sx={{
+                    mt: 1,
+                    padding: iconPadding,
+                    backgroundColor: "#e0ccff",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous search term">
+              <IconButton
+                size="small"
+                sx={{ padding: iconPadding }}
+                onClick={() => {
+                  const found = logText
+                      .substring(0, currentLine ? currentLine - 1 : nLines - 1)
+                      .lastIndexOf(search),
+                    id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+                    section = logText.substring(id1, found),
+                    id = /\d+/.exec(section),
+                    { current } = logRef;
+                  window.location.hash = "#" + id;
+                  console.log(
+                    "currentLine",
+                    currentLine,
+                    "found",
+                    found,
+                    "id1",
+                    id1,
+                    "section",
+                    section,
+                    "id",
+                    id,
+                    "current",
+                    current
+                  );
+                  if (found > 0) setCurrentLine(found);
+                  else setCurrentLine(nLines - 1);
+                }}
+              >
+                <ArrowUpward
+                  fontSize="small"
+                  sx={{
+                    mt: 1,
+                    padding: iconPadding,
+                    backgroundColor: "#e0ccff",
+                    border: 0.5,
+                    borderRadius: 3,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>{" "}
+            <Tooltip title="Information about this screen">
+              <IconButton
+                size="small"
+                // aria-label="account of current user"
+                // aria-controls="menu-appbar"
+                // aria-haspopup="true"
+                onClick={() => {
+                  setOpenInfo(true);
+                }}
+                color="info"
+                sx={{ padding: iconPadding }}
+              >
+                <Info />
+              </IconButton>
+            </Tooltip>
           </Box>
           {program && <b>Program:</b>} {program} &nbsp;{" "}
           {submitted && <b>Submitted:</b>} {submitted} &nbsp;{" "}
@@ -1934,7 +2284,7 @@ function App() {
           <Box
             placeholder="Empty"
             sx={{
-              border: 1,
+              border: 0.5,
               color: "gray",
               fontSize: fontSize - 1,
               fontFamily: "courier",
@@ -1953,7 +2303,7 @@ function App() {
                 if (show) {
                   return (
                     <React.Fragment key={id}>
-                      {showLineNumbers ? zeroPad(link.lineNumber, 6) + " " : ""}
+                      {showLineNumbers ? zeroPad(link.lineNumber, 7) + " " : ""}
                       <a
                         style={{ color: `${link.linkColor}` }}
                         href={`#${link.id}`}
@@ -2243,7 +2593,7 @@ function App() {
                   <RestartAlt fontSize="small" />
                 </IconButton>
               </Tooltip>{" "}
-              <Tooltip title={`Zoom out`}>
+              <Tooltip title={`Zoom in`}>
                 <IconButton
                   size="small"
                   onClick={() => {
@@ -2281,31 +2631,44 @@ function App() {
                 </IconButton>
               </Tooltip>
               {mermaidInfo.lines && (
-                <Chip
-                  label={mermaidInfo.lines.toLocaleString() + " lines"}
-                  sx={{
-                    fontSize: 12,
-                    float: "right",
-                  }}
-                />
+                <Tooltip title={`Copy Mermaid Code`}>
+                  <Chip
+                    label={mermaidInfo.lines.toLocaleString() + " lines"}
+                    sx={{
+                      fontSize: 12,
+                      float: "right",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(chart);
+                    }}
+                  />
+                </Tooltip>
               )}
               {mermaidInfo.characters && (
-                <Chip
-                  label={
-                    mermaidInfo.characters.toLocaleString() + " characters"
-                  }
-                  sx={{
-                    fontSize: 12,
-                    float: "right",
-                  }}
-                />
+                <Tooltip title={`Copy Mermaid Code and open a mermaid editor`}>
+                  <Chip
+                    label={
+                      mermaidInfo.characters.toLocaleString() + " characters"
+                    }
+                    sx={{
+                      fontSize: 12,
+                      float: "right",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(chart);
+                      setTimeout(function () {
+                        window.open("https://mermaid.live/");
+                      }, 500);
+                    }}
+                  />
+                </Tooltip>
               )}
             </DialogTitle>
             <DialogContent
               sx={{
                 transform: `scale(${scale})`,
                 transformOrigin: "0% 0% 0px;",
-                width: Math.round(windowDimension.winWidth / scale),
+                width: Math.round(windowDimension.winWidth / scale) - 50,
               }}
             >
               <Mermaid chart={chart} useMaxWidth={useMaxWidth} />
@@ -2356,6 +2719,64 @@ function App() {
           </Dialog>
         </Grid>
       </Grid>
+      {/* Dialog with General info about this screen */}
+      <Dialog
+        fullWidth
+        maxWidth="xl"
+        onClose={() => setOpenInfo(false)}
+        open={openInfo}
+      >
+        <DialogTitle>Info about this screen</DialogTitle>
+        <DialogContent>
+          <ul>
+            <li>
+              <a
+                href="https://github.com/argenxQuantitativeSciences/logviewer"
+                target="_blank"
+                rel="noreferrer"
+              >
+                App source code
+              </a>{" "}
+              {" - "}code for this app is held on GitHub.
+            </li>
+            <li>
+              <a
+                href={`https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/doc.aspx?sourcedoc={ca0a4288-847f-4f24-8829-c17c1611c347}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Log Analysis at argenx
+              </a>
+              {" - "}this document gives an overview and explains what is
+              available for viewing logs at argenx.
+            </li>
+
+            <li>
+              <a
+                href={`https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/doc.aspx?sourcedoc=%7be15cda2c-7a82-4301-b1bf-8fbaec90b5b0%7d`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Log Viewer User Guide
+              </a>
+              {" - "}this document explains more about how to use this Log
+              Viewer web application.
+            </li>
+            <li>
+              <a
+                href={`https://argenxbvba.sharepoint.com/:p:/r/sites/Biostatistics/Shared%20Documents/STAR%20processes/Checking%20your%20SAS%20log.pptx?d=w234104b39bfb408caaef918708059768&csf=1&web=1&e=xAb0I9`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Checking your SAS log
+              </a>
+              {" - "}take a look at this presentation that explains how log
+              checking works with the log viewer or SAS macro which both use
+              JSON files with rules defined.
+            </li>
+          </ul>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }
