@@ -2,8 +2,8 @@
 
 NOTE: Unable to open SASUSER.PROFILE. WORK.PROFILE will be opened instead.
 NOTE: All profile changes will be lost at the end of the session.
-NOTE: Copyright (c) 2002-2010 by SAS Institute Inc., Cary, NC, USA. 
-NOTE: SAS (r) Proprietary Software 9.3 (TS1M1) 
+NOTE: Copyright (c) 2002-2010 by SAS Institute Inc., Cary, NC, USA.
+NOTE: SAS (r) Proprietary Software 9.3 (TS1M1)
       Licensed to CABOT  GRID CONTROL SVR - KINGSHILL 1, Site 51211877.
 NOTE: This session is executing on the X64_ES08R2  platform.
 
@@ -13,43 +13,43 @@ NOTE: Updated analytical products:
 
 SAS/STAT 9.3_M1, SAS/ETS 9.3_M1, SAS/OR 9.3_M1
 
-NOTE: The paths specified with the UTILLOC option do not exist.  UTILLOC=WORK will be used 
+NOTE: The paths specified with the UTILLOC option do not exist.  UTILLOC=WORK will be used
       instead.
 NOTE: SAS initialization used:
       real time           0.17 seconds
       cpu time            0.10 seconds
-      
+
 1          /*	This code is written in SQL since it is the core process of Letter Fulfilment for
 1        !  the Proof of Concept.*/
 2          /*	It should be translated into Microsoft SQL/Server SQL.*/
-3          
+3
 4          %include '\\kh-pre-gman\SASDATA\Strategies\init.sas' ;
-NOTE: Libref CICDM was successfully assigned as follows: 
-      Engine:        OLEDB 
+NOTE: Libref CICDM was successfully assigned as follows:
+      Engine:        OLEDB
       Physical Name: SQLNCLI10
-NOTE: Libref SASIDM was successfully assigned as follows: 
-      Engine:        OLEDB 
+NOTE: Libref SASIDM was successfully assigned as follows:
+      Engine:        OLEDB
       Physical Name: SQLNCLI10
-NOTE: Libref MATABLES was successfully assigned as follows: 
-      Engine:        BASE 
+NOTE: Libref MATABLES was successfully assigned as follows:
+      Engine:        BASE
       Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\pmason
-NOTE: Libref APEX was successfully assigned as follows: 
-      Engine:        BASE 
+NOTE: Libref APEX was successfully assigned as follows:
+      Engine:        BASE
       Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\APEX
-NOTE: Libref CABOT was successfully assigned as follows: 
-      Engine:        BASE 
+NOTE: Libref CABOT was successfully assigned as follows:
+      Engine:        BASE
       Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\cabot_allocations
-NOTE: Libref _FMT_ was successfully assigned as follows: 
-      Engine:        V9 
+NOTE: Libref _FMT_ was successfully assigned as follows:
+      Engine:        V9
       Physical Name: Y:\SASDATA\Data Management\SASFormats
 WARNING: Libname USER is not assigned.
-228        
+228
 229        /*This is the letter we are going to process.*/
 230        /*This could be written to loop through all unique values in the treatment table so
 230      ! that they can all be handled.*/
 231        %let treatmentCode=DCG120180 ;
 232        %let letterCode=CABOT_CAB007 ;
-233        
+233
 2                                       The SAS System              08:27 Monday, June 30, 2014
 
 234        /*need to repeat this loop for each value of treatmentCode & letterCode*/
@@ -83,8 +83,8 @@ NOTE: Table WORK.CODES created, with 1 rows and 2 columns.
 254      ! td.letterCode=s.letterCode
 255        		where s.source>' ' & s.outputName>' '
 256        		order by sequence ;
-WARNING: The query as specified involves ordering by an item that doesn't appear in its SELECT 
-         clause. Since you are ordering the output of a SELECT DISTINCT it may appear that 
+WARNING: The query as specified involves ordering by an item that doesn't appear in its SELECT
+         clause. Since you are ordering the output of a SELECT DISTINCT it may appear that
          some duplicates have not been eliminated.
 257        /*	build the FROM clause ;*/
 258        	select distinct strip(f.source) into :f separated by ' '
@@ -92,8 +92,8 @@ WARNING: The query as specified involves ordering by an item that doesn't appear
 260        			left join matables._sqlFrom as f on td.treatmentCode=f.treatmentCode &
 260      ! td.letterCode=f.letterCode
 261        		order by sequence ;
-WARNING: The query as specified involves ordering by an item that doesn't appear in its SELECT 
-         clause. Since you are ordering the output of a SELECT DISTINCT it may appear that 
+WARNING: The query as specified involves ordering by an item that doesn't appear in its SELECT
+         clause. Since you are ordering the output of a SELECT DISTINCT it may appear that
          some duplicates have not been eliminated.
 262        /*	build the WHERE clause ;*/
 263        	select distinct strip(w.source) into :w_clause separated by ' '
@@ -101,10 +101,10 @@ WARNING: The query as specified involves ordering by an item that doesn't appear
 265        			left join matables._sqlWhere as w on td.treatmentCode=w.treatmentCode &
 265      ! td.letterCode=w.letterCode
 266        		order by sequence ;
-WARNING: The query as specified involves ordering by an item that doesn't appear in its SELECT 
+WARNING: The query as specified involves ordering by an item that doesn't appear in its SELECT
 3                                       The SAS System              08:27 Monday, June 30, 2014
 
-         clause. Since you are ordering the output of a SELECT DISTINCT it may appear that 
+         clause. Since you are ordering the output of a SELECT DISTINCT it may appear that
          some duplicates have not been eliminated.
 267        /*	if we have a where clause then we need the WHERE in front of it ;*/
 268        	create table w2
@@ -121,136 +121,136 @@ NOTE: The PROCEDURE SQL printed pages 1-7.
 NOTE: PROCEDURE SQL used (Total process time):
       real time           0.57 seconds
       cpu time            0.10 seconds
-      
+
 
 274        %put NOTE: CREATE TABLE --- %superq(c) ;
 NOTE: CREATE TABLE --- letterTest
 275        %put NOTE: SELECT --------- %superq(s) ;
-NOTE: SELECT --------- table2.CUSTOMERACCOUNTKEY as CUSTOMERACCOUNTKEY,( 
-PUT(table3.DepartmentKey,DEPARTMENTDESCRIPTION.) ) as DEPARTMENT_2,( 
-PUT(table3.CustomerAccountPositionKey, CUSTACCTPOS_POSITIONDESCRIPTION.) ) as 
-CUSTOMER_ACCOUNT_POSITION_DESCRI,( table4.AccountName ) as 
-ACCOUNTNAME,table3.BankAccountNumber as BANKACCOUNTNUMBER,table3.BankAddress1 as 
-BANKADDRESS1,table3.BankAddress2 as BANKADDRESS2,table3.BankAddress3 as 
-BANKADDRESS3,table3.BankTown as BANKTOWN,table3.BankCounty as BANKCOUNTY,table3.BankName as 
-BANKNAME,table3.SortCode as SORTCODE,table9.AddressLine1 as ADDRESSLINE1,table9.AddressLine2 
-as ADDRESSLINE2,table9.AddressLine3 as ADDRESSLINE3_1,( CASE WHEN table9.Town = ' ' or 
-table9.Town IS NULL or table9.Town = '                                                  ' THEN 
-propcase(table9.County) ELSE propcase(table9.Town) END ) as CURRENTTOWN,table9.PostCode as 
-POSTCODE_2,( table4.DateOfBirth ) as DATEOFBIRTH_1,table4.FirstName as FIRSTNAME_1,( 
-PUT(table4.TitleID,TITLE_SALUTATION.) ) as DESIGNATION_2,table4.LastName as LASTNAME_2,( 
-PUT(table4.TitleID,TITLE_DESCRIPTION.) ) as DESIGNATION,table7.StatementAccruedInterest as 
-STATEMENTACCRUEDINTEREST,table3.CCAClosingBalance as CCACLOSINGBALANCE_1,( 
-table3.StatementDueDate ) as STATEMENTDUEDATE,table3.CCAOpeningBalance as 
-CCAOPENINGBALANCE_1,( table3.PreviousStatementDate ) as 
-PREVIOUSSTATEMENTDATE,table7.AccountNumber as ACCOUNTNUMBER,table3.CustomerAccountID as 
-CUSTOMERACCOUNTID,( table4._105_Review_Date ) as _105_REVIEW_DATE,( table7.purchaseDate ) as 
-PURCHASEDATE,( table4.PaymentPlanLastMissedInstDate ) as PAYMENTPLANLASTMISSEDINSTDATE_2,( 
-table7.determinationDate ) as DETERMINATIONDATE,table7.secure as SECURE,( 
-PUT(table3.externalAgentID,DIMEXTAGENTID_NAME.) ) as EXTERNALAGENTID_2,( case      when 
-table6.PartyType ='EA' then table11.value     else ''     end ) as 
-EXTERNAL_AGENT_PHONE,table3.claimNumber as CLAIMNUMBER,table7.clearedBalance as 
-CLEAREDBALANCE_1,table7.DebtAmount as DEBTAMOUNT,( table3.FirstInstallmentDate ) as 
-FIRSTINSTALLMENTDATE_1,table3.planinstallmentamount as PLANINSTALLMENTAMOUNT,( 
-table3.NextInstallmentDate ) as NEXTINSTALLMENTDATE_1,table7.InterestAccrued as 
-INTERESTACCRUED,( table7.LastPaymentDate ) as LASTPAYMENTDATE_1,table7.LastPaymentAmount as 
+NOTE: SELECT --------- table2.CUSTOMERACCOUNTKEY as CUSTOMERACCOUNTKEY,(
+PUT(table3.DepartmentKey,DEPARTMENTDESCRIPTION.) ) as DEPARTMENT_2,(
+PUT(table3.CustomerAccountPositionKey, CUSTACCTPOS_POSITIONDESCRIPTION.) ) as
+CUSTOMER_ACCOUNT_POSITION_DESCRI,( table4.AccountName ) as
+ACCOUNTNAME,table3.BankAccountNumber as BANKACCOUNTNUMBER,table3.BankAddress1 as
+BANKADDRESS1,table3.BankAddress2 as BANKADDRESS2,table3.BankAddress3 as
+BANKADDRESS3,table3.BankTown as BANKTOWN,table3.BankCounty as BANKCOUNTY,table3.BankName as
+BANKNAME,table3.SortCode as SORTCODE,table9.AddressLine1 as ADDRESSLINE1,table9.AddressLine2
+as ADDRESSLINE2,table9.AddressLine3 as ADDRESSLINE3_1,( CASE WHEN table9.Town = ' ' or
+table9.Town IS NULL or table9.Town = '                                                  ' THEN
+propcase(table9.County) ELSE propcase(table9.Town) END ) as CURRENTTOWN,table9.PostCode as
+POSTCODE_2,( table4.DateOfBirth ) as DATEOFBIRTH_1,table4.FirstName as FIRSTNAME_1,(
+PUT(table4.TitleID,TITLE_SALUTATION.) ) as DESIGNATION_2,table4.LastName as LASTNAME_2,(
+PUT(table4.TitleID,TITLE_DESCRIPTION.) ) as DESIGNATION,table7.StatementAccruedInterest as
+STATEMENTACCRUEDINTEREST,table3.CCAClosingBalance as CCACLOSINGBALANCE_1,(
+table3.StatementDueDate ) as STATEMENTDUEDATE,table3.CCAOpeningBalance as
+CCAOPENINGBALANCE_1,( table3.PreviousStatementDate ) as
+PREVIOUSSTATEMENTDATE,table7.AccountNumber as ACCOUNTNUMBER,table3.CustomerAccountID as
+CUSTOMERACCOUNTID,( table4._105_Review_Date ) as _105_REVIEW_DATE,( table7.purchaseDate ) as
+PURCHASEDATE,( table4.PaymentPlanLastMissedInstDate ) as PAYMENTPLANLASTMISSEDINSTDATE_2,(
+table7.determinationDate ) as DETERMINATIONDATE,table7.secure as SECURE,(
+PUT(table3.externalAgentID,DIMEXTAGENTID_NAME.) ) as EXTERNALAGENTID_2,( case      when
+table6.PartyType ='EA' then table11.value     else ''     end ) as
+EXTERNAL_AGENT_PHONE,table3.claimNumber as CLAIMNUMBER,table7.clearedBalance as
+CLEAREDBALANCE_1,table7.DebtAmount as DEBTAMOUNT,( table3.FirstInstallmentDate ) as
+FIRSTINSTALLMENTDATE_1,table3.planinstallmentamount as PLANINSTALLMENTAMOUNT,(
+table3.NextInstallmentDate ) as NEXTINSTALLMENTDATE_1,table7.InterestAccrued as
+INTERESTACCRUED,( table7.LastPaymentDate ) as LASTPAYMENTDATE_1,table7.LastPaymentAmount as
 4                                       The SAS System              08:27 Monday, June 30, 2014
 
-LASTPAYMENTAMOUNT_3,table7.ConsolidatedBalance as CONSOLIDATEDBALANCE,( table4.PreferredEmail 
-) as PREFERREDEMAIL_1,table7.contractualInstalmentAmount as 
-CONTRACTUALINSTALMENTAMOUNT,table7.rebateAmount as REBATEAMOUNT,table7.currentInterestRate as 
-CURRENTINTERESTRATE,table7.preDefaultArrears as PREDEFAULTARREARS_1,( 
-table4.dateLatestComplaintReceived ) as DATELATESTCOMPLAINTRECEIVED,( 
-PUT(table7.ProductTypeId, PRODUCTTYPE_DESCRIPTION.) ) as PRODUCT_TYPE_DESCRIPTION,( 
-table7.AccountOpenedDate ) as ACCOUNTOPENEDDATE_1,table7.loanTerm as 
-LOANTERM,table7.LoanAdvance as LOANADVANCE,table7.ccjAmount as CCJAMOUNT,table4.FirstName as 
-FIRSTNAME,table4.LastName as LASTNAME,( table4.DateOfBirth ) as DATEOFBIRTH,table9.PostCode as 
-POSTCODE,( case      when put(table3.externalAgentID, DIMEXTAGENTID_DPAAGREEMENT.)='Y' then 
-'Y'     else table3.dpaAgreement     end ) as DPAAGREEMENT,table3.ExternalAgentReference as 
-EXTERNALAGENTREFERENCE,table3.BarCode as BARCODE,( table4.PreferredEmail ) as PREFERREDEMAIL,( 
-PUT(table4.CustomerStatusKey, DIMCUSTSTAT_STATUSDESCORIG.)  ) as CUSTOMER_STATUS,table9.County 
-as COUNTY_1,table9.Country as COUNTRY,( '' ) as HISTORIC_DCA_REFERENCE,( '' ) as 
-HISTORIC_DCA_TELEPHONE_NUMBER,table4.CustomerID as CUSTOMERID,( case when table7.ClientID=1107 
-then table4.SourceSystemID     else table7.AccountNumber     end ) as 
-ACCOUNT_NUMBER_2,table7.AgentReference as AGENTREFERENCE,( table7.LDMBarclaysDateNextAmountDue 
-) as LDMBARCLAYSDATENEXTAMOUNTDUE_1,( table7.arrearsCalculationStartDate ) as 
-ARREARSCALCULATIONSTARTDATE,table7.ClientID as CLIENTID,( PUT(table7.ClientID,CLIENT_NAME.) ) 
-as CLIENT_NAME,table7.unclearedBalance as UNCLEAREDBALANCE,table3.paymentplanamountarrears as 
-PAYMENTPLANAMOUNTARREARS,( case when     table7.amountInArrears is null  OR  
-table7.amountInArrears <0.00 then 0     else 1     end ) as 
-AMOUNT_IN_ARREARS_2,table7.ContractID as CONTRACTID,( case when table3.CorrespondenceName is 
-null then table4.FullName     else table3.CorrespondenceName     end ) as 
-CORRESPONDENCENAME_2,table4.MiddleName as MIDDLENAME,table4._112__C__Advised_Limit as 
-_112__C__ADVISED_LIMIT,table4._113__C__Current_Balance as 
-_113__C__CURRENT_BALANCE,table4._117__L__Mnthly_Inst_Amnt as 
-_117__L__MNTHLY_INST_AMNT,table4._138_Contractual_Amount as _138_CONTRACTUAL_AMOUNT,( case     
-when table7.ClientID = 1266 then table3.FtypeArrearsAllocation     else 
-table4._150_Gross_Arrears     end ) as _150_GROSS_ARREARS,table4._151_G_tee_Call_up_Amount as 
-_151_G_TEE_CALL_UP_AMOUNT_1,table4._155_Interest_value as 
-_155_INTEREST_VALUE,table4._214_Company_Name as _214_COMPANY_NAME,table4._243_Guarantor_for_ 
-as _243_GUARANTOR_FOR_,table4._247_Insolvency_Firm as 
-_247_INSOLVENCY_FIRM,table4._251_Ltd_Company_Name as 
-_251_LTD_COMPANY_NAME,table4._271_Portfolio_Name as _271_PORTFOLIO_NAME,( 
-table3.LDMSecondLetterSentDate ) as LDMSECONDLETTERSENTDATE,( table3.CurrentDate28 ) as 
-CURRENTDATE28,( table3.CurrentDate21 ) as CURRENTDATE21,( table3.CurrentDate10 ) as 
-CURRENTDATE10,table7.totalExcluded as TOTALEXCLUDED,table7.currentBalance as CURRENTBALANCE,( 
-table4.ClearedBalance * 0.7 ) as CUSTOMER_CLEARED_BALANCE,( table4.ClearedBalance * 0.3 ) as 
-CUSTOMER_CLEARED_BALANCE_2,( PUT(table7.ContractID, CONTRACTID_HOD.) ) as 
-LDM_CONTRACTID_DISCOUNT,( case     when table9.Location = 'England & Wales' then case          
-when table4.UnclearedBalance >=5000 then 'England Wales and NI > 5K'          else 'England 
-Wales and NI < 5K'          end     else  table9.Location     end ) as 
-LDM_LOCATION_VAL,table9.Location as LOCATION,( 
-PUT(table7.ClientID,CLIENTID_COURTFEESSOLICITORSCOST.) ) as CLIENT_ID_2,( 
-PUT(table7.PlacementCategoryID,PLACEMENTCATEGORYID_AGENCIES.) ) as PLACEMENT_CATEGORY_ID,( 
-PUT(table7.ContractID,CONTRACTID_DISCOUNT.) ) as CONTRACT_ID_2,( table4.AssignmentDate ) as 
-ASSIGNMENTDATE,( case     when table7.amountInArrears is null then table4._141_Current_arrears 
-    else table7.amountInArrears     end ) as AMOUNT_IN_ARREARS,( table7.clearedBalance/2 ) as 
-CLEARED_BALANCE,( table3.CurrentBalance ) as CURRENTBALANCE_3,( table3.SettlementFigure ) as 
+LASTPAYMENTAMOUNT_3,table7.ConsolidatedBalance as CONSOLIDATEDBALANCE,( table4.PreferredEmail
+) as PREFERREDEMAIL_1,table7.contractualInstalmentAmount as
+CONTRACTUALINSTALMENTAMOUNT,table7.rebateAmount as REBATEAMOUNT,table7.currentInterestRate as
+CURRENTINTERESTRATE,table7.preDefaultArrears as PREDEFAULTARREARS_1,(
+table4.dateLatestComplaintReceived ) as DATELATESTCOMPLAINTRECEIVED,(
+PUT(table7.ProductTypeId, PRODUCTTYPE_DESCRIPTION.) ) as PRODUCT_TYPE_DESCRIPTION,(
+table7.AccountOpenedDate ) as ACCOUNTOPENEDDATE_1,table7.loanTerm as
+LOANTERM,table7.LoanAdvance as LOANADVANCE,table7.ccjAmount as CCJAMOUNT,table4.FirstName as
+FIRSTNAME,table4.LastName as LASTNAME,( table4.DateOfBirth ) as DATEOFBIRTH,table9.PostCode as
+POSTCODE,( case      when put(table3.externalAgentID, DIMEXTAGENTID_DPAAGREEMENT.)='Y' then
+'Y'     else table3.dpaAgreement     end ) as DPAAGREEMENT,table3.ExternalAgentReference as
+EXTERNALAGENTREFERENCE,table3.BarCode as BARCODE,( table4.PreferredEmail ) as PREFERREDEMAIL,(
+PUT(table4.CustomerStatusKey, DIMCUSTSTAT_STATUSDESCORIG.)  ) as CUSTOMER_STATUS,table9.County
+as COUNTY_1,table9.Country as COUNTRY,( '' ) as HISTORIC_DCA_REFERENCE,( '' ) as
+HISTORIC_DCA_TELEPHONE_NUMBER,table4.CustomerID as CUSTOMERID,( case when table7.ClientID=1107
+then table4.SourceSystemID     else table7.AccountNumber     end ) as
+ACCOUNT_NUMBER_2,table7.AgentReference as AGENTREFERENCE,( table7.LDMBarclaysDateNextAmountDue
+) as LDMBARCLAYSDATENEXTAMOUNTDUE_1,( table7.arrearsCalculationStartDate ) as
+ARREARSCALCULATIONSTARTDATE,table7.ClientID as CLIENTID,( PUT(table7.ClientID,CLIENT_NAME.) )
+as CLIENT_NAME,table7.unclearedBalance as UNCLEAREDBALANCE,table3.paymentplanamountarrears as
+PAYMENTPLANAMOUNTARREARS,( case when     table7.amountInArrears is null  OR
+table7.amountInArrears <0.00 then 0     else 1     end ) as
+AMOUNT_IN_ARREARS_2,table7.ContractID as CONTRACTID,( case when table3.CorrespondenceName is
+null then table4.FullName     else table3.CorrespondenceName     end ) as
+CORRESPONDENCENAME_2,table4.MiddleName as MIDDLENAME,table4._112__C__Advised_Limit as
+_112__C__ADVISED_LIMIT,table4._113__C__Current_Balance as
+_113__C__CURRENT_BALANCE,table4._117__L__Mnthly_Inst_Amnt as
+_117__L__MNTHLY_INST_AMNT,table4._138_Contractual_Amount as _138_CONTRACTUAL_AMOUNT,( case
+when table7.ClientID = 1266 then table3.FtypeArrearsAllocation     else
+table4._150_Gross_Arrears     end ) as _150_GROSS_ARREARS,table4._151_G_tee_Call_up_Amount as
+_151_G_TEE_CALL_UP_AMOUNT_1,table4._155_Interest_value as
+_155_INTEREST_VALUE,table4._214_Company_Name as _214_COMPANY_NAME,table4._243_Guarantor_for_
+as _243_GUARANTOR_FOR_,table4._247_Insolvency_Firm as
+_247_INSOLVENCY_FIRM,table4._251_Ltd_Company_Name as
+_251_LTD_COMPANY_NAME,table4._271_Portfolio_Name as _271_PORTFOLIO_NAME,(
+table3.LDMSecondLetterSentDate ) as LDMSECONDLETTERSENTDATE,( table3.CurrentDate28 ) as
+CURRENTDATE28,( table3.CurrentDate21 ) as CURRENTDATE21,( table3.CurrentDate10 ) as
+CURRENTDATE10,table7.totalExcluded as TOTALEXCLUDED,table7.currentBalance as CURRENTBALANCE,(
+table4.ClearedBalance * 0.7 ) as CUSTOMER_CLEARED_BALANCE,( table4.ClearedBalance * 0.3 ) as
+CUSTOMER_CLEARED_BALANCE_2,( PUT(table7.ContractID, CONTRACTID_HOD.) ) as
+LDM_CONTRACTID_DISCOUNT,( case     when table9.Location = 'England & Wales' then case
+when table4.UnclearedBalance >=5000 then 'England Wales and NI > 5K'          else 'England
+Wales and NI < 5K'          end     else  table9.Location     end ) as
+LDM_LOCATION_VAL,table9.Location as LOCATION,(
+PUT(table7.ClientID,CLIENTID_COURTFEESSOLICITORSCOST.) ) as CLIENT_ID_2,(
+PUT(table7.PlacementCategoryID,PLACEMENTCATEGORYID_AGENCIES.) ) as PLACEMENT_CATEGORY_ID,(
+PUT(table7.ContractID,CONTRACTID_DISCOUNT.) ) as CONTRACT_ID_2,( table4.AssignmentDate ) as
+ASSIGNMENTDATE,( case     when table7.amountInArrears is null then table4._141_Current_arrears
+    else table7.amountInArrears     end ) as AMOUNT_IN_ARREARS,( table7.clearedBalance/2 ) as
+CLEARED_BALANCE,( table3.CurrentBalance ) as CURRENTBALANCE_3,( table3.SettlementFigure ) as
 5                                       The SAS System              08:27 Monday, June 30, 2014
 
-SETTLEMENTFIGURE,( table7.portfolioCode ) as PORTFOLIOCODE,( 
-PUT(table7.portfolioCode,$PORTFOLIOCODE_LBGHERITAGE.) ) as LBG_HERITAGE,( 
-PUT(table7.portfolioCode,$PORTFOLIOCODE_LBGTYPEOFDEBT.) ) as LBGTYPEOFDEBT,( 
-PUT(table7.funderID,funder_name.) ) as FUNDER_NAME,%sysfunc(datetime()) as CURRENT_TIME,( 
-table7.DateAccountCreated ) as DATEACCOUNTCREATED,( table3.paymentplanlastmissedinstdate ) as 
-PAYMENTPLANLASTMISSEDINSTDATE_1,( table7.preDefaultArrears ) as 
-PREDEFAULTARREARS,table4._327_Freetext_10__Migrated_ as _327_FREETEXT_10__MIGRATED_,( 
-input(table4._326_Freetext_9__Migrated_, yymmdd8.) ) as 
-ORIGINAL_AGREEMENT_DATE,table4._325_Freetext_8__Migrated_ as 
-_325_FREETEXT_8__MIGRATED_,table4._324_Freetext_7__Migrated_ as _324_FREETEXT_7__MIGRATED_,( 
-table4._95_Last_Payment_Date ) as _95_LAST_PAYMENT_DATE,table4.CCATotalPaymentAmount as 
-CCATOTALPAYMENTAMOUNT,table7.AmountOutstanding as AMOUNTOUTSTANDING,( 
-table3.FirstDayOfMonth6MonthsAgo ) as FIRSTDAYOFMONTH6MONTHSAGO,( table3.FirstDayOfPrevMonth ) 
+SETTLEMENTFIGURE,( table7.portfolioCode ) as PORTFOLIOCODE,(
+PUT(table7.portfolioCode,$PORTFOLIOCODE_LBGHERITAGE.) ) as LBG_HERITAGE,(
+PUT(table7.portfolioCode,$PORTFOLIOCODE_LBGTYPEOFDEBT.) ) as LBGTYPEOFDEBT,(
+PUT(table7.funderID,funder_name.) ) as FUNDER_NAME,%sysfunc(datetime()) as CURRENT_TIME,(
+table7.DateAccountCreated ) as DATEACCOUNTCREATED,( table3.paymentplanlastmissedinstdate ) as
+PAYMENTPLANLASTMISSEDINSTDATE_1,( table7.preDefaultArrears ) as
+PREDEFAULTARREARS,table4._327_Freetext_10__Migrated_ as _327_FREETEXT_10__MIGRATED_,(
+input(table4._326_Freetext_9__Migrated_, yymmdd8.) ) as
+ORIGINAL_AGREEMENT_DATE,table4._325_Freetext_8__Migrated_ as
+_325_FREETEXT_8__MIGRATED_,table4._324_Freetext_7__Migrated_ as _324_FREETEXT_7__MIGRATED_,(
+table4._95_Last_Payment_Date ) as _95_LAST_PAYMENT_DATE,table4.CCATotalPaymentAmount as
+CCATOTALPAYMENTAMOUNT,table7.AmountOutstanding as AMOUNTOUTSTANDING,(
+table3.FirstDayOfMonth6MonthsAgo ) as FIRSTDAYOFMONTH6MONTHSAGO,( table3.FirstDayOfPrevMonth )
 as FIRSTDAYOFPREVMONTH,table3.DepartmentKey as DEPARTMENTKEY,table8.Amount as AMOUNT_1
 276        %put NOTE: FROM ----------- %superq(f) ;
-NOTE: FROM ----------- ( SELECT  DISTINCT table0.CustomerAccountKey AS CUSTOMERACCOUNTKEY 
-LABEL='Customer Account Key' FORMAT=F11.0 FROM next table1 Inner join sasidm.CustomerAccount 
-table0 on table1.customerAccountID = table0.customerAccountID ) table2 Left join 
-sasidm.CustomerAccount table3 on table2.CUSTOMERACCOUNTKEY = table3.CustomerAccountKey Left 
-join sasidm.Customer table4 on table4.CustomerKey = table3.CustomerKey Left join 
-sasidm.Account table7 on table7.AccountID = table3.AccountID Left join sasidm.PaymentPlan 
-table8 on table8.customerAccountID = table3.CustomerAccountID Left join 
-sasidm.CustomerAccountParty table5 on table3.CustomerAccountKey = table5.CustomerAccountKey 
-Left join sasidm.CustomerAddress table9 on table4.CustomerKey = table9.CustomerKey Left join 
-sasidm.CustomerSundryText table10 on table10.customerID = table4.CustomerID Left join 
-sasidm.Party table6 on table6.IDMPartyID = table5.IDMPartyID Left join sasidm.PartyContact 
-table11 on table6.IDMPartyID = table11.IDMPartyID   left join next table12 on 
+NOTE: FROM ----------- ( SELECT  DISTINCT table0.CustomerAccountKey AS CUSTOMERACCOUNTKEY
+LABEL='Customer Account Key' FORMAT=F11.0 FROM next table1 Inner join sasidm.CustomerAccount
+table0 on table1.customerAccountID = table0.customerAccountID ) table2 Left join
+sasidm.CustomerAccount table3 on table2.CUSTOMERACCOUNTKEY = table3.CustomerAccountKey Left
+join sasidm.Customer table4 on table4.CustomerKey = table3.CustomerKey Left join
+sasidm.Account table7 on table7.AccountID = table3.AccountID Left join sasidm.PaymentPlan
+table8 on table8.customerAccountID = table3.CustomerAccountID Left join
+sasidm.CustomerAccountParty table5 on table3.CustomerAccountKey = table5.CustomerAccountKey
+Left join sasidm.CustomerAddress table9 on table4.CustomerKey = table9.CustomerKey Left join
+sasidm.CustomerSundryText table10 on table10.customerID = table4.CustomerID Left join
+sasidm.Party table6 on table6.IDMPartyID = table5.IDMPartyID Left join sasidm.PartyContact
+table11 on table6.IDMPartyID = table11.IDMPartyID   left join next table12 on
 table12.customerAccountID = table3.CustomerAccountID
 277        %put NOTE: WHERE ---------- %superq(w) ;
-NOTE: WHERE ----------                                                                         
-                                                                                               
-                                                                                               
-                                                                                               
-                                                                                               
-                                                                                               
-                                                                                               
-                                                                                               
-                                                                                               
-                                                                                               
-                                                                                               
-  
-278        
-279        
+NOTE: WHERE ----------
+
+
+
+
+
+
+
+
+
+
+
+278
+279
 280        *** Now we actually generate the data which will populate the letter ;
 281        proc sql ;
 282        	create table next as
@@ -273,10 +273,10 @@ NOTE: Table WORK.LETTERTEST created, with 4 rows and 133 columns.
 NOTE: PROCEDURE SQL used (Total process time):
       real time           11:59.11
       cpu time            7:27.84
-      
 
-293        
-294        
+
+293
+294
 295        /*	Now we export from table to a flat delimited file ;*/
 296        /*	could use SAS code to do this, but SQL/Server probably has a preferred way to do
 296      ! this ;*/
@@ -876,18 +876,18 @@ NOTE: There were 4 observations read from the data set WORK.LETTERTEST.
 NOTE: DATA statement used (Total process time):
       real time           0.03 seconds
       cpu time            0.03 seconds
-      
+
 
 4 records created in c:\users\pmason\test.csv from LETTERTEST.
-  
-  
+
+
 NOTE: "c:\users\pmason\test.csv" file was successfully created.
 18                                      The SAS System              08:27 Monday, June 30, 2014
 
 NOTE: PROCEDURE EXPORT used (Total process time):
       real time           0.17 seconds
       cpu time            0.12 seconds
-      
+
 
 855        data _null_ ;
 856        	infile 'c:\users\pmason\test.csv' ;
@@ -923,10 +923,10 @@ NOTE: 5 records were read from the infile 'c:\users\pmason\test.csv'.
 NOTE: DATA statement used (Total process time):
       real time           0.00 seconds
       cpu time            0.00 seconds
-      
+
 
 NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
 NOTE: The SAS System used:
       real time           12:00.14
       cpu time            7:28.22
-      
+

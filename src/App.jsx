@@ -99,7 +99,7 @@ function App() {
     [localUrl, setLocalUrl] = useState(null),
     [scale, setScale] = useState(1),
     [mermaidInfo, setMermaidInfo] = useState({ characters: null, lines: null }),
-    [rules, setRules] = useState(defaultRules),
+    [rules, setRules] = useState(null),
     [anchorEl, setAnchorEl] = useState(null),
     getLog = (url) => {
       // const username = "",
@@ -260,22 +260,9 @@ function App() {
     },
     // paste the contents of clipboard in as a new log
     pasteClipboard = async () => {
-      const text = await navigator.clipboard.readText();
+      let text = await navigator.clipboard.readText();
       if (text.length > 100) {
-        text.replace(/\r\n/g, "\n");
-        // text.replace(/\r/g, "");
-        const lines = text.split("\n");
-        // show first element of lines in hex
-        let hex,
-          i,
-          result = "",
-          l1 = lines[0];
-        for (i = 0; i < l1.length; i++) {
-          hex = l1.charCodeAt(i).toString(16);
-          result += ("000" + hex).slice(-4);
-        }
-        console.log("lines[0]", lines[0], "result", result);
-
+        text = text.replace(/\r\n/g, "\n");
         setOpenPopUp(true);
         setPopUpMessage("Pasting contents of clipboard");
         setLogOriginalText(text);
@@ -289,7 +276,8 @@ function App() {
     },
     // use rules to analyse text and modify it
     analyse = (text) => {
-      if (text === null || text.length === 0) return;
+      if (text === null || text.length === 0 || rules === null) return;
+      const startOfAnalysis = new Date().getTime();
       console.log("analyse", text.length);
       resetCounts();
       // Object.keys(badgeCount).forEach((key) => {
@@ -399,26 +387,7 @@ function App() {
           badgeCount[type] = counts[type];
         });
       }
-      // console.log(
-      //   "uniqueTypes",
-      //   uniqueTypes,
-      //   "counts",
-      //   counts,
-      //   "badgeCount",
-      //   badgeCount
-      // );
-      // const tempBadgeCount = {};
-      // if (uniqueTypes) {
-      //   uniqueTypes.forEach((type) => {
-      //     // if (counts.hasOwnProperty(type)) tempBadgeCount[type] = counts[type];
-      //     if (counts.hasOwnProperty(type)) badgeCount[type] = counts[type];
-      //   });
-      //   // setBadgeCount(tempBadgeCount);
-      // }
-      // console.log("tempBadgeCount", tempBadgeCount);
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
-      // setLineNumberToLink(tempLineNumberToLink);
-      // console.log(tempLineNumberToLink);
 
       const modified = html
         .map((h, hid) => {
@@ -429,8 +398,15 @@ function App() {
         })
         .filter((element) => element != null);
 
-      // console.log(showLineNumbers);
-      // if (mode === "local") return modified.join("\n"); else
+      const endOfAnalysis = new Date().getTime(),
+        timeTaken = (endOfAnalysis - startOfAnalysis) / 1000;
+      setPopUpMessage(
+        "Time taken for checking log against rules was " +
+          timeTaken +
+          " seconds"
+      );
+      setOpenPopUp(true);
+      setAnalyseAgain(false);
       return modified.join("\n");
     },
     selectLog = (index) => {
@@ -548,7 +524,10 @@ function App() {
     // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Ftests/a.log
     // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Fsrc%2Flogs.json
     handleCloseRulesMenu = (item) => {
-      console.log(item);
+      setOpenRulesMenu(false);
+      // check that item is a string
+      if (typeof item !== "string") return;
+      localStorage.setItem("rulesURL", item);
       const url =
         mode === "local"
           ? "http://localhost:3001/getfile/" +
@@ -556,16 +535,9 @@ function App() {
             "/" +
             item
           : item;
-      // console.log(
-      //   "webDavPrefix",
-      //   webDavPrefix,
-      //   "rulesDirectory",
-      //   rulesDirectory,
-      //   "item",
-      //   item,
-      //   "url",
-      //   url
-      // );
+      loadRules(url);
+    },
+    loadRules = (url) => {
       fetch(url).then(function (response) {
         response.text().then(function (text) {
           const tempRules = JSON.parse(text);
@@ -575,7 +547,6 @@ function App() {
           setRules(tempRules);
         });
       });
-      setOpenRulesMenu(false);
     },
     [logDirectory, setLogDirectory] = useState(
       "/general/biostat/jobs/gadam_ongoing_studies/dev/logs/"
@@ -1297,6 +1268,7 @@ function App() {
 
   // update when rules change
   useEffect(() => {
+    if (rules === null) return;
     console.log("*** rules", rules.length);
     updateRules();
     // eslint-disable-next-line
@@ -1321,7 +1293,8 @@ function App() {
 
   // analyse text again using current rules, if the flag is set true
   useEffect(() => {
-    if (!logOriginalText || analyseAgain === null) return;
+    if (!logOriginalText || analyseAgain === false || analyseAgain === null)
+      return;
     console.log("*** analyseAgain", analyseAgain, logOriginalText.length);
     // resetCounts();
     // Object.keys(badgeCount).forEach((key) => {
@@ -1424,10 +1397,21 @@ function App() {
   // for remote mode
   useEffect(() => {
     if (mode !== "remote") return;
+    console.log("*** remote");
+
+    // use any saved rules selection from local storage
+    const previouslySelectedRules = localStorage.getItem("rulesURL");
+    console.log("previouslySelectedRules", previouslySelectedRules);
+    if (previouslySelectedRules) {
+      loadRules(previouslySelectedRules); // loads from URL and then sets the rules
+    } else {
+      setRules(defaultRules);
+      console.log("Using default rules");
+    }
+
     getRulesWebDav(rulesDirectory); // get the list of rules by reading directory
     const splitQuestionMarks = href.split("?");
     if (splitQuestionMarks.length > 1) return; // handled in href section since we have a log specified in URL
-    console.log("*** remote");
     const defaultDirectory = navigator.platform.startsWith("Win")
       ? "/general/biostat/jobs/dashboard/dev/logs"
       : "/Users/philipmason/Documents/GitHub/logviewer/tests";
@@ -1442,9 +1426,20 @@ function App() {
   // - get the list of rules by reading directory
   useEffect(() => {
     if (mode !== "local") return;
+    console.log("*** local");
+
+    // use any saved rules selection from local storage
+    // const previouslySelectedRules = localStorage.getItem("rulesURL");
+    // console.log("previouslySelectedRules", previouslySelectedRules);
+    // if (previouslySelectedRules) {
+    //   loadRules(previouslySelectedRules); // loads from URL and then sets the rules
+    // } else {
+    setRules(defaultRules);
+    console.log("Using default rules");
+    // }
+
     const splitQuestionMarks = href.split("?");
     if (splitQuestionMarks.length > 1) return; // handled in href section since we have a log specified in URL
-    console.log("*** local");
     // console.log(navigator);
     const defaultDirectory = navigator.platform.startsWith("Win")
       ? "C:/github/logviewer/tests"
@@ -1492,31 +1487,13 @@ function App() {
   useEffect(() => {
     if (selectedLocalFile === "") return;
     console.log("*** selectedLocalFile", selectedLocalFile);
-    // const dir = encodeURIComponent(
-    //     "/Users/philipmason/Documents/GitHub/logviewer/src"
-    //   ),
-    //   file = "sample.log",
-    //   url = "http://localhost:3001/getfile/" + dir + "/" + file;
     const file = selectedLocalFile.split("/").pop(),
       dir = encodeURIComponent(logDirectory),
       url = "http://localhost:3001/getfile/" + dir + "/" + file;
     setLocalUrl(url);
-    // console.log(
-    //   "selectedLocalFile",
-    //   selectedLocalFile,
-    //   "\nfile",
-    //   file,
-    //   "\ndir",
-    //   dir,
-    //   "\nfile",
-    //   file,
-    //   "\nurl",
-    //   url
-    // );
     fetch(url).then(function (response) {
       response.text().then(function (text) {
         console.log(`${text.length} characters were read from file ${url}`);
-        // setAnalyseAgain(!analyseAgain);
         setLogOriginalText(text);
         setLogText(analyse(text));
       });
@@ -1537,7 +1514,6 @@ function App() {
       tempMacrosSelected.push(mprint[item - 1].name);
     });
     setMacrosSelected(tempMacrosSelected);
-    // setAnalyseAgain(!analyseAgain);
     // eslint-disable-next-line
   }, [showSource, showMacroLines, selectionModel]);
 

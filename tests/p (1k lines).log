@@ -1,0 +1,1024 @@
+1                                                          The SAS System                      Wednesday, March 20, 2024 01:08:00 PM
+
+NOTE: Copyright (c) 2016 by SAS Institute Inc., Cary, NC, USA.
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M7 MBCS3170)
+      Licensed to ARGENX VIA OCS_SAS LSAF_SAAS, Site 70265777.
+NOTE: This session is executing on the Linux 4.18.0-305.19.1.el8_4.x86_64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+
+      SAS/STAT 15.2
+      SAS/IML 15.2
+
+NOTE: Additional host information:
+
+ Linux LIN X64 4.18.0-305.19.1.el8_4.x86_64 #1 SMP Tue Sep 7 07:07:31 EDT 2021 x86_64 Red Hat Enterprise Linux release 8.4 (Ootpa)
+
+You are running SAS 9. Some SAS 8 files will be automatically converted
+by the V9 engine; others are incompatible.  Please see
+http://support.sas.com/rnd/migration/planning/platform/64bit.html
+
+PROC MIGRATE will preserve current SAS file attributes and is
+recommended for converting all your SAS libraries from any
+SAS 8 release to SAS 9.  For details and examples, please see
+http://support.sas.com/rnd/migration/index.html
+
+
+This message is contained in the SAS news file, and is presented upon
+initialization.  Edit the file "news" in the "misc/base" directory to
+display site-specific news and information in the program log.
+The command line option "-nonews" will prevent this display.
+
+
+
+
+NOTE: SAS Initialization used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+NOTE: The autoexec file, /sso/biconfig/940/Lev1/LSAFApp/WorkspaceServer/autoexec.sas, was executed at server initialization.
+1          options nofmterr;
+2          options dtreset;
+3          options locale=EN_US;
+4          %let _SDDUSR_=%bquote(fbuerger);
+5          %let _SASWS_ = %nrstr("/lsafshared/SASWorkspaces/fbuerger");
+6          %let _SASWS_ = %qsubstr(&_SASWS_, 2, %length(&_SASWS_) - 2);
+7          %let _SASUSRWS_ = %nrstr("/lsafshared/SASWorkspaces/fbuerger/Users/fbuerger");
+8          %let _SASUSRWS_ = %qsubstr(&_SASUSRWS_, 2, %length(&_SASUSRWS_) - 2);
+9          %let _SASINSTANCE_ = %nrstr("xarprod.ondemand.sas.com");
+10         %let _SASINSTANCE_ = %qsubstr(&_SASINSTANCE_, 2, %length(&_SASINSTANCE_) - 2);
+11         options nosource;
+
+NOTE: DATA statement used (Total process time):
+      real time           1.06 seconds
+      cpu time            0.01 seconds
+
+
+18
+
+/**********************************************************************************************************************
+ * Submission Start: run_mapping_engine.sas
+ * Mar 20, 2024 13:08:25 GMT by fbuerger
+ *********************************************************************************************************************/
+2                                                          The SAS System                      Wednesday, March 20, 2024 01:08:25 PM
+
+19         options nosyntaxcheck errorcheck=strict notes;
+20         ;*';*";*/;*); run; quit;
+21
+22         %let _SASFILELOCATION_ = %nrstr("/general/dm/jobs/gsdtm_mapping_engine/prod/macros");
+23         %let _SASFILELOCATION_ = %qsubstr(&_SASFILELOCATION_, 2, %length(&_SASFILELOCATION_) - 2);
+24         %let _SASFILEPATH_ = %nrstr("/general/dm/jobs/gsdtm_mapping_engine/prod/macros/run_mapping_engine.sas");
+25         %let _SASFILEPATH_ = %qsubstr(&_SASFILEPATH_, 2, %length(&_SASFILEPATH_) - 2);
+26
+27         /********************************************************************************************************************/
+28         proc scaproc; record "&_SASWS_/.sessions/3/sca_b5184a89-ceba-4811-9ea0-a619da415828.txt" EXPANDMACROS; run;
+
+NOTE: PROCEDURE SCAPROC used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+29
+30         options nomprint;
+31         /********************************************************************************************************************/
+32         /* Macro Variables for Job Parameters */
+33         %let JOB_LOCATION=&_SASWS_/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs;
+34         %let LOGPATH=&_SASWS_/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs;
+35         %let TRIAL_MACROS=&_SASWS_/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/macros;
+36         %let MAPPING_FILE_LOCATION=&_SASWS_/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/mapping;
+37         %let SOURCE=&_SASWS_/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/3_raw;
+38         %let INPUT=&_SASWS_/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/input;
+39         %let OUTLIB=&_SASWS_/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/4_sdtm/datasets;
+40         %let CRO_SDTM_LOCATION=&_SASWS_/clinical/argx-113/cidp/argx-113-1902/dm/staging/current/4_sas/datasets;
+41         %let SELECT_DOMAINS=;
+42         %let CODEGEN=Y;
+43         %let CONVERT_TO_XPT=Y;
+44         %let GETSTANDARD=N;
+45         %let STANDARDMAPPING=&_SASWS_/general/dm/jobs/gsdtm_mapping_engine/prod/metadata/mapping_engine_specs_standard.xlsx;
+46
+47         /********************************************************************************************************************/
+48
+49         /*******************************************************************************
+50           Program     : run_mapping_engine.sas
+51           Author      : Bas van Bakel
+52                         Kai Wanke
+53           Location    : TO BE DEFINED
+54           Date (ISO)  : 2023-xx-xx
+55           Description : Program to setup the Mapping Engine and execute its main.sas macro.
+56                         The program will interpret the submitted job parameters in oder
+57                         to compile macros, process the mapping specifications, and assing
+58                         libraries for source data and metadata.
+59           Remarks     : The configuration can be done using the Mapping Engine
+60                         job and the xlsx file with trial mapping specifications.
+61         ********************************************************************************
+62           Parameters  : Job Parameters
+63                         Mapping Specification 'PARAMETERS' sheet
+64         ********************************************************************************
+65           Input       : Raw source datasets
+66                         Trial metadata
+67                         Trial T-domains
+68                         Trial Mapping Specifications
+69         ********************************************************************************
+70           Output      : SDTM Datasets
+3                                                          The SAS System                      Wednesday, March 20, 2024 01:08:25 PM
+
+71                           - regular output (OUTLIB)
+72                           When CONVERT_TO_XPT was "Y"
+73                           - datasets with adjusted lengths
+74                           - SDTM datasets stored as xpt files
+75                         When CODEGEN was "Y"
+76                           - mprint.sas
+77         ********************************************************************************
+78           Modification history:
+79           Date (ISO) User Description
+80         *******************************************************************************/
+81
+82         /*******************************************************************************
+83           Set SAS System Options
+84         *******************************************************************************/
+85
+86         OPTION VALIDVARNAME=V7; /*Option used to import excel files with '_' instead of ' ' in names*/
+87         OPTIONS COMPRESS=YES REUSE=YES;
+88
+89         /*******************************************************************************
+90           Set debug options
+91         *******************************************************************************/
+92
+93         %macro init_mprint();
+94           %global CODEFILE;
+95           %let CODEFILE=;
+96
+97           %if "&CODEGEN." = "Y" %then %do;
+98             %let CODEFILE = &logpath./mprint.sas;
+99
+100            /* Remove the previous version of mprint if it exists */
+101            filename old "&codefile.";
+102
+103            %if %sysfunc(fexist(old)) =1 %then %do;
+104              %let rc =%sysfunc(fdelete(old));
+105            %end;
+106
+107            filename old clear;
+108          %end;
+109        %mend init_mprint;
+110        %init_mprint();
+NOTE: Fileref OLD has been deassigned.
+111
+112        /***************************************************************************
+113         Compile macros to use to read in parameters and libraries from mapping sheet
+114         - excel_import: to import a sheet from an Excel file
+115         - mapping_sheet_exist: To determine if a sheet exists in the Excel file
+116         - get_parameters: To obtain the parameters from the parameter sheet and
+117                           generate macro variables from them
+118         - set_default_parameter: To initialize expected parameters with default values
+119                                  (unless they were assigned in get_parameters).
+120         - get_libraries:  To obtain the libraries as defined in the libraries sheet
+121                           in the Excel file and generate libnames from them.
+122        ***************************************************************************/
+123        %macro excel_import(
+124                       file,      /*full path to excel file*/
+125                       tab,       /*sheet in excel file to read*/
+126                       lib_out,   /*library of output dataset*/
+127                       ds_out     /*name of output dataset*/
+4                                                          The SAS System                      Wednesday, March 20, 2024 01:08:25 PM
+
+128                       );
+129
+130          /*Delete the output dataset if it exists*/
+131          %if %sysfunc(exist(&lib_out..&ds_out.)) %then %do;
+132            %if "%upcase(&tab.)" ^= "LIBRARIES" and "%upcase(&tab.)" ^= "PARAMETERS" %then %do;
+133              %note(msg = Remove the existing version of [&lib_out..&ds_out.]);
+134            %end;
+135
+136            proc datasets lib=&lib_out. nolist nowarn;
+137              delete &ds_out.;
+138            quit;
+139          %end;
+140
+141          /*Import the dataset*/
+142          %if "%upcase(&tab.)" ^= "LIBRARIES" and "%upcase(&tab.)" ^= "PARAMETERS" %then %do;
+143            %note(msg = Import the initial version of the [&tab.] sheet as [&lib_out..&ds_out.]);
+144          %end;
+145
+146          filename _xlsx "&file.";
+147          proc import out=&lib_out..&ds_out. DATAFILE=_xlsx DBMS=xlsx REPLACE;
+148             SHEET="&tab.";
+149             GETNAMES=YES;
+150          run;
+151          filename _xlsx clear;
+152
+153          /*Delete completely empty rows from the dataset*/
+154          %if "%upcase(&tab.)" ^= "LIBRARIES" and "%upcase(&tab.)" ^= "PARAMETERS" %then %do;
+155            %note(msg = Remove empty rows from [&lib_out..&ds_out.]);
+156          %end;
+157
+158          data &lib_out..&ds_out.(drop=_temp:);
+159            length _temp_char $1. _temp_num 8.;
+160            call missing(_temp_char, _temp_num);
+161            set &lib_out..&ds_out.;
+162            /* Store the original Excel row number */
+163            xlsx_row = '*#' || strip(put(_n_ + 1,best.)) || ';';
+164            /* Remove empty records */
+165            if coalesce(of _numeric_)=. and cats(of _character_)='' then delete;
+166          run;
+167        %mend excel_import;
+168
+169        /*Macro used for checking if sheet exists in mapping xlsx file*/
+170        %macro mapping_sheet_exist(check_sheet=);
+171
+172          libname CHKLIB xlsx "&xls_mapping.";
+173
+174          proc sql noprint;
+175            select count(*) into :mapping_sheet_exist trimmed
+176            from sashelp.vtable
+177            where libname="CHKLIB" and upcase(memname)=upcase("&check_sheet.");
+178          quit;
+179          %PUT mapping_sheet_exist: &mapping_sheet_exist for check_sheet=&check_sheet;
+180          libname CHKLIB clear;
+181
+182        %mend mapping_sheet_exist;
+183
+184        %macro get_parameters();
+185
+5                                                          The SAS System                      Wednesday, March 20, 2024 01:08:25 PM
+
+186          %let mapping_sheet_exist=0;
+187          %mapping_sheet_exist(check_sheet=parameters);
+188
+189          %if &mapping_sheet_exist. %then %do;
+190
+191            %excel_import (&xls_mapping., parameters, work, _parameters);
+192
+193            data parameters;
+194              set _parameters;
+195              retain obs;
+196              if _n_=1 then obs=1;
+197              if ^missing(parameter) then do;
+198                output;
+199                obs=obs+1;
+200              end;
+201            run;
+202
+203            %let parameters_cnt=0;
+204            proc sql noprint;
+205              select count(*) into :parameters_cnt trimmed from parameters;
+206            quit;
+207
+208            %if &parameters_cnt.>0 %then %do;
+209              %do pi=1 %to &parameters_cnt.;
+210                %let parameter_name=;
+211                %let parameter_value=;
+212                proc sql noprint;
+213                  select parameter, value into :parameter_name trimmed, :parameter_value trimmed from parameters where obs=&pi.;
+214                quit;
+215
+216                %if "&parameter_name."^="" %then %do;
+217                  %global &parameter_name.;
+218                  %let &parameter_name.=&parameter_value.;
+219                  %put NOTE: Parameter [&parameter_name.] value set to [&parameter_value.];
+220                %end;
+221              %end;
+222            %end;
+223          %end;
+224
+225        %mend get_parameters;
+226
+227        /* Macro to initialize expected parameters with default values if they were not assigned manually */
+228        %macro set_default_parameter(parameter=,value=);
+229
+230          %if %symexist(&parameter.) = 0 %then %do;
+231            %global &parameter.;
+232            %let &parameter. = &value.;
+233            %put NOTE: Parameter [&parameter.] was initialized with default value [&value.];
+234          %end;
+235
+236        %mend set_default_parameter;
+237
+238        /*Macro checks MFS excel file for libraries sheet and assign the libraries*/
+239        %macro get_libraries();
+240
+241          /* Assing OUTLIB library */
+242          %if "&outlib." ^="" %then %do;
+243            libname outlib "&outlib.";
+6                                                          The SAS System                      Wednesday, March 20, 2024 01:08:25 PM
+
+244          %end; %else %do;
+245            %put %str(ERR)OR: The mandatory parameter [OUTLIB] was submitted without value. Please resubmit the job with a valid
+245      ! path;
+246          %end;
+247
+248          %let mapping_sheet_exist=0;
+249          %mapping_sheet_exist(check_sheet=libraries);
+250
+251          %if &mapping_sheet_exist. %then %do;
+252            %excel_import (&xls_mapping., libraries, work, _libraries);
+253
+254            data libraries;
+255              set _libraries;
+256              retain obs;
+257              if _n_=1 then obs=1;
+258              if ^missing(library) then do;
+259                output;
+260                obs=obs+1;
+261              end;
+262            run;
+263
+264            %let parameters_cnt=0;
+265            proc sql noprint;
+266              select count(*) into :library_cnt trimmed from libraries;
+267            quit;
+268
+269            %if &library_cnt.>0 %then %do;
+270
+271              /* Detect if the program was run via a repository job */
+272              %let job_location =workspace;
+273              %if %index(&_SASWS_.,SASWorkspaces/.transient/mapping_engine.job) %then %let job_location =respository;
+274
+275              %do li=1 %to &library_cnt.;
+276                %let libary_name=;
+277                %let library_path=;
+278                proc sql noprint;
+279                  select library, path, option
+280                    into :libary_name trimmed, :library_path trimmed, :library_option trimmed
+281                    from libraries where obs=&li.;
+282                quit;
+283
+284                %if "&libary_name."^="" %then %do;
+285                  /* Confirm the library path exists and is accessible before creating a LIBNAME statement (only when run in the
+285      ! repository) */
+286                  %if "&job_location." ="respository" %then %do;
+287                    %let library_path_r = %substr(&library_path. ,%length(&_SASWS_.)+1);
+288                    %lsaf_exists(lsaf_path=&library_path_r.);
+289                  %end; %else %do;
+290                    %let _lsafExists_ = 1;
+291                  %end;
+292
+293                  %if &_lsafExists_. = 1 %then %do;
+294                    filename chklb "&library_path.";
+295                    %let lib_exists = %sysfunc(fexist(chklb));
+296                    filename chklb clear;
+297
+298                    %if &lib_exists. = 0 %then %do;
+299                      %put %str(ERR)OR: The path to library [&libary_name.] does not exist in the LSAF Workspace. Please revisit
+7                                                          The SAS System                      Wednesday, March 20, 2024 01:08:25 PM
+
+299      ! job inputs and parameters and ensure the folder is included.;
+300                    %end; %else %do;
+301                      libname &libary_name. "&library_path." &library_option.;
+302
+303                      %put NOTE: Library [&libary_name.] assigned to path [&library_path. &library_option.] ;
+304                    %end;
+305                  %end; %else %do;
+306                    %put %str(ERR)OR: The path to library [&libary_name.] does not exist in the LSAF Repository. Please revisit
+306      ! the libraries sheet and ensure the complete path was submitted using the correct casing;
+307                  %end;
+308                %end;
+309              %end;
+310            %end;
+311          %end;
+312
+313        %mend get_libraries;
+314
+315        /*******************************************************************************
+316          Determine the location of the Mapping Engine standard or study macros
+317          and compile the macros via sasautos
+318        *******************************************************************************/
+319
+320        /* Determine which version (dev/test/prod) of the job is used */
+321        %let env = %scan(&_SASFILEPATH_, 5, /);
+322
+323        /*Location of the standard and study macros*/
+324        %let mappingengineloc = &_SASWS_./general/dm/jobs/gsdtm_mapping_engine/&env./macros;
+325        %let studmac          = &TRIAL_MACROS.;
+326
+327        /*Only create filename if it does not yet exist*/
+328        %macro makeFilenameOnce(filename, path);
+329          proc sql noprint;
+330            select count(*)>0 into :exists
+331            from sashelp.vextfl
+332            where lowcase(fileref) = "&filename"
+333            ;
+334          quit;
+335
+336          %if &exists = 0 %then %do;
+337            filename &filename. "&path.";
+338          %end;
+339        %mend makeFilenameOnce;
+340
+341        /* The macro will flag global macros that are replaced by a trial version */
+342        %macro detect_local_macro_version();
+343
+344          %let did_global=%sysfunc(dopen(mapenmac));
+345          /* The name of all global macros are stored in a macro variable */
+346          %let all_general_macros =;
+347          %if %sysfunc(dnum(&did_global)) >0 %then %do;
+348            %do i = 1 %to %sysfunc(dnum(&did_global));
+349              %let general_macro =%qsysfunc(dread(&did_global,&i));
+350              %if %index(%upcase(&general_macro.),.SAS) %then %do;
+351                %let all_general_macros =&all_general_macros.|%qsysfunc(dread(&did_global,&i));
+352              %end;
+353            %end;
+354          %end; %else %do;
+355            %put %str(ERR)OR: No files were detected in the global MACROS folder. Please revisit the Mapping Engine input
+8                                                          The SAS System                      Wednesday, March 20, 2024 01:08:25 PM
+
+355      ! parameters;
+356          %end;
+357          %let rc=%sysfunc(dclose(&did_global.));
+358
+359          %let did_local=%sysfunc(dopen(studymac));
+360          /* The second loop goes through the local macro files */
+361          %if %sysfunc(dnum(&did_local)) >0 %then %do;
+362            %do j =1 %to %sysfunc(dnum(&did_local));
+363              %let local_macro =%qsysfunc(dread(&did_local,&j));
+364              %if %index(%upcase(&local_macro.),.SAS) %then %do;
+365                /* The third loop compares each local file with all global macros and triggers a %str(WARN)ING for conflicts */
+366                %do k =1 %to %sysfunc(countw(&all_general_macros.));
+367                  %let check_macro =%scan(&all_general_macros.,&k.,|);
+368                  %if &check_macro. =&local_macro. %then %do;
+369                    %put %str(WARN)ING: Global macro [&local_macro.] will be overwritten by a local version;
+370                  %end;
+371                %end;
+372              %end;
+373            %end;
+374          %end;
+375          %let rc=%sysfunc(dclose(&did_local.));
+376
+377        %mend detect_local_macro_version;
+378
+379        %makeFilenameOnce(mapenmac, &mappingengineloc.);
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+380        %makeFilenameOnce(studymac, &studmac);
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+
+
+381        %detect_local_macro_version();
+382
+383        /*By defining study macros, the standard macros can be overruled*/
+384        %let sasauto_list = %qsysfunc(compress(%qsysfunc(getoption(SASAUTOS)),%str(%()%str(%))));
+385        options mautosource sasautos=(&sasauto_list. studymac mapenmac);
+386        %put ###%sysfunc(getoption(sasautos));
+###("SASEnvironment/SASMacro" '!SASROOT/sasautos' "/sso/sfw/sas/940/SASFoundation/9.4/lsafapi/lsaf-sas-macro-2.6.1/sasmacros"
+"/lsafshared/SASWorkspaces/global_macros"  studymac mapenmac)
+387
+388        /***************************************************************************
+389          Define and check the mapping specification file
+390        ***************************************************************************/
+391
+392        /*Define location of the mapping Excel file*/
+393        %let xls_mapping = &MAPPING_FILE_LOCATION./mapping_engine_specs.xlsx;
+394
+395        %mapping_sheet_exist(check_sheet=mapping);
+NOTE: Libref CHKLIB was successfully assigned as follows:
+      Engine:        XLSX
+      Physical Name:
+      /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/mapping/mapping_engine_specs.
+      xlsx
+9                                                          The SAS System                      Wednesday, March 20, 2024 01:08:26 PM
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.60 seconds
+      cpu time            0.49 seconds
+
+
+mapping_sheet_exist: 1 for check_sheet=mapping
+NOTE: Libref CHKLIB has been deassigned.
+396        %mapping_sheet_exist(check_sheet=recode);
+NOTE: Libref CHKLIB was successfully assigned as follows:
+      Engine:        XLSX
+      Physical Name:
+      /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/mapping/mapping_engine_specs.
+      xlsx
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.09 seconds
+
+
+mapping_sheet_exist: 1 for check_sheet=recode
+NOTE: Libref CHKLIB has been deassigned.
+397        %mapping_sheet_exist(check_sheet=order);
+NOTE: Libref CHKLIB was successfully assigned as follows:
+      Engine:        XLSX
+      Physical Name:
+      /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/mapping/mapping_engine_specs.
+      xlsx
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+
+
+mapping_sheet_exist: 1 for check_sheet=order
+NOTE: Libref CHKLIB has been deassigned.
+398
+399        /*******************************************************************************
+400          Set Mapping Engine parameters and libraries
+401        *******************************************************************************/
+402
+403        %get_parameters();
+NOTE: Libref CHKLIB was successfully assigned as follows:
+      Engine:        XLSX
+      Physical Name:
+      /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/mapping/mapping_engine_specs.
+      xlsx
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.06 seconds
+
+
+mapping_sheet_exist: 1 for check_sheet=parameters
+NOTE: Libref CHKLIB has been deassigned.
+
+NOTE: One or more variables were converted because the data type is not supported by the V9 engine. For more details, run with
+      options MSGLEVEL=I.
+NOTE: The import data set has 4 observations and 3 variables.
+NOTE: Compressing data set WORK._PARAMETERS decreased size by 0.00 percent.
+      Compressed is 1 pages; un-compressed would require 1 pages.
+NOTE: WORK._PARAMETERS data set was successfully created.
+10                                                         The SAS System                      Wednesday, March 20, 2024 01:08:27 PM
+
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+
+
+NOTE: Fileref _XLSX has been deassigned.
+
+NOTE: There were 4 observations read from the data set WORK._PARAMETERS.
+NOTE: The data set WORK._PARAMETERS has 4 observations and 4 variables.
+NOTE: Compressing data set WORK._PARAMETERS decreased size by 0.00 percent.
+      Compressed is 1 pages; un-compressed would require 1 pages.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: There were 4 observations read from the data set WORK._PARAMETERS.
+NOTE: The data set WORK.PARAMETERS has 4 observations and 5 variables.
+NOTE: Compressing data set WORK.PARAMETERS decreased size by 0.00 percent.
+      Compressed is 1 pages; un-compressed would require 1 pages.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Parameter [ENCODING] value set to [UTF-8]
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Parameter [REMOVE_FORMATS] value set to [Y]
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Parameter [MAX_CHAR_VAR_LENGTH] value set to [250]
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Parameter [SDTM] value set to [Y]
+404
+405        /* Expected but missing paramters will be assinged with default values */
+406        %set_default_parameter(parameter = ENCODING            ,value = UTF-8);
+407        %set_default_parameter(parameter = REMOVE_FORMATS      ,value = Y);
+11                                                         The SAS System                      Wednesday, March 20, 2024 01:08:27 PM
+
+408        %set_default_parameter(parameter = MAX_CHAR_VAR_LENGTH ,value = 250);
+409        %set_default_parameter(parameter = SDTM                ,value = Y);
+410
+411        %get_libraries();
+NOTE: Libref OUTLIB was successfully assigned as follows:
+      Engine:        V9
+      Physical Name: /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/4_sdtm/datasets
+NOTE: Libref CHKLIB was successfully assigned as follows:
+      Engine:        XLSX
+      Physical Name:
+      /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/mapping/mapping_engine_specs.
+      xlsx
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+
+
+mapping_sheet_exist: 1 for check_sheet=libraries
+NOTE: Libref CHKLIB has been deassigned.
+
+NOTE: One or more variables were converted because the data type is not supported by the V9 engine. For more details, run with
+      options MSGLEVEL=I.
+NOTE: The import data set has 5 observations and 4 variables.
+NOTE: Compressing data set WORK._LIBRARIES decreased size by 0.00 percent.
+      Compressed is 1 pages; un-compressed would require 1 pages.
+NOTE: WORK._LIBRARIES data set was successfully created.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.05 seconds
+
+
+NOTE: Fileref _XLSX has been deassigned.
+
+NOTE: There were 5 observations read from the data set WORK._LIBRARIES.
+NOTE: The data set WORK._LIBRARIES has 5 observations and 5 variables.
+NOTE: Compressing data set WORK._LIBRARIES decreased size by 0.00 percent.
+      Compressed is 1 pages; un-compressed would require 1 pages.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+
+
+NOTE: There were 5 observations read from the data set WORK._LIBRARIES.
+NOTE: The data set WORK.LIBRARIES has 5 observations and 6 variables.
+NOTE: Compressing data set WORK.LIBRARIES decreased size by 0.00 percent.
+      Compressed is 1 pages; un-compressed would require 1 pages.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+12                                                         The SAS System                      Wednesday, March 20, 2024 01:08:27 PM
+
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref CHKLB has been deassigned.
+NOTE: Libref EDC was successfully assigned as follows:
+      Engine:        V9
+      Physical Name: /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/3_raw/edc
+NOTE: Library [EDC] assigned to path
+[/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/3_raw/edc ACCESS = READONLY]
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+
+
+NOTE: Fileref CHKLB has been deassigned.
+NOTE: Libref LAB was successfully assigned as follows:
+      Engine:        V9
+      Physical Name: /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/3_raw/lab
+NOTE: Library [LAB] assigned to path
+[/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/3_raw/lab ACCESS = READONLY]
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref CHKLB has been deassigned.
+NOTE: Libref METADATA was successfully assigned as follows:
+      Engine:        V9
+      Physical Name: /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/input/metadata
+NOTE: Library [METADATA] assigned to path
+[/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/input/metadata ACCESS = READONLY]
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref CHKLB has been deassigned.
+NOTE: Libref TDOMAINS was successfully assigned as follows:
+      Engine:        V9
+      Physical Name: /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/input/tdomains
+NOTE: Library [TDOMAINS] assigned to path
+[/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/input/tdomains ACCESS = READONLY]
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref CHKLB has been deassigned.
+NOTE: Libref CRO was successfully assigned as follows:
+      Engine:        V9
+      Physical Name: /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/staging/current/4_sas/datasets
+NOTE: Library [CRO] assigned to path
+[/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/staging/current/4_sas/datasets ACCESS = READONLY]
+412
+413        /*******************************************************************************
+414          Execute Mapping Engine main macro
+415        *******************************************************************************/
+416
+13                                                         The SAS System                      Wednesday, March 20, 2024 01:08:27 PM
+
+417        /*Call the standard main.sas unless a study specific program is available*/
+418        %macro run_main;
+419          %if %sysfunc(fileexist(&studmac./main.sas)) %then %do;
+420            %include "&studmac./main.sas";
+421            %put ### Main.sas from study folder is called instead of the standard version.;
+422          %end;
+423          %else %do;
+424            %include "&mappingengineloc./main.sas";
+425          %end;
+426        %mend run_main;
+427        %run_main;
+NOTE: Source datasets are read in with encoding [UTF-8]
+MPRINT(MAIN):  ;
+NOTE: The macro generated output from MPRINT will also be written to external file
+      /lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs/mprint.sas while
+      OPTIONS MPRINT and MFILE are set.
+MPRINT(CODEGEN_STOP):   options nomfile nomprint;
+NOTE: Import Mapping Specification File
+
+NOTE: The file MPRINT is:
+      Filename=/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs/mprint.sas,
+      Owner Name=fbuerger,Group Name=webtrust,
+      Access Permission=-rw-rw-rw-,
+      Last Modified=20Mar2024:13:08:27,
+      File Size (bytes)=2
+
+NOTE: 3 records were written to the file MPRINT.
+      The minimum record length was 0.
+      The maximum record length was 45.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref MPRINT has been deassigned.
+MPRINT(NOTE):  ;
+MPRINT(MAIN):  ;
+MPRINT(CODEGEN_STOP):   options nomfile nomprint;
+NOTE: Import the initial version of the [mapping] sheet as [work._mappings]
+
+NOTE: The file MPRINT is:
+      Filename=/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs/mprint.sas,
+      Owner Name=fbuerger,Group Name=webtrust,
+      Access Permission=-rw-rw-rw-,
+      Last Modified=20Mar2024:13:08:27,
+      File Size (bytes)=54
+
+NOTE: 3 records were written to the file MPRINT.
+      The minimum record length was 0.
+      The maximum record length was 81.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+
+
+NOTE: Fileref MPRINT has been deassigned.
+MPRINT(NOTE):  ;
+MPRINT(EXCEL_IMPORT):  ;
+14                                                         The SAS System                      Wednesday, March 20, 2024 01:08:28 PM
+
+MPRINT(EXCEL_IMPORT):   filename _xlsx
+"/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/mapping/mapping_engine_specs.xlsx"
+;
+MPRINT(EXCEL_IMPORT):   proc import out=work._mappings DATAFILE=_xlsx DBMS=xlsx REPLACE;
+MPRINT(EXCEL_IMPORT):   RXLX;
+MPRINT(EXCEL_IMPORT):   SHEET="mapping";
+MPRINT(EXCEL_IMPORT):   GETNAMES=YES;
+MPRINT(EXCEL_IMPORT):   run;
+
+NOTE: One or more variables were converted because the data type is not supported by the V9 engine. For more details, run with
+      options MSGLEVEL=I.
+NOTE: The import data set has 7751 observations and 10 variables.
+NOTE: Compressing data set WORK._MAPPINGS decreased size by 97.32 percent.
+      Compressed is 8 pages; un-compressed would require 299 pages.
+NOTE: WORK._MAPPINGS data set was successfully created.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.98 seconds
+      cpu time            0.94 seconds
+
+
+MPRINT(EXCEL_IMPORT):   filename _xlsx clear;
+NOTE: Fileref _XLSX has been deassigned.
+MPRINT(CODEGEN_STOP):   options nomfile nomprint;
+NOTE: Remove empty rows from [work._mappings]
+
+NOTE: The file MPRINT is:
+      Filename=/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs/mprint.sas,
+      Owner Name=fbuerger,Group Name=webtrust,
+      Access Permission=-rw-rw-rw-,
+      Last Modified=20Mar2024:13:08:29,
+      File Size (bytes)=420
+
+NOTE: 3 records were written to the file MPRINT.
+      The minimum record length was 0.
+      The maximum record length was 51.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref MPRINT has been deassigned.
+MPRINT(NOTE):  ;
+MPRINT(EXCEL_IMPORT):  ;
+MPRINT(EXCEL_IMPORT):   data work._mappings(drop=_temp:);
+MPRINT(EXCEL_IMPORT):   length _temp_char $1. _temp_num 8.;
+MPRINT(EXCEL_IMPORT):   call missing(_temp_char, _temp_num);
+MPRINT(EXCEL_IMPORT):   set work._mappings;
+MPRINT(EXCEL_IMPORT):   xlsx_row = '*#' || strip(put(_n_ + 1,best.)) || ';';
+MPRINT(EXCEL_IMPORT):   if coalesce(of _numeric_)=. and cats(of _character_)='' then delete;
+MPRINT(EXCEL_IMPORT):   run;
+
+NOTE: There were 7751 observations read from the data set WORK._MAPPINGS.
+NOTE: The data set WORK._MAPPINGS has 7751 observations and 11 variables.
+NOTE: Compressing data set WORK._MAPPINGS decreased size by 97.32 percent.
+      Compressed is 8 pages; un-compressed would require 299 pages.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+15                                                         The SAS System                      Wednesday, March 20, 2024 01:08:29 PM
+
+
+
+MPRINT(MAIN):  ;
+MPRINT(CODEGEN_STOP):   options nomfile nomprint;
+NOTE: Import the initial version of the [recode] sheet as [work._recode]
+
+NOTE: The file MPRINT is:
+      Filename=/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs/mprint.sas,
+      Owner Name=fbuerger,Group Name=webtrust,
+      Access Permission=-rw-rw-rw-,
+      Last Modified=20Mar2024:13:08:29,
+      File Size (bytes)=734
+
+NOTE: 3 records were written to the file MPRINT.
+      The minimum record length was 0.
+      The maximum record length was 78.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref MPRINT has been deassigned.
+MPRINT(NOTE):  ;
+MPRINT(EXCEL_IMPORT):  ;
+MPRINT(EXCEL_IMPORT):   filename _xlsx
+"/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/mapping/mapping_engine_specs.xlsx"
+;
+MPRINT(EXCEL_IMPORT):   proc import out=work._recode DATAFILE=_xlsx DBMS=xlsx REPLACE;
+MPRINT(EXCEL_IMPORT):   RXLX;
+MPRINT(EXCEL_IMPORT):   SHEET="recode";
+MPRINT(EXCEL_IMPORT):   GETNAMES=YES;
+MPRINT(EXCEL_IMPORT):   run;
+
+NOTE: One or more variables were converted because the data type is not supported by the V9 engine. For more details, run with
+      options MSGLEVEL=I.
+NOTE: The import data set has 786 observations and 5 variables.
+NOTE: Compressing data set WORK._RECODE decreased size by 80.00 percent.
+      Compressed is 1 pages; un-compressed would require 5 pages.
+NOTE: WORK._RECODE data set was successfully created.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.11 seconds
+
+
+MPRINT(EXCEL_IMPORT):   filename _xlsx clear;
+NOTE: Fileref _XLSX has been deassigned.
+MPRINT(CODEGEN_STOP):   options nomfile nomprint;
+NOTE: Remove empty rows from [work._recode]
+
+NOTE: The file MPRINT is:
+      Filename=/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs/mprint.sas,
+      Owner Name=fbuerger,Group Name=webtrust,
+      Access Permission=-rw-rw-rw-,
+      Last Modified=20Mar2024:13:08:29,
+      File Size (bytes)=1094
+
+NOTE: 3 records were written to the file MPRINT.
+      The minimum record length was 0.
+16                                                         The SAS System                      Wednesday, March 20, 2024 01:08:29 PM
+
+      The maximum record length was 49.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref MPRINT has been deassigned.
+MPRINT(NOTE):  ;
+MPRINT(EXCEL_IMPORT):  ;
+MPRINT(EXCEL_IMPORT):   data work._recode(drop=_temp:);
+MPRINT(EXCEL_IMPORT):   length _temp_char $1. _temp_num 8.;
+MPRINT(EXCEL_IMPORT):   call missing(_temp_char, _temp_num);
+MPRINT(EXCEL_IMPORT):   set work._recode;
+MPRINT(EXCEL_IMPORT):   xlsx_row = '*#' || strip(put(_n_ + 1,best.)) || ';';
+MPRINT(EXCEL_IMPORT):   if coalesce(of _numeric_)=. and cats(of _character_)='' then delete;
+MPRINT(EXCEL_IMPORT):   run;
+
+NOTE: There were 786 observations read from the data set WORK._RECODE.
+NOTE: The data set WORK._RECODE has 786 observations and 6 variables.
+NOTE: Compressing data set WORK._RECODE decreased size by 83.33 percent.
+      Compressed is 1 pages; un-compressed would require 6 pages.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+
+
+MPRINT(MAIN):  ;
+MPRINT(CODEGEN_STOP):   options nomfile nomprint;
+NOTE: Import the initial version of the [order] sheet as [work._order]
+
+NOTE: The file MPRINT is:
+      Filename=/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs/mprint.sas,
+      Owner Name=fbuerger,Group Name=webtrust,
+      Access Permission=-rw-rw-rw-,
+      Last Modified=20Mar2024:13:08:29,
+      File Size (bytes)=1402
+
+NOTE: 3 records were written to the file MPRINT.
+      The minimum record length was 0.
+      The maximum record length was 76.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref MPRINT has been deassigned.
+MPRINT(NOTE):  ;
+MPRINT(EXCEL_IMPORT):  ;
+MPRINT(EXCEL_IMPORT):   filename _xlsx
+"/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/mapping/mapping_engine_specs.xlsx"
+;
+MPRINT(EXCEL_IMPORT):   proc import out=work._order DATAFILE=_xlsx DBMS=xlsx REPLACE;
+MPRINT(EXCEL_IMPORT):   RXLX;
+MPRINT(EXCEL_IMPORT):   SHEET="order";
+MPRINT(EXCEL_IMPORT):   GETNAMES=YES;
+MPRINT(EXCEL_IMPORT):   run;
+
+NOTE: One or more variables were converted because the data type is not supported by the V9 engine. For more details, run with
+17                                                         The SAS System                      Wednesday, March 20, 2024 01:08:29 PM
+
+      options MSGLEVEL=I.
+NOTE: The import data set has 20 observations and 3 variables.
+NOTE: Compressing data set WORK._ORDER decreased size by 0.00 percent.
+      Compressed is 1 pages; un-compressed would require 1 pages.
+NOTE: WORK._ORDER data set was successfully created.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+
+
+MPRINT(EXCEL_IMPORT):   filename _xlsx clear;
+NOTE: Fileref _XLSX has been deassigned.
+MPRINT(CODEGEN_STOP):   options nomfile nomprint;
+NOTE: Remove empty rows from [work._order]
+
+NOTE: The file MPRINT is:
+      Filename=/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs/mprint.sas,
+      Owner Name=fbuerger,Group Name=webtrust,
+      Access Permission=-rw-rw-rw-,
+      Last Modified=20Mar2024:13:08:29,
+      File Size (bytes)=1758
+
+NOTE: 3 records were written to the file MPRINT.
+      The minimum record length was 0.
+      The maximum record length was 48.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+NOTE: Fileref MPRINT has been deassigned.
+MPRINT(NOTE):  ;
+MPRINT(EXCEL_IMPORT):  ;
+MPRINT(EXCEL_IMPORT):   data work._order(drop=_temp:);
+MPRINT(EXCEL_IMPORT):   length _temp_char $1. _temp_num 8.;
+MPRINT(EXCEL_IMPORT):   call missing(_temp_char, _temp_num);
+MPRINT(EXCEL_IMPORT):   set work._order;
+MPRINT(EXCEL_IMPORT):   xlsx_row = '*#' || strip(put(_n_ + 1,best.)) || ';';
+MPRINT(EXCEL_IMPORT):   if coalesce(of _numeric_)=. and cats(of _character_)='' then delete;
+MPRINT(EXCEL_IMPORT):   run;
+
+NOTE: There were 20 observations read from the data set WORK._ORDER.
+NOTE: The data set WORK._ORDER has 20 observations and 4 variables.
+NOTE: Compressing data set WORK._ORDER decreased size by 0.00 percent.
+      Compressed is 1 pages; un-compressed would require 1 pages.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+MPRINT(MAIN):  ;
+MPRINT(CODEGEN_STOP):   options nomfile nomprint;
+NOTE: Process [ORDER] sheet
+
+NOTE: The file MPRINT is:
+      Filename=/lsafshared/SASWorkspaces/fbuerger/clinical/argx-113/cidp/argx-113-1902/dm/g_sdtm/current/2_jobs/logs/mprint.sas,
+      Owner Name=fbuerger,Group Name=webtrust,
+      Access Permission=-rw-rw-rw-,

@@ -1,7 +1,7 @@
 1                                       The SAS System              07:59 Monday, June 30, 2014
 
-NOTE: Copyright (c) 2002-2010 by SAS Institute Inc., Cary, NC, USA. 
-NOTE: SAS (r) Proprietary Software 9.3 (TS1M1) 
+NOTE: Copyright (c) 2002-2010 by SAS Institute Inc., Cary, NC, USA.
+NOTE: SAS (r) Proprietary Software 9.3 (TS1M1)
       Licensed to CABOT  GRID CONTROL SVR - KINGSHILL 1, Site 51211877.
 NOTE: This session is executing on the X64_ES08R2  platform.
 
@@ -11,37 +11,37 @@ NOTE: Updated analytical products:
 
 SAS/STAT 9.3_M1, SAS/ETS 9.3_M1, SAS/OR 9.3_M1
 
-NOTE: The paths specified with the UTILLOC option do not exist.  UTILLOC=WORK will be used 
+NOTE: The paths specified with the UTILLOC option do not exist.  UTILLOC=WORK will be used
       instead.
 NOTE: SAS initialization used:
       real time           0.29 seconds
       cpu time            0.12 seconds
-      
+
 1          *** This code is written in SAS since it just populates tables for the Proof of
 1        ! Concept.
 2          	The content of the tables can be moved to SQL/Server for their Proof of Concept.
 3          	These tables will eventually be created and populated in SQL Server.
 4          	Strategies will update the tables directly.
 5          ;
-6          
+6
 7          %include '\\kh-pre-gman\SASDATA\Strategies\init.sas' ;
-NOTE: Libref CICDM was successfully assigned as follows: 
-      Engine:        OLEDB 
+NOTE: Libref CICDM was successfully assigned as follows:
+      Engine:        OLEDB
       Physical Name: SQLNCLI10
-NOTE: Libref SASIDM was successfully assigned as follows: 
-      Engine:        OLEDB 
+NOTE: Libref SASIDM was successfully assigned as follows:
+      Engine:        OLEDB
       Physical Name: SQLNCLI10
-NOTE: Libref MATABLES was successfully assigned as follows: 
-      Engine:        BASE 
+NOTE: Libref MATABLES was successfully assigned as follows:
+      Engine:        BASE
       Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\pmason
-NOTE: Libref APEX was successfully assigned as follows: 
-      Engine:        BASE 
+NOTE: Libref APEX was successfully assigned as follows:
+      Engine:        BASE
       Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\APEX
-NOTE: Libref CABOT was successfully assigned as follows: 
-      Engine:        BASE 
+NOTE: Libref CABOT was successfully assigned as follows:
+      Engine:        BASE
       Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\cabot_allocations
 WARNING: Libname USER is not assigned.
-227        
+227
 228        * get some real sample data for test purposes ;
 229        data sample ;
 230        	set sasidm.customerAccount(keep=customerAccountID customerID firstobs=123456
@@ -55,9 +55,9 @@ NOTE: The data set WORK.SAMPLE has 4 observations and 2 variables.
 NOTE: DATA statement used (Total process time):
       real time           0.21 seconds
       cpu time            0.14 seconds
-      
 
-232        
+
+232
 233        * make a table we will use to create a treatmentDaily table for test purposes ;
 234        data td ;
 235        	attrib
@@ -84,11 +84,11 @@ NOTE: The data set WORK.TD has 2 observations and 9 variables.
 NOTE: DATA statement used (Total process time):
       real time           0.01 seconds
       cpu time            0.00 seconds
-      
+
 
 253        ;;
 254        run ;
-255        
+255
 256        * make the treatmentDaily table by using the previous table and repeating it for our
 256      !  sample data ;
 257        data matables.treatmentDaily(keep=customerID customerAccountID treatmentCode
@@ -112,9 +112,9 @@ NOTE: The data set MATABLES.TREATMENTDAILY has 8 observations and 9 variables.
 NOTE: DATA statement used (Total process time):
       real time           0.17 seconds
       cpu time            0.00 seconds
-      
 
-268        
+
+268
 269        * make a treatmentHistory table based on the treatmentDaily table ;
 270        data matables.treatmentHistory(keep=customerID customerAccountID treatmentCode
 270      ! treatmentName strategyCode strategyName letterCode dateCreated) ;
@@ -138,10 +138,10 @@ NOTE: The data set MATABLES.TREATMENTHISTORY has 8 observations and 8 variables.
 NOTE: DATA statement used (Total process time):
       real time           0.11 seconds
       cpu time            0.00 seconds
-      
+
 
 NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
 NOTE: The SAS System used:
       real time           0.99 seconds
       cpu time            0.29 seconds
-      
+

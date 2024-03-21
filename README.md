@@ -39,6 +39,8 @@ Your app is ready to be deployed!
 ## Building for use on LSAF
 
 - To build app for LSAF we need to use this as the homepage in package.json
+  "homepage": "/lsaf/webdav/repo/general/biostat/tools/logviewer",
+  or
   "homepage": "/lsaf/webdav/repo/general/biostat/tools/logviewer2",
 
 ## Setup tools in PC SAS to use Log Viewer

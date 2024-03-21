@@ -1,0 +1,2365 @@
+1                                                          The SAS System                       Wednesday, June  7, 2023 12:19:00 PM
+
+NOTE: Copyright (c) 2016 by SAS Institute Inc., Cary, NC, USA.
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M7 MBCS3170)
+      Licensed to ARGENX VIA OCS_SAS LSAF_SAAS, Site 70265777.
+NOTE: This session is executing on the Linux 4.18.0-305.19.1.el8_4.x86_64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+
+      SAS/STAT 15.2
+      SAS/IML 15.2
+
+NOTE: Additional host information:
+
+ Linux LIN X64 4.18.0-305.19.1.el8_4.x86_64 #1 SMP Tue Sep 7 07:07:31 EDT 2021 x86_64 Red Hat Enterprise Linux release 8.4 (Ootpa)
+
+You are running SAS 9. Some SAS 8 files will be automatically converted
+by the V9 engine; others are incompatible.  Please see
+http://support.sas.com/rnd/migration/planning/platform/64bit.html
+
+PROC MIGRATE will preserve current SAS file attributes and is
+recommended for converting all your SAS libraries from any
+SAS 8 release to SAS 9.  For details and examples, please see
+http://support.sas.com/rnd/migration/index.html
+
+
+This message is contained in the SAS news file, and is presented upon
+initialization.  Edit the file "news" in the "misc/base" directory to
+display site-specific news and information in the program log.
+The command line option "-nonews" will prevent this display.
+
+
+
+
+NOTE: SAS Initialization used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+NOTE: The autoexec file, /sso/biconfig/940/Lev1/LSAFApp/WorkspaceServer/autoexec.sas, was executed at server initialization.
+1          options nofmterr;
+2          options dtreset;
+3          options locale=EN_US;
+4          %let _SDDUSR_=%bquote(pmason);
+5          %let _SASWS_ = %nrstr("/lsafshared/SASWorkspaces/pmason");
+6          %let _SASWS_ = %qsubstr(&_SASWS_, 2, %length(&_SASWS_) - 2);
+7          %let _SASUSRWS_ = %nrstr("/lsafshared/SASWorkspaces/pmason/Users/pmason");
+8          %let _SASUSRWS_ = %qsubstr(&_SASUSRWS_, 2, %length(&_SASUSRWS_) - 2);
+9          %let _SASINSTANCE_ = %nrstr("xarprod.ondemand.sas.com");
+10         %let _SASINSTANCE_ = %qsubstr(&_SASINSTANCE_, 2, %length(&_SASINSTANCE_) - 2);
+11         options nosource;
+
+NOTE: DATA statement used (Total process time):
+      real time           1.02 seconds
+      cpu time            0.00 seconds
+
+
+18
+
+/**********************************************************************************************************************
+ * Submission Start: postprocessing.sas
+ * Jun 07, 2023 12:19:35 GMT by pmason
+ *********************************************************************************************************************/
+2                                                          The SAS System                       Wednesday, June  7, 2023 12:19:35 PM
+
+19         options nosyntaxcheck errorcheck=strict notes;
+20         ;*';*";*/;*); run; quit;
+21
+22         %let _SASFILELOCATION_ = %nrstr("/general/biostat/jobs/dashboard/dev/programs");
+23         %let _SASFILELOCATION_ = %qsubstr(&_SASFILELOCATION_, 2, %length(&_SASFILELOCATION_) - 2);
+24         %let _SASFILEPATH_ = %nrstr("/general/biostat/jobs/dashboard/dev/programs/postprocessing.sas");
+25         %let _SASFILEPATH_ = %qsubstr(&_SASFILEPATH_, 2, %length(&_SASFILEPATH_) - 2);
+26
+27         /********************************************************************************************************************/
+28         proc scaproc; record "&_SASWS_/.sessions/2/sca_c144d3d4-9a8f-4be1-b566-38176362e8c4.txt" EXPANDMACROS; run;
+
+NOTE: PROCEDURE SCAPROC used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+29
+30         options nomprint;
+31         /********************************************************************************************************************/
+32         /* Macro Variables for Job Parameters */
+33         %let refolder=&_SASWS_/clinical/argx-113/pemphigus/argx-113-1904/biostat/staging/testrun2/qc_tlf;
+34         %let dbg=no;
+35         %let job_instance=;
+36         %let _PARENTJOB_WS_=;
+37         %let _PARENTJOB_WRK_=;
+38
+39         /********************************************************************************************************************/
+40
+41         /**
+42         @file
+43         @brief      Refreshes dashboard
+44         @details    Produces the projectstatus.html file which is a study specific dashboard.
+45
+46         @author     Martijn Busselen
+47
+48         @date       27-Mar-2022
+49
+50         @param[in]  refolder  Reporting event path
+51
+52         @test       You can test this program in your LSAF workspace by setting refolder to a folder for your study, and dbg to
+52       ! no.
+53         @code
+54         %let refolder=/clinical/argx-113/cidp/argx-113-1802/biostat/staging/testrun1/qc_tlf;
+55         %let dbg=no;
+56         @endcode
+57
+58         #### Update History ####
+59
+60             Date         Author               Description
+61             -----------  -------------------  --------------------------------
+62             28 Mar 2022  mbusselen            Original version of code created
+63             16 Jan 2023  Phil Mason (pmason)  Changed links to log so that they open the log with the logviewer program.
+64                                               Set background color for Errors and Warnings.
+65                                               Added study to title in browser tab.
+66                                               Fixed flyover text for link to docx files.
+67             17 Jan 2023  Phil Mason (pmason)  Changed links to other files so that they open the log with the fileviewer program.
+68             30 Jan 2023  Phil Mason (pmason)  For figures we will link to svg file from the txt column, if there is one.
+69              1 Feb 2023  Phil Mason (pmason)  Handle the issue that SVG files were named with underscores instead of dots between
+3                                                          The SAS System                       Wednesday, June  7, 2023 12:19:35 PM
+
+69       !  numbers.
+70              2 Feb 2023  Phil Mason (pmason)  Allow showing txt column in native tab or file viewer
+71              9 Feb 2023  Phil Mason (pmason)  Create JSON file dashstudy.json for use with Project Dashboard
+72             10 Feb 2023  Phil Mason (pmason)  Fix sort sequence for Studiy Selection list
+73             19 APr 2023  Phil Mason (pmason)  Added nosastags parameter to proc json, since outputs seemed to now be in the wrong
+73       !  format for how they are used.
+74         */
+75
+76         /* testing in LSAF workspace */
+77
+78         %let refolder=/clinical/argx-113/pemphigus/argx-113-1904/biostat/staging/testrun2/qc_tlf;
+79         %let dbg=no;
+80
+81         options nomprint;
+82         %setenv (ini=0);
+MPRINT(SETENV):   source source2 nofmterr notes spool nodate nonumber MAUTOCOMPLOC NOMAUTOLOCDISPLAY;
+MPRINT(SETENV):   * in case run in batch;
+(SETENV): _SASFILEPATH_ = /general/biostat/jobs/dashboard/dev/programs/postprocessing.sas
+(SETENV): path1 = /general/biostat/jobs/dashboard/dev/programs/postprocessing.sas
+(SETENV): _sasws_ = /lsafshared/SASWorkspaces/pmason
+(SETENV): runenvironment = workspace
+MPRINT(SETENV):   *libname projmeta "&projectsmetapath" access=readonly;
+MPRINT(SETENV):   data gen_setenv(keep=fname ver maxver);
+MPRINT(SETENV):   length fref $8 dirname fname $400;
+MPRINT(SETENV):   direxists = 0;
+MPRINT(SETENV):   found = 0;
+MPRINT(SETENV):   maxver = .;
+MPRINT(SETENV):   dirname="/lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library";
+MPRINT(SETENV):   rc=filename(fref, dirname);
+MPRINT(SETENV):   did=dopen(fref);
+MPRINT(SETENV):   if did > 0 then do;
+MPRINT(SETENV):   direxists=1;
+MPRINT(SETENV):   memcount=dnum(did);
+MPRINT(SETENV):   do i = 1 to memcount;
+MPRINT(SETENV):   fname=dread(did, i);
+MPRINT(SETENV):   if prxmatch('/^setenv\d+\.sas$/', cats(fname)) then do;
+MPRINT(SETENV):   found+1;
+MPRINT(SETENV):   ver = input(prxchange('s/^setenv(\d+)\.sas$/\1/', 1, cats(fname)), best32.);
+MPRINT(SETENV):   if ver > maxver then maxver = ver;
+MPRINT(SETENV):   put "(SETENV):" found= fname= ver= rc= did= fref= dirname=;
+MPRINT(SETENV):   output;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   *put "(&sysmacroname):" found= fname= ver= rc= did= fref= dirname=;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   rc=dclose(did);
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   else do;
+MPRINT(SETENV):   msg = put(sysmsg(), $400.);
+MPRINT(SETENV):   put "Failed to open directory: " rc= did= fref= dirname= "sysmsg=" msg;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   rc=filename(fref);
+MPRINT(SETENV):   run;
+
+(SETENV):found=1 fname=setenv01.sas ver=1 rc=0 did=1 fref=#LN00016
+dirname=/lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library
+(SETENV):found=2 fname=setenv02.sas ver=2 rc=0 did=1 fref=#LN00016
+dirname=/lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library
+NOTE: The data set WORK.GEN_SETENV has 2 observations and 3 variables.
+                                                           The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+MPRINT(SETENV):   proc sql noprint;
+MPRINT(SETENV):   select fname into :gen_setenv trimmed from gen_setenv having ver = max(ver) ;
+NOTE: The query requires remerging summary statistics back with the original data.
+MPRINT(SETENV):   quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+gen_setenv = setenv02.sas
+MPRINT(SETENV):   data repev_setenv(keep=fname ver maxver);
+MPRINT(SETENV):   length fref frefsrc $8 setenv $32 d dirname fname msg $400;
+MPRINT(SETENV):   direxists = 0;
+MPRINT(SETENV):   found = 0;
+MPRINT(SETENV):   maxver = .;
+MPRINT(SETENV):   do d="/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros",
+"/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global-macros" while(direxists=0);
+MPRINT(SETENV):   put d=;
+MPRINT(SETENV):   rc=filename(fref, d);
+MPRINT(SETENV):   did=dopen(fref);
+MPRINT(SETENV):   if did > 0 then do;
+MPRINT(SETENV):   direxists=1;
+MPRINT(SETENV):   dirname=d;
+MPRINT(SETENV):   memcount=dnum(did);
+MPRINT(SETENV):   do i = 1 to memcount;
+MPRINT(SETENV):   fname=dread(did, i);
+MPRINT(SETENV):   if prxmatch('/^setenv\d+\.sas$/', cats(fname)) then do;
+MPRINT(SETENV):   found+1;
+MPRINT(SETENV):   ver = input(prxchange('s/^setenv(\d+)\.sas$/\1/', 1, cats(fname)), best32.);
+MPRINT(SETENV):   if ver > maxver then do;
+MPRINT(SETENV):   maxver = ver;
+MPRINT(SETENV):   setenv = fname;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   put "(SETENV):" found= fname= ver= rc= did= fref= dirname=;
+MPRINT(SETENV):   output;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   *put "(&sysmacroname):" found= fname= ver= rc= did= fref= dirname=;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   rc=dclose(did);
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   else do;
+MPRINT(SETENV):   put "Failed to open directory: " rc= did= fref= dirname=;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   rc=filename(fref);
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   if direxists=0 then do;
+MPRINT(SETENV):   *- JMBodart 2021-10-13 - create macros folder if it does not exist (START) -*;
+MPRINT(SETENV):   rc=filename(fref, "/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros");
+MPRINT(SETENV):   did=dopen(fref);
+MPRINT(SETENV):   if did > 0 then do;
+MPRINT(SETENV):   rc=dclose(did);
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   else do;
+                                                           The SAS System
+
+MPRINT(SETENV):   dirname = dcreate("macros", "/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/");
+MPRINT(SETENV):   dirname = ' ';
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   rc=filename(fref);
+MPRINT(SETENV):   *- JMBodart 2021-10-13 - create macros folder if it does not exist (END) -*;
+MPRINT(SETENV):   dirname=dcreate("global_macros", "/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros");
+MPRINT(SETENV):   if dirname ^= ' ' then do;
+MPRINT(SETENV):   rc=filename(fref, dirname);
+MPRINT(SETENV):   did=dopen(fref);
+MPRINT(SETENV):   if did > 0 then do;
+MPRINT(SETENV):   direxists=1;
+MPRINT(SETENV):   rc=dclose(did);
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   rc=filename(fref);
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   put dirname= direxists=;
+MPRINT(SETENV):   if direxists then do;
+MPRINT(SETENV):   call execute("option insert=(sasautos="||quote(cats(dirname))||");");
+MPRINT(SETENV):   if found = 0 then do;
+MPRINT(SETENV):   cumrc = 0;
+MPRINT(SETENV):   rc=filename(frefsrc, "/lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library/setenv02.sas");
+MPRINT(SETENV):   if rc ne 0 then do;
+MPRINT(SETENV):   msg = sysmsg();
+MPRINT(SETENV):   put msg;
+MPRINT(SETENV):   cumrc=rc;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   rc=filename(fref, cats(dirname, "/setenv02.sas"));
+MPRINT(SETENV):   if rc ne 0 then do;
+MPRINT(SETENV):   msg = sysmsg();
+MPRINT(SETENV):   put msg;
+MPRINT(SETENV):   cumrc=rc;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   if cumrc = 0 then do;
+MPRINT(SETENV):   put "Copying  ""/lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library/setenv02.sas"" to" dirname
+$quote. ;
+MPRINT(SETENV):   rc = fcopy(frefsrc, fref);
+MPRINT(SETENV):   if rc ne 0 then do;
+MPRINT(SETENV):   put "Failed.";
+MPRINT(SETENV):   msg = sysmsg();
+MPRINT(SETENV):   put msg;
+MPRINT(SETENV):   cumrc=rc;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   else put "Success.";
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   rc=filename(frefsrc);
+MPRINT(SETENV):   rc=filename(fref);
+MPRINT(SETENV):   if cumrc = 0 then setenv = "setenv02.sas";
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   end;
+MPRINT(SETENV):   call symput("setenv", cats(setenv));
+MPRINT(SETENV):   put setenv=;
+MPRINT(SETENV):   run;
+
+d=/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros
+(SETENV):found=1 fname=setenv01.sas ver=1 rc=0 did=1 fref=#LN00017
+dirname=/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros
+(SETENV):found=2 fname=setenv02.sas ver=2 rc=0 did=1 fref=#LN00017
+                                                           The SAS System
+
+dirname=/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros
+dirname=/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros direxists=1
+MPRINT(SETENV):   option
+insert=(sasautos="/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros");
+setenv=setenv02.sas
+NOTE: The data set WORK.REPEV_SETENV has 2 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+
+
+NOTE: CALL EXECUTE generated line.
+1         + option insert=(sasautos="/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros");
+setenv=setenv02.sas
+(SETENV): Calling %setenv02(ini=0, tabno=, default_debug=1)
+MAUTOCOMPLOC:  The autocall macro SETENV02 is compiling using the autocall source file
+            /lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros/setenv02.sas.
+MPRINT(SETENV.SETENV02):   options mprint nofmterr spool nodate nonumber MAUTOCOMPLOC NOMAUTOLOCDISPLAY;
+MPRINT(SETENV.SETENV02):   *- Clean previously compiled macros from WORK.SASMAC* -*;
+MPRINT(SETENV.SETENV02):   data _NULL_;
+MPRINT(SETENV.SETENV02):   length save $500;
+MPRINT(SETENV.SETENV02):   retain save;
+MPRINT(SETENV.SETENV02):   set sashelp.vcatalg(where=(libname="WORK" and memname=:'SASMAC' and objtype="MACRO")) end=last;
+MPRINT(SETENV.SETENV02):   by memname notsorted;
+MPRINT(SETENV.SETENV02):   if first.memname then do;
+MPRINT(SETENV.SETENV02):   if index(" "||save, " "||strip(memname)||".") eq 0 then save = catx(" ", save,
+strip(memname)||"."||objname);
+MPRINT(SETENV.SETENV02):   end;
+MPRINT(SETENV.SETENV02):   if last;
+MPRINT(SETENV.SETENV02):   call symputx('save_macr', save);
+MPRINT(SETENV.SETENV02):   run;
+
+NOTE: There were 2 observations read from the data set SASHELP.VCATALG.
+      WHERE (libname='WORK') and (memname=:'SASMAC') and (objtype='MACRO');
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+
+
+save_macr = SASMAC1.SETENV
+MPRINT(SETENV.SETENV02):   proc catalog catalog=work.SASMAC1 force;
+MPRINT(SETENV.SETENV02):   *save &sysmacroname /et=macro;
+MPRINT(SETENV.SETENV02):   save SETENV SETENV02 /et=macro;
+MPRINT(SETENV.SETENV02):   run;
+
+NOTE: Saving entry SETENV.MACRO in catalog WORK.SASMAC1.
+NOTE: Saving entry SETENV02.MACRO in catalog WORK.SASMAC1.
+MPRINT(SETENV.SETENV02):   quit;
+
+NOTE: PROCEDURE CATALOG used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+
+
+MPRINT(SETENV.SETENV02):   *- Clear filenames and delete previous scaprocrecord.txt (J-M Bodart 2021-03-25) -*;
+MPRINT(SETENV.SETENV02):   filename _all_ clear;
+MPRINT(SETENV.SETENV02):   *- Use PROC SCAPROC to record all files accessed during program execution -*;
+MPRINT(SETENV.SETENV02):   *- Jean-Michel Bodart 2021-03-30 - code moved here from setenv.sas to make sure it is executed only when
+                                                           The SAS System
+
+setenv is called outside any other macro - i.e. not within a loop -*;
+MPRINT(SETENV.SETENV02):   *- If environment is LSAF workspace, assign fileref SCAPRMOD to append to the existing scaproc record
+file. Otherwise assign it to a new file in WORK. -*;
+MPRINT(SETENV.SETENV02):   data _nuLL_;
+MPRINT(SETENV.SETENV02):   set sashelp.vextfl end = last;
+MPRINT(SETENV.SETENV02):   where prxmatch('/[\/\\]sca[^\/\\]+\.txt$/i', trim(xpath));
+MPRINT(SETENV.SETENV02):   if last;
+MPRINT(SETENV.SETENV02):   put fileref xpath;
+MPRINT(SETENV.SETENV02):   rc = filename("SCAPRMOD", xpath, "DISK", "MOD");
+MPRINT(SETENV.SETENV02):   run;
+
+#LN00011 /lsafshared/SASWorkspaces/pmason/.sessions/2/sca_c144d3d4-9a8f-4be1-b566-38176362e8c4.txt
+NOTE: There were 1 observations read from the data set SASHELP.VEXTFL.
+      WHERE PRXMATCH('/[\/\\]sca[^\/\\]+\.txt$/i', TRIM(xpath));
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+MPRINT(SETENV.SETENV02):   proc scaproc;
+MPRINT(SETENV.SETENV02):   write;
+MPRINT(SETENV.SETENV02):   run;
+
+NOTE: PROCEDURE SCAPROC used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+
+NOTE: PROCEDURE SCAPROC used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+MPRINT(SETENV.SETENV02):   * in case run in batch;
+(SETENV02): _SASFILEPATH_ = /general/biostat/jobs/dashboard/dev/programs/postprocessing.sas
+(SETENV02): path1 = /general/biostat/jobs/dashboard/dev/programs/postprocessing.sas
+(SETENV02): _sasws_ = /lsafshared/SASWorkspaces/pmason
+(SETENV02): runenvironment = workspace
+MPRINT(SETENV.SETENV02):   libname projmeta "/lsafshared/SASWorkspaces/pmason/general/biostat/metadata/projects/" access=readonly;
+NOTE: Libref PROJMETA was successfully assigned as follows:
+      Engine:        V9
+      Physical Name: /lsafshared/SASWorkspaces/pmason/general/biostat/metadata/projects
+runenvironment=workspace
+progpath=/general/biostat/jobs/dashboard/dev/programs/
+repevpath=/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/
+relrepevpath=/general/biostat/jobs/dashboard/dev/
+progname=postprocessing.sas
+pgmname=postprocessing
+general=/lsafshared/SASWorkspaces/pmason/general/biostat/
+debug=1
+compound=biostat
+indication=jobs
+study=dashboard
+revent=
+NOTE: %INCLUDE (level 1) file /lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library/setsasautos.sas is file
+      /lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library/setsasautos.sas.
+83        +/**
+                                                           The SAS System
+
+84        +@file
+85        +@author     Martijn Busselen
+86        +@date       2020-11-23
+87        +@brief      set the macro sasautos so it uses first the maros defined on reporting event level and secondly those from
+87       !+the global level
+88        +
+89        +@pre        Need to run %setenv
+90        +
+91        +#### Update History ####
+92        +
+93        +      Date           Name                       Description
+94        +      ------------   ------------------------
+94       !+-----------------------------------------------------------------------------
+95        +      2021-07-21     S Shipp                    Update for global_macros folder.
+96        +      2022-02-27     J-M Bodart                 Include /general/gadam/_library when last level of &repevpath =
+96       !+generic_adam.
+97        +      2022-03-01     J-M Bodart                 Add \ as delimiter in %scan(&repevpath, -1, /\) as it is not part of
+97       !+default delimiters
+98        +                                                (needed when run locally on Windows).
+99        +      2022-06-30     J-M Bodart                 Add gsdtm/_library.
+100       +      2022-12-07     J-M Bodart                 Add user workspace macros to SASAUTOS for development purposes, if
+100      !+applicable.
+101       +      2022-12-08     J-M Bodart                 Increase l3 size to avoid truncations.
+102       +                                                Only add workspace macros to SASAUTOS if environment variable
+102      !+USE_SAS_WORKSPACE_MACROS
+103       +                                                is defined as Y, or global macro-variable &USE_SAS_WORKSPACE_MACROS=Y.
+104       +      2022-12-11     J-M Bodart                 Fix regex !^/general/biostat/jobs/(gadam|gsdtm)_\w+/dev(/|$)!.
+105       +
+106       +
+107       +#### Examples ####
+108       +@code
+109       +   option mautosource mcompilenote=all;
+110       +   %setSasAutos();
+111       +@endcode
+112       +**/
+113       +
+114       +%macro setSasAutos();
+115       +   %local firstset last3 nb_dirs user_workspace_macros;
+116       +   %let firstset = 1;
+117       +   %if %symexist(runenvironment)=0 %then %local runenvironment;
+118       +
+119       +   %*- Determine if WORKSPACE macros should be used (in case available) -*;
+120       +   %if %symexist(USE_SAS_WORKSPACE_MACROS)=0 %then %do;
+121       +      %global USE_SAS_WORKSPACE_MACROS;
+122       +   %end;
+123       +   %if %sysfunc(sysexist(USE_SAS_WORKSPACE_MACROS)) %then %do;
+124       +      %let USE_SAS_WORKSPACE_MACROS = %sysget(USE_SAS_WORKSPACE_MACROS);
+125       +   %end;
+126       +   %if %sysfunc(sysexist(USE_SAS_WORKSPACE_MACROS))=0 and %qsysfunc(upcase(%superq(USE_SAS_WORKSPACE_MACROS)), $1.)=Y
+126      !+%then %do;
+127       +      *- Set environment variable -*;
+128       +      option set=USE_SAS_WORKSPACE_MACROS "Y";  /*- to unset environment variable use: option
+128      !+set=USE_SAS_WORKSPACE_MACROS ""; -*/
+129       +   %end;
+130       +   %put &=USE_SAS_WORKSPACE_MACROS;
+131       +   %put %str(Not)ice: Environment variable USE_SAS_WORKSPACE_MACROS is
+131      !+%sysfunc(ifc(%sysfunc(sysexist(USE_SAS_WORKSPACE_MACROS)), DEFINED, NOT DEFINED)).;
+132       +
+                                                           The SAS System
+
+133       +   /*in LSAF there are 3 default directories in sasautos and these need to be kept*/
+134       +   %if &runenvironment=repository or &runenvironment=workspace %then %do;
+135       +      data _null_;
+136       +         length a b c dirs l3 $4000;  /*- jbodart - 2022-12-08 - increase l3 size to avoid truncations -*/
+137       +         a= strip(getoption("sasautos"));
+138       +         put a=;
+139       +         len = length(a);
+140       +         nobrack = substr(a,2,len-2);
+141       +         b = tranwrd(nobrack,'"',"");
+142       +         c = compbl(strip(tranwrd(b,"'","")));
+143       +         e = countw(c," ");
+144       +         call symputx("nb_dirs",strip(put(e,8.)));
+145       +         do i = 1 to e;
+146       +            last3 = (e-i<3);
+147       +            dirs = scan(c,i," ");
+148       +            output;
+149       +            if last3 then l3 = strip(l3)||' "'||strip(dirs)||'"';
+150       +            if e then call symputx ('last3',strip(l3));
+151       +         end;
+152       +      run;
+153       +      %put nb sasautos dirs = &nb_dirs;
+154       +      %put last3 = &last3;
+155       +   %end;
+156       +   %if ( %sysfunc(fileexist(&general.macros&sepchar._library&sepchar)) or %sysfunc(fileexist(&repevpath.macros&sepchar))
+156      !+) %then %do;
+157       +      %if %sysfunc(fileexist(&repevpath.macros&sepchar)) %then %do;
+158       +
+159       +         %let gmdfolder=%sysfunc(fileexist(&repevpath.macros&sepchar.global-macros));
+160       +         %let gmufolder=%sysfunc(fileexist(&repevpath.macros&sepchar.global_macros));
+161       +
+162       +         %put &=gmdfolder;
+163       +         %put &=gmufolder;
+164       +
+165       +         options dlcreatedir;
+166       +         %if &gmdfolder=1 %then %do;
+167       +            libname globmac ("&repevpath.macros&sepchar.global-macros");
+168       +         %end;
+169       +         %else %do;
+170       +            libname globmac ("&repevpath.macros&sepchar.global_macros");
+171       +         %end;
+172       +      %end;
+173       +
+174       +      %*- 2022-12-07 - jbodart - Add user workspace macros to SASAUTOS for development purposes, if applicable -*;
+175       +      %let user_workspace_macros = ;
+176       +
+177       +      %if &runenvironment=repository and %symexist(_SDDUSR_) %then %do;
+178       +
+179       +         %if ("&revent"="generic_adam" or "%scan(&repevpath, -1, /\)"="generic_adam")
+180       +            and %sysfunc(prxmatch(!^/clinical/test/gadam-tests/!, %superq(relrepevpath)))
+181       +            and %sysfunc(fileexist(/lsafshared/SASWorkspaces/&_SDDUSR_/general/biostat/gadam/_library/%str(*).sas))
+182       +            and %qsysfunc(upcase(%superq(USE_SAS_WORKSPACE_MACROS)), $1.)=Y
+183       +            %then %let user_workspace_macros = &user_workspace_macros
+183      !+"/lsafshared/SASWorkspaces/&_SDDUSR_/general/biostat/gadam/_library";
+184       +
+185       +         %else %if ("&revent"="generic_sdtm" or "%scan(&repevpath, -1, /\)"="generic_sdtm")
+186       +            and %sysfunc(prxmatch(!^/clinical/test/gsdtm-tests/!, %superq(relrepevpath)))
+187       +            and %sysfunc(fileexist(/lsafshared/SASWorkspaces/&_SDDUSR_/general/biostat/gsdtm/_library/%str(*).sas))
+188       +            and %qsysfunc(upcase(%superq(USE_SAS_WORKSPACE_MACROS)), $1.)=Y
+                                                           The SAS System
+
+189       +            %then %let user_workspace_macros = &user_workspace_macros
+189      !+"/lsafshared/SASWorkspaces/&_SDDUSR_/general/biostat/gsdtm/_library";
+190       +
+191       +         %if (    "&revent"="generic_adam" or "%scan(&repevpath, -1, /\)"="generic_adam"
+192       +               or "&revent"="generic_sdtm" or "%scan(&repevpath, -1, /\)"="generic_sdtm"
+193       +               or %sysfunc(prxmatch(!^/general/biostat/jobs/(gadam|gsdtm)_\w+/dev(/|$)!, %superq(relrepevpath)))
+194       +               )
+195       +            and %sysfunc(fileexist(/lsafshared/SASWorkspaces/&_SDDUSR_/general/biostat/macros/_library/%str(*).sas))
+196       +            and %qsysfunc(upcase(%superq(USE_SAS_WORKSPACE_MACROS)), $1.)=Y
+197       +            %then %let user_workspace_macros = &user_workspace_macros
+197      !+"/lsafshared/SASWorkspaces/&_SDDUSR_/general/biostat/macros/_library";
+198       +
+199       +         %if %length(%superq(user_workspace_macros)) %then %do;
+200       +            %put %str(WAR)NING: === Adding WORKSPACE paths to SASAUTOS for development purposes, please check macros
+200      !+versions in your workspace: === ;
+201       +            %put %str(   )&user_workspace_macros;
+202       +            %put;
+203       +         %end;
+204       +
+205       +         %put &=runenvironment &=_SDDUSR_ &=relrepevpath &=user_workspace_macros;
+206       +
+207       +      %end;
+208       +
+209       +      %*- Use autocall to compile any macro in Macros subfolder on demand -*;
+210       +      options mautosource sasautos = (
+211       +            %if %sysfunc(fileexist(&repevpath.macros&sepchar))                         %then "&repevpath.macros";
+212       +                                                                                             &user_workspace_macros
+213       +            %if "&revent"="generic_adam" or "%scan(&repevpath, -1, /\)"="generic_adam" %then
+213      !+"&general.gadam&sepchar._library";
+214       +            %if "&revent"="generic_sdtm" or "%scan(&repevpath, -1, /\)"="generic_sdtm" %then
+214      !+"&general.gsdtm&sepchar._library";  /*- jbodart 2022-06-30 -*/
+215       +            %if %sysfunc(fileexist(&repevpath.macros&sepchar.global-macros))           %then
+215      !+"&repevpath.macros&sepchar.global-macros";
+216       +            %if %sysfunc(fileexist(&repevpath.macros&sepchar.global_macros))           %then
+216      !+"&repevpath.macros&sepchar.global_macros";
+217       +            %if %sysfunc(fileexist(&general.macros&sepchar._library&sepchar))          %then
+217      !+"&general.macros&sepchar._library" ;
+218       +            %if &runenvironment=local or &runenvironment=batch or %length(%superq(runenvironment))=0
+219       +                                                                                       %then sasautos;
+220       +                                                                                       %else &last3;
+221       +            ) MRECALL=YES;
+222       +   %end;
+223       +   %let sa = %sysfunc(getoption(sasautos));
+224       +   %put sa=&sa;
+225       +%mend setSasAutos;
+NOTE: %INCLUDE (level 1) ending.
+USE_SAS_WORKSPACE_MACROS=
+Notice: Environment variable USE_SAS_WORKSPACE_MACROS is NOT DEFINED.
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   data _null_;
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   length a b c dirs l3 $4000;
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   a= strip(getoption("sasautos"));
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   put a=;
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   len = length(a);
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   nobrack = substr(a,2,len-2);
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   b = tranwrd(nobrack,'"',"");
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   c = compbl(strip(tranwrd(b,"'","")));
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   e = countw(c," ");
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   call symputx("nb_dirs",strip(put(e,8.)));
+                                                           The SAS System
+
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   do i = 1 to e;
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   last3 = (e-i<3);
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   dirs = scan(c,i," ");
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   output;
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   if last3 then l3 = strip(l3)||' "'||strip(dirs)||'"';
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   if e then call symputx ('last3',strip(l3));
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   end;
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   run;
+
+a=('/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros' "SASEnvironment/SASMacro" '!SASROOT/sa
+sautos' "/sso/sfw/sas/940/SASFoundation/9.4/lsafapi/lsaf-sas-macro-2.6.1/sasmacros" "/lsafshared/SASWorkspaces/global_macros")
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+
+
+nb sasautos dirs = 5
+last3 = "!SASROOT/sasautos" "/sso/sfw/sas/940/SASFoundation/9.4/lsafapi/lsaf-sas-macro-2.6.1/sasmacros"
+"/lsafshared/SASWorkspaces/global_macros"
+GMDFOLDER=0
+GMUFOLDER=1
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   options dlcreatedir;
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   libname globmac
+("/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros");
+NOTE: Libref GLOBMAC was successfully assigned as follows:
+      Levels:           1
+      Engine(1):        V9
+      Physical Name(1): /lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros
+MPRINT(SETENV.SETENV02.SETSASAUTOS):   options mautosource sasautos = (
+"/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros"
+"/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros"
+"/lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library" "!SASROOT/sasautos"
+"/sso/sfw/sas/940/SASFoundation/9.4/lsafapi/lsaf-sas-macro-2.6.1/sasmacros" "/lsafshared/SASWorkspaces/global_macros" ) MRECALL=YES;
+sa=("/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros"
+
+"/lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/global_macros"
+"/lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library" "!SASROOT/sasautos"
+"/sso/sfw/sas/940/SASFoundation/9.4/lsafapi/lsaf-sas-macro-2.6.1/sasmacros" "/lsafshared/SASWorkspaces/global_macros")
+MPRINT(SETENV.SETENV02):  ;
+MPRINT(SETENV.SETENV02):  ;
+MPRINT(SETENV.SETENV02):   ;
+MAUTOCOMPLOC:  The autocall macro GET_JOB_PROG_INFO is compiling using the autocall source file
+            /lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/get_job_prog_info.sas.
+MPRINT(SETENV.SETENV02.GET_JOB_PROG_INFO):   options nomprint;
+MAUTOCOMPLOC:  The autocall macro LSAF_GET_VERSION is compiling using the autocall source file
+            /lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library/lsaf_get_version.sas.
+MAUTOCOMPLOC:  The autocall macro LOCAL_LSAF is compiling using the autocall source file
+            /lsafshared/SASWorkspaces/pmason/general/biostat/macros/_library/local_lsaf.sas.
+MAUTOCOMPLOC:  The autocall macro LSAF_GETPROPERTIES is compiling using the autocall source file
+            /sso/sfw/sas/940/SASFoundation/9.4/lsafapi/lsaf-sas-macro-2.6.1/sasmacros/lsaf_getproperties.sas.
+MAUTOCOMPLOC:  The autocall macro LSAF_GETPRODUCTNAME is compiling using the autocall source file
+            /sso/sfw/sas/940/SASFoundation/9.4/lsafapi/lsaf-sas-macro-2.6.1/sasmacros/lsaf_getproductname.sas.
+
+
+NOTE: SAS Life Science Analytics Framework Macro: *
+List of properties were returned for /general/biostat/jobs/dashboard/dev/programs/postprocessing.sas
+NOTE: SAS Life Science Analytics Framework Macro: *  lsaf_getproperties
+NOTE: SAS Life Science Analytics Framework Macro: *  21  records written to data set work.lsafGetProperties
+                                                           The SAS System
+
+NOTE: SAS Life Science Analytics Framework Macro: *  _lsafMsg_= Success.
+NOTE: SAS Life Science Analytics Framework Macro: *  _lsafRC_= 0
+NOTE: The data set WORK.LSAFGETPROPERTIES has 21 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.31 seconds
+      cpu time            0.02 seconds
+
+
+
+NOTE: There were 1 observations read from the data set WORK.LSAFGETPROPERTIES.
+      WHERE name='version';
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+progversion = 0.125
+(SETENV): Done.
+226        options mprint;
+227
+228        /*remove lsaf _sasws_ part from folder path*/
+229        data _null_;
+230             repoloc = substr("&refolder",1,index("&refolder","/clinical/"));
+231             call symputx("repoloc",strip(repoloc));
+232             fp = substr("&refolder",index("&refolder","/clinical/"));
+233             call symputx("repath",strip(fp));
+234             call symputx("mnfpath",strip(fp)||"/manifest/");
+235        run;
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+
+
+236        %put &=refolder;
+REFOLDER=/clinical/argx-113/pemphigus/argx-113-1904/biostat/staging/testrun2/qc_tlf
+237        %put &=repoloc;
+REPOLOC=/
+238        %put &=repath;
+REPATH=/clinical/argx-113/pemphigus/argx-113-1904/biostat/staging/testrun2/qc_tlf
+239        %put &=mnfpath;
+MNFPATH=/clinical/argx-113/pemphigus/argx-113-1904/biostat/staging/testrun2/qc_tlf/manifest/
+240
+241        %let isrepevent=no;
+242        %getprojmeta;
+MAUTOCOMPLOC:  The autocall macro GETPROJMETA is compiling using the autocall source file
+            /lsafshared/SASWorkspaces/pmason/general/biostat/jobs/dashboard/dev/macros/getprojmeta.sas.
+METAEXISTS=yes
+MPRINT(GETPROJMETA):   libname prjmeta "/lsafshared/SASWorkspaces/pmason/general/biostat/metadata/projects";
+NOTE: Libref PRJMETA refers to the same physical library as PROJMETA.
+NOTE: Libref PRJMETA was successfully assigned as follows:
+      Engine:        V9
+      Physical Name: /lsafshared/SASWorkspaces/pmason/general/biostat/metadata/projects
+MPRINT(GETPROJMETA):   data meta;
+MPRINT(GETPROJMETA):   set prjmeta.meta;
+MPRINT(GETPROJMETA):   run;
+NOTE: There were 430 observations read from the data set PRJMETA.META.
+NOTE: The data set WORK.META has 430 observations and 5 variables.
+                                                           The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+243        data _null_;
+244             set meta;
+245             where index(Reporting_Event_Path, "&repath") >0;
+246             call symputx("isrepevent","yes");
+247        run;
+
+NOTE: There were 1 observations read from the data set WORK.META.
+      WHERE INDEX(Reporting_Event_Path, '/clinical/argx-113/pemphigus/argx-113-1904/biostat/staging/testrun2/qc_tlf')>0;
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+248        %put &=isrepevent;
+ISREPEVENT=yes
+249
+250        data croosdocs ;
+251            delete ;
+252        run ;
+
+NOTE: The data set WORK.CROOSDOCS has 0 observations and 0 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+253
+254        %macro ppmacro;
+255        data _null_;
+256        %if &isrepevent=no %then put "E" "RROR: job parameter: &refolder., is not valid reporting event";;
+257        run;
+258
+259        %if &isrepevent=yes %then %do; /*go to end*/
+260
+261        %let compound=%scan(&repath,2,"/");
+262        %let indication=%scan(&repath,3,"/");
+263        %let study= %scan(&repath,4,"/");
+264        %let revent= %scan(&repath,7,"/");
+265        /*if CRO oversight (ie has qc_tlf/qc_adam etc) then look at the parent folder documents*/
+266        %if %index(&repath.,qc_)>0 %then %do;
+267           %let oversight=Y;
+268        %end; %else %do;
+269           %let oversight=N;
+270        %end;
+271        %put &=compound;
+272        %put &=indication;
+273        %put &=study;
+274        %put &=revent;
+275        %put &=oversight;
+276
+277        /*keep log file with reporting event*/
+278        %let workpath = %sysfunc(pathname(work));
+279        options linesize=MAX;
+                                                           The SAS System
+
+280        proc printto log="&workpath/dashboard.log" new;
+281        run;
+282
+283        %put &=refolder;
+284        %put &=repoloc;
+285        %put &=repath;
+286        %put &=mnfpath;
+287
+288
+289        data _null_;
+290             call sleep(1000,.01); * 10 seconds;
+291        run;
+292
+293        %let dbstartdatetime = %sysfunc(datetime());
+294
+295        %let docmeta=work;
+296        %if &dbg = yes %then %do;
+297        /*libname docmeta "&_sasws_.&repath./documents/meta";*/
+298        libname docmeta "&_sasws_.&repath./documents";
+299        %let docmeta=docmeta;
+300        %end;
+301
+302        %getlsaffolderinfo(folder=log);
+303        %getlsaffolderinfo(folder=manifest);
+304        %getlsaffolderinfo(folder=output);
+305        %getlsaffolderinfo(folder=output/txt);
+306        %getlsaffolderinfo(folder=output/svg);
+307        %getlsaffolderinfo(folder=output/pdf);
+308        %getlsaffolderinfo(folder=programs);
+309        %getlsaffolderinfo(folder=documents/meta);
+310        /*if CRO oversight (ie has qc_tlf/qc_adam etc) then look at the parent folder documents*/
+311        %if &oversight.=Y %then %do;
+312            %getlsaffolderinfo(folder=../documents);
+313        %end;
+314        %if %sysfunc(exist(fi_documents_meta))=0 %then %do;
+315             /*this happens when the dashboard job runs over reporting event where documents/meta doesn't exist yet*/
+316             data fi_documents_meta;
+317                  set fi_log (obs=0);
+318             run;
+319        %end;
+320        %getlsaffolderinfo(folder=documents);
+321        %splistinfo(&repath);
+322
+323        %getrepemeta;
+324        %if &repemetaexists=yes %then %do; /*goto end if not exists*/
+325
+326
+327        proc contents data=repemeta out=x noprint;
+328        run;
+329        %macro addvar (varnam);
+330        %let addvarnam=yes;
+331        %let isnumeric=no;
+332        data _null_;
+333             set x;
+334             if lowcase(name)="&varnam" and type=2 then call symputx('addvarnam','no');
+335             if lowcase(name)="&varnam" and type=1 then call symputx('isnumeric','yes');
+336        run;
+337        %put &=addvarnam;
+                                                           The SAS System
+
+338        %if &addvarnam=yes %then %do;
+339             data repemeta %if &isnumeric=yes %then (drop = vo);;
+340                  length &varnam $50;
+341                  set repemeta %if &isnumeric=yes %then (rename=(&varnam = vo));;
+342                  %if &isnumeric=yes %then &varnam=put(vo,best.);
+343                  %else &varnam="";;
+344             run;
+345        %end;
+346        %mend addvar;
+347        %addvar (dataset);
+348        %addvar (num);
+349        %addvar (title);
+350        %addvar (Analysis_Set);
+351        %addvar (Section);
+352
+353        proc sort data=repemeta out=sasprograms (keep=sas_program) nodupkey;
+354             by sas_program;
+355             where not missing(sas_program) and (not missing(dataset) or not missing (num));
+356        run;
+357        %let sas_program_len = 50;
+358        data _null_;
+359             set sasprograms (obs=1);
+360             call symputx ("sas_program_len",max(50,vlength (sas_program)));
+361        run;
+362        %put &=sas_program_len;
+363        data sasprograms;
+364             length sas_program $&sas_program_len;
+365             set sasprograms;
+366             format sas_program;
+367             informat sas_program;
+368        run;
+369
+370        %macro mnffiles;
+371             %let nbmnf=0;
+372             data _null_;
+373                  set fi_manifest end=last;
+374                  call symputx("mnffilepath"||strip(put(_n_,8.)),strip(path));
+375                  if last then call symputx("nbmnf",strip(put(_n_,8.)));
+376             run;
+377             %do f = 1 %to &nbmnf;
+378                  option nomprint;
+379        /*           %lsaf_getjobmanifestoutputs(lsaf_path=&&mnffilepath&f, lsaf_version=,
+379      ! sas_dsname=work.lsafGetJobManifestOutputs); */
+380                  %lsaf_getjobmanifestoutputs(lsaf_location=REPOSITORY,lsaf_path=&&mnffilepath&f, lsaf_version=,
+380      ! sas_dsname=work.lsafGetJobManifestOutputs);
+381                  option mprint;
+382                  data lsafGetJobManifestOutputs;
+383                       set lsafGetJobManifestOutputs;
+384                       keep path jobManifestPath referenceProgram;
+385                  run;
+386                  %if &f=1 %then %do;
+387                  data mnffiles;
+388                       set lsafGetJobManifestOutputs;
+389                  run;
+390                  %end;
+391                  %else %if &f>1 %then %do;
+392                  %app(mnffiles,lsafGetJobManifestOutputs);
+393                  %end;
+                                                           The SAS System
+
+394             %end;
+395
+396             proc sort data=mnffiles out=z nodupkey;
+397                  by jobManifestPath referenceProgram;
+398                  where not missing(referenceProgram);
+399             run;
+400             proc freq data=z noprint;
+401                  table jobManifestPath/ norow nocol nopercent nocum list out=f (where=(count>1));
+402             run;
+403             data _null_;
+404                  set f;
+405                  put 'ER' "ROR: we don't expect manifests to have >1 sas program " @;
+406                  put jobManifestPath;
+407             run;
+408             data z2 (keep = jobManifestPath sas_program);
+409                  length sas_program $&sas_program_len;
+410                  set z;
+411                  sas_program=scan(referenceProgram,-1,'/\');
+412             run;
+413
+414             data &docmeta.._mnffiles mnffiles;
+415                  merge mnffiles z2;
+416                  by jobManifestPath;
+417             run;
+418        %mend mnffiles;
+419        /*jobmanifestoutputs serve as link between all outputs*/
+420        %mnffiles;
+421
+422         /*Check which programs have no or newer manifest file than programs_pgm.json in documents/meta*/
+423        /*if needed update programs_pgm.json */
+424        %macro refreshmeta;
+425             %let nbprogjson=0;
+426
+427             data prgjson (keep=sas_program pgmjsonlastmod);
+428                  length sas_program $&sas_program_len;
+429                  set fi_documents_meta (rename=(dateLastModified=pgmjsonlastmod)) end=last;
+430                  where name=:"programs_" and index(name,".json")>0;
+431                  sas_program = tranwrd(substr(name,10),'.json','');
+432                  call symputx("progjson"||strip(put(_n_,8.)),strip(name));
+433                  if last then call symputx("nbprogjson",strip(put(_n_,8.)));
+434                  format sas_program;
+435                  informat sas_program;
+436             run;
+437             data mnf;
+438                  length sas_program $&sas_program_len;
+439                  set fi_manifest (obs=0);
+440                  sas_program="";
+441                  manifestname=name;
+442                  mnflastmod=dateLastModified;
+443                  keep mnflastmod manifestname sas_program;
+444                  format sas_program;
+445                  informat sas_program;
+446            run;
+447             %do j = 1 %to &nbprogjson;
+448        /*          LIBNAME dx JSON "&_sasws_.&repath./documents/meta/&&progjson&j";*/
+449        /*          proc copy in=dx out=work;*/
+450        /*          run;*/
+451                  %getjsonfile(&repath./documents/meta/&&progjson&j);
+                                                           The SAS System
+
+452                  %put STEVE: &=j.;
+453                  proc sql;
+454                       create table mnfA as
+455                       select a.dateLastModified as mnflastmod, b.manifestname, b.sas_program as sas_programA
+456                       from fi_manifest as a inner join root as b
+457                       on a.path = b.manifestname;
+458                  quit;
+459                  data mnfB (drop=sas_programA);
+460                       length sas_program $&sas_program_len;
+461                       set mnfA;
+462                       sas_program = tranwrd(scan (sas_programA,-1,'/\'),'.sas','');
+463                       format sas_program;
+464                       informat sas_program;
+465                  run;
+466                  data mnf;
+467                       set mnf mnfB;
+468                  run;
+469             %end;
+470
+471             proc sort data=mnf;
+472                  by sas_program;
+473             run;
+474             proc sort data=prgjson;
+475                  by sas_program;
+476             run;
+477             data mnfnorefresh (rename=(manifestname=path)) mnfrefresh (rename=(manifestname=path));
+478                  merge sasprograms (in=a) prgjson (in=b) mnf (in=c);
+479                  by sas_program;
+480
+481                  if missing(pgmjsonlastmod) or mnflastmod>pgmjsonlastmod then output mnfrefresh;
+482                  else output mnfnorefresh;
+483             run;
+484             proc sort data=mnfnorefresh;
+485                  by path;
+486             run;
+487             data &docmeta.._sasprograms;
+488                  set sasprograms;
+489             run;
+490             data &docmeta.._prgjson;
+491                  set prgjson;
+492             run;
+493             data &docmeta.._mnf;
+494                  set mnf;
+495             run;
+496             data &docmeta.._mnfnorefresh;
+497                  set mnfnorefresh;
+498             run;
+499             data &docmeta.._mnfrefresh;
+500                  set mnfrefresh;
+501             run;
+502             proc sort data = fi_manifest;
+503                  by path;
+504             run;
+505             proc sort data = mnfrefresh;
+506                  by path;
+507             run;
+508             data torefresh;
+509                  merge fi_manifest (in=a) mnfnorefresh (in=b) mnfrefresh (in=c keep=path);
+                                                           The SAS System
+
+510                  by path;
+511                  if a and not b /*and c*/;
+512             run;
+513             %let nbmnf=0;
+514             data _null_;
+515                  set torefresh end=last;
+516                  call symputx("mnffilepath"||strip(put(_n_,8.)),"&mnfpath."||strip(name));
+517                  if last then call symputx("nbmnf",strip(put(_n_,8.)));
+518             run;
+519             filename ro  "&workpath/refreshedoutputs.json";
+520             %if &nbmnf=0 %then %do;
+521                  data torefresh;
+522                       msg="No refresh needed";
+523                  run;
+524             %end;
+525             proc json out=ro pretty;
+526                  export torefresh / nosastags;
+527             run;
+528
+529             %do m = 1 %to &nbmnf;
+530                  %put &m - &&mnffilepath&m;
+531             %end;
+532
+533             %do m = 1 %to &nbmnf;
+534                  %permanifest (mnffilepath=&&mnffilepath&m);
+535             %end;
+536        %mend refreshmeta;
+537
+538        %macro permanifest (mnffilepath=);
+539
+540             option nomprint;
+541        /*      %lsaf_getjobmanifestinfo(lsaf_path=&mnffilepath, lsaf_version=, sas_dsname=work.lsafGetJobManifestInfo); */
+542             %lsaf_getjobmanifestinfo(lsaf_location=REPOSITORY,lsaf_path=&mnffilepath, lsaf_version=,
+542      ! sas_dsname=work.lsafGetJobManifestInfo);
+543             option mprint;
+544             data _null_ (keep=path value);
+545                  set lsafGetJobManifestInfo;
+546                  where name='submitted';
+547                  call symputx('submitdt',strip(put(input(value,datetime18.),18.)));
+548                  call symputx('submitdtf',strip(value));
+549             run;
+550             %put &=submitdt;
+551             %put &=submitdtf;
+552
+553             option nomprint;
+554        /*      %lsaf_getjobmanifestprograms(lsaf_path=&mnffilepath, lsaf_version=, sas_dsname=work.lsafGetJobManifestPrograms);
+554      ! */
+555             %lsaf_getjobmanifestprograms(lsaf_location=REPOSITORY,lsaf_path=&mnffilepath, lsaf_version=,
+555      ! sas_dsname=work.lsafGetJobManifestPrograms);
+556             option mprint;
+557             %let nbsasprograms=0;
+558
+559             data sasprogram &docmeta.._sasprogram;
+560                  set lsafGetJobManifestPrograms end=last;
+561                  where index(path,'setenv')=0;
+562                  pgm = scan(path,-1,'/\');
+563                  call symputx("sasprogrampath"||strip(put(_n_,8.)),strip(path));
+564                  call symputx("sasprogram"||strip(put(_n_,8.)),strip(pgm));
+                                                           The SAS System
+
+565                  call symputx("sasprogramnoext"||strip(put(_n_,8.)),strip(tranwrd(pgm,'.sas','')));
+566                  if last then call symputx("nbsasprograms",strip(put(_n_,8.)));
+567                  keep jobManifestPath path pgm;
+568             run;
+569             %put &=nbsasprograms;
+570             %put &=sasprogram1;
+571             /*Check if SAS program is in our repemeta list*/
+572             %let programavailable=no;
+573             data _null_ ;
+574                  set sasprograms;
+575                  where sas_program="&sasprogramnoext1" or sas_program="&sasprogram1";
+576                  call symput('programavailable',"yes");
+577             run;
+578             %if &programavailable=yes %then %do;
+579        /*
+580                  option nomprint;
+581                  %lsaf_getjobmanifestoutputs(lsaf_path=&mnffilepath, lsaf_version=, sas_dsname=work.lsafGetJobManifestOutputs);
+582                  option mprint;*/
+583                  data &docmeta.._sasoutputs&m sasoutputs;
+584        /*               set lsafGetJobManifestOutputs;*/
+585                       set mnffiles;
+586                       where jobManifestPath="&mnffilepath";
+587                       keep path jobManifestPath referenceProgram;
+588                  run;
+589                  data logfiles datasets outputs;
+590                       set sasoutputs;
+591                       if path=:"&repath./log" and index(path,".log")>0 then output logfiles;
+592                       else if path=:"&repath./output" and index(path,".sas7bdat")=0 then output outputs;
+593                       else if index(path,".sas7bdat")>0 and path ne:"&repath./documents" then output datasets;
+594                  run;
+595
+596                  /*************/
+597                  /* Check log */
+598                  /*************/
+599                  data logexists;
+600                       set fi_documents_meta;
+601                       where name=:"log_";
+602                       path = tranwrd(tranwrd(path,'documents/meta/log_','log/'),'.json','.log');
+603                  run;
+604                  proc sort data=logexists; by path; run;
+605                  proc sort data=logfiles; by path; run;
+606             /*     proc sort data=fi_log; by path; run;*/
+607                  data /*&docmeta.._todolog*/ todolog;
+608                       merge logfiles(in=a) logexists (in=b) fi_log (keep=path dateLastModified
+608      ! rename=(dateLastModified=loglastmod));
+609                       by path;
+610                       if a;
+611                       if missing(referenceProgram) then refresh = 1;
+612                       /*if loglastmod<&submitdt or not b then*/ refresh = 1;  /*it seems not to work to use the json files that
+612      ! are produced for the program being run*/
+613
+614                       ufloglm = loglastmod;
+615                       submitdt=&submitdt;
+616                       submitdtf=submitdt;
+617                       format ufloglm submitdt;
+618                       format submitdtf datetime16.;
+619                  run;
+620                  %let nblogfiles=0;
+                                                           The SAS System
+
+621                  data _null_;
+622                       set todolog end=last;
+623                       where refresh;
+624                       call symputx("logfile"||strip(put(_n_,8.)),strip(path));
+625                       if last then call symputx("nblogfiles",strip(put(_n_,8.)));
+626                  run;
+627                  %put &=nblogfiles;
+628
+629                  %do lf = 1 %to &nblogfiles;
+630                       %put log check of &&logfile&lf;
+631                       options nomprint;
+632                       %lsaf_exists(lsaf_path=&&logfile&lf);
+633                       options mprint;
+634                       %put &=_lsafExists_;
+635
+636                       %if &_lsafExists_=1 %then %do;
+637                            options nomprint;
+638                            %lsaf_existsinworkspace(lsaf_path=&&logfile&lf);
+639                            %lsaf_syncfiletoworkspace(lsaf_path=&&logfile&lf);
+640                            options mprint spool;
+641
+642                            filename logf "/lsafshared/SASWorkspaces/&_SDDUSR_.&&logfile&lf";
+643                            options nomprint;
+644                            %logchecker;
+645                            options mprint;
+646                            %log2json (repoloc=&_sasws_.&repath./log/);
+647
+648                            options nomprint;
+649                            %if &_lsafExistsInWorkspace_=0 %then %lsaf_deleteworkspaceitem(lsaf_path=&&logfile&lf);;
+650                            options mprint;
+651                       %end;
+652
+653                  %end;
+654
+655                  /************************/
+656                  /* Check program header */
+657                  /************************/
+658                  options nomprint;
+659                  %lsaf_existsinworkspace(lsaf_path=&sasprogrampath1);
+660                  %lsaf_syncfiletoworkspace(lsaf_path=&sasprogrampath1);
+661                  options mprint;
+662                  filename chkprog "/lsafshared/SASWorkspaces/&_SDDUSR_/&sasprogrampath1";
+663                  %let compound=%scan(&repath,2,"&sepchar");
+664                  %let indication=%scan(&repath,3,"&sepchar");
+665                  %let study= %scan(&repath,4,"&sepchar");
+666                  %let revent= %scan(&repath,7,"&sepchar");
+667                  %checkheader (chkprog, &sasprogramnoext1, dsetout=pg_header);
+668                  options nomprint;
+669                  %if &_lsafExistsInWorkspace_=0 %then %lsaf_deleteworkspaceitem(lsaf_path=&sasprogrampath1);
+670                  options mprint;
+671
+672                  proc freq data=pg_header noprint;
+673                       table check / norow nocol nocum nopercent out=hck;
+674                  run;
+675                  proc transpose data=hck out=thck;
+676                       var count;
+677                       id check;
+678                  run;
+                                                           The SAS System
+
+679                  data mess (keep=headerfailmess);
+680                       length headerfailmess $1000;
+681                       retain headerfailmess;
+682                       set pg_header end=last;
+683                       if strip(lowcase(check))="fail" then do;
+684                            fcounter+1;
+685                            if fcounter>1 then ms = ", "||strip(put(fcounter,8.))||") "||strip(message);
+686                            else ms = strip(put(fcounter,8.))||") "||strip(message);
+687                            headerfailmess = strip(headerfailmess)||strip(ms);
+688                       end;
+689                       if last;
+690                       if strip(headerfailmess)="" then headerfailmess="All pass";
+691                  run;
+692                  data pg_headercombA (keep=headersummary headerfailmess pgm);
+693                       length pgm $&sas_program_len;
+694                       merge thck mess;
+695                       if missing(fail) then fail=0;
+696                       if missing(pass) then pass=0;
+697                       headersummary = strip(put(fail,8.))||' Fails, '||strip(put(pass,8.))||' Pass';
+698                       pgm=scan("&sasprogrampath1",-1,'/\');
+699                  run;
+700                  data fiprograms (keep=pgm lastModifiedBy);
+701                       length pgm $&sas_program_len;
+702                       set fi_programs;
+703                       pgm=scan(path,-1,'/\');
+704                  run;
+705                  data pg_headercomb;
+706                       merge pg_headercombA (in=a) fiprograms;
+707                       by pgm;
+708                       if a;
+709                  run;
+710
+711                  /*this json file to keep the link between sas program and manifest file*/
+712                  data sasprog;
+713                       merge sasprogram pg_headercomb;
+714                       rename jobManifestPath=manifestname pgm=sas_program;
+715                  run;
+716             %end;
+717             %else %do;
+718                  data sasprog;
+719                       set sasprogram ;
+720                       rename jobManifestPath=manifestname pgm=sas_program;
+721                  run;
+722             %end;
+723
+724        /*     filename ox  "&_sasws_.&repath./documents/meta/programs_&sasprogramnoext1..json";*/
+725             filename ox  "&workpath/programs_&sasprogramnoext1..json";
+726
+727             proc json out=ox pretty;
+728                  export sasprog / nosastags;
+729             run;
+730             data _null_;
+731                  LENGTH logtxtline $ 1500;
+732                  INFILE "&workpath/programs_&sasprogramnoext1..json"
+733                  DLM = "€" TRUNCOVER LRECL=1500;
+734                  INPUT logtxtline;
+735                  file "&_sasws_.&repath./documents/meta/programs_&sasprogramnoext1..json";
+736                  varlen=length(logtxtline);
+                                                           The SAS System
+
+737                  put @1 logtxtline $varying1500. varlen;
+738             run;
+739
+740        %mend permanifest;
+741
+742        %refreshmeta;
+743
+744        /*note, this doesn't capture the items just created with log2json */
+745        %macro getdocmetalist;
+746        %let docmetaexists=no;
+747        %if %sysfunc(fileexist(&_sasws_.&repath./documents/meta)) %then %do;
+748             %let docmetaexists=yes;
+749        %end;
+750        %put &=docmetaexists;
+751        %if &docmetaexists=yes %then %do;
+752             data documentsmeta;
+753                  length fref $8 fname $200;
+754                  did = filename(fref,"&_sasws_.&repath./documents/meta");
+755                  did = dopen(fref);
+756                  do i = 1 to dnum(did);
+757                    fname = dread(did,i);
+758                    output;
+759                  end;
+760                  did = dclose(did);
+761                  did = filename(fref);
+762                  keep fname;
+763             run;
+764        %end;
+765        %else %do;
+766             options nomprint;
+767             %lsaf_getchildren(lsaf_path=&repath./documents/meta,LSAF_RECURSIVE=1,sas_dsname=work.docmeta_files);
+768             options mprint;
+769             data documentsmeta;
+770                  length fname $200;
+771                  set docmeta_files;
+772                  fname=scan(path,-1,'/\');
+773             run;
+774        %end;
+775        data &docmeta.._documentsmeta;
+776             set documentsmeta;
+777        run;
+778        %mend getdocmetalist;
+779        %getdocmetalist;
+780
+781        %macro getmetadata (type=programs);
+782             data mnfprog ;
+783                  set documentsmeta;
+784                  where fname=:"&type._";
+785                  if fname ne "log_dashboard.json";
+786             run;
+787
+788             %let nbmnfprog=0;
+789             data _null_;
+790                  set mnfprog end=last;
+791                  call symputx("mnfprog"||strip(put(_n_,8.)),strip(fname));
+792                  if last then call symputx("nbmnfprog",strip(put(_n_,8.)));
+793             run;
+794             %put &=nbmnfprog;
+                                                           The SAS System
+
+795             %do h = 1 %to &nbmnfprog;
+796                  %getjsonfile (&repath./documents/meta/&&mnfprog&h);
+797
+798                  %if &h=1 %then %do;
+799                  data mngprog;
+800                       set root;
+801                       length jsonfile $150;
+802                       jsonfile = "&&mnfprog&h";
+803                  run;
+804                  %end;
+805                  %else %if &h>1 %then %do;
+806                  %app(mngprog,root, %str(jsonfile = "&&mnfprog&h"));
+807                  %end;
+808
+809             %end;
+810             data &docmeta.._mnf&type mnf&type;
+811                  %if &type=programs %then %do;
+812                  length sas_program $&sas_program_len;
+813                  format sas_program;
+814                  informat sas_program;
+815                  %end;
+816                  set mngprog;
+817             run;
+818        %mend getmetadata;
+819        %getmetadata (type=programs);
+820        %getmetadata (type=log);
+821
+822        %macro createdashboard;
+823        /*****************************/
+824        /* Report 1 on program level */
+825        /*****************************/
+826        data sasprogramsext;
+827             length sas_program $&sas_program_len;
+828             set sasprograms;
+829             if index(sas_program,'.sas')=0 then sas_program=strip(sas_program)||'.sas';
+830             format sas_program;
+831             informat sas_program;
+832        run;
+833        proc sort data=sasprogramsext;
+834             by sas_program;
+835        run;
+836        data glue;
+837             length sas_program $&sas_program_len;
+838             set mnffiles;
+839             sas_program=scan(referenceProgram,-1,'/\');
+840        run;
+841        proc sort data=glue out=job;
+842             by sas_program;
+843             where missing(referenceProgram) and index(path,'.log')>0;
+844        run;
+845        data joblog;
+846             set mnflog;
+847             jobname2 = tranwrd(scan(path,-1,'/\'),'.log','.job');
+848             where index(path,'/job_')>0;
+849             length logcheck $100;
+850             logcheck = "clean";
+851             if war ne 0 or err ne 0 or un ne 0 or note ne 0 then
+852               logcheck=strip(put(err,8.))||' E'||'rrors, '||strip(put(war,8.))||' W'||'arnings, '||strip(put(un,8.))||'
+                                                           The SAS System
+
+852      ! U'||'ninitialized, '||strip(put(note,8.))||' N'||'otes';
+853        run;
+854        proc sort data=mnfprograms;
+855             by sas_program;
+856        run;
+857        data report1a;
+858             merge sasprogramsext (in=a) mnfprograms;
+859             by sas_program;
+860             if a;
+861             sasprog_exist = 'Yes';
+862             if missing(manifestname) then do;
+863                  sasprog_exist = 'No';
+864             end;
+865             jobname = tranwrd(scan(manifestname,-1,'/\'),'.mnf','.job');
+866             rename headersummary = headercheck;
+867        run;
+868        proc sql;
+869             create table report1 as
+870             select *
+871             from report1a left join joblog (drop=path ordinal_root jsonfile)
+872             on report1a.jobname = joblog.jobname2
+873             order by sas_program;
+874        quit;
+875        data report1a;
+876             set report1;
+877             if missing(manifestname) then do;
+878                  logcheck = 'no log!';
+879                  jobname = 'no job';
+880             end;
+881        run;
+882        data report1;
+883             set report1a;
+884             keep headercheck headerfailmess lastModifiedBy logcheck manifestname message path sas_program sasprog_exist line war
+884      !  err un note f_msg;
+885        run;
+886        data report1;
+887             set report1a;
+888        run;
+889        filename r1  "&workpath/report1.json";
+890         proc json out=r1 pretty nosastags;
+891            export report1 ;
+892         run;
+893
+894        /****************************/
+895        /* Report 2 on output level */
+896        /****************************/
+897        data repoutputs;
+898             length sas_program $&sas_program_len;
+899
+900             set repemeta (rename=(type=oritype));
+901             order = _n_;
+902             where not missing(sas_program) and (not missing(dataset) or not missing (num));
+903             length output $100 type $50;
+904             output = outputfilename;
+905             if not missing(dataset) then do;
+906                  type = "Dataset";
+907             end;
+908             else do;
+                                                           The SAS System
+
+909                  type = oritype;
+910             end;
+911             if index(sas_program,'.sas')=0 then sas_program=strip(sas_program)||'.sas';
+912             format sas_program;
+913             informat sas_program;
+914        run;
+915        %macro getoutputfiles(type, dsetin);
+916             %if %sysfunc(exist(&dsetin)) %then %do;
+917                  data output&type (keep=path&type output lastModifiedBy&type dateLastModified&type);
+918                       set &dsetin;
+919                       where index(name,".&type")>0;
+920                       length output $100;
+921                       output = tranwrd(name,".&type",'');
+922                       rename path=path&type;
+923                       rename lastModifiedBy=lastModifiedBy&type;
+924                       rename dateLastModified=dateLastModified&type;
+925                  run;
+926                  proc sort data=output&type nodupkey;
+927                       by output;
+928                  run;
+929             %end;
+930             %else %do;
+931                  data output&type (keep=path&type output lastModifiedBy&type dateLastModified&type);
+932                       set fi_output (obs=0);
+933                       length output $100;
+934                       output = tranwrd(name,".&type",'');
+935                       rename path=path&type;
+936                       rename lastModifiedBy=lastModifiedBy&type;
+937                       rename dateLastModified=dateLastModified&type;
+938                  run;
+939             %end;
+940        %mend getoutputfiles;
+941        %getoutputfiles(lst, fi_output);
+942        %getoutputfiles(txt, fi_output_txt);
+943        %getoutputfiles(svg, fi_output_svg);
+944        %getoutputfiles(pdf, fi_output_pdf);
+945        %getoutputfiles(log, fi_log);
+946
+947        data modified_outputsvg;
+948            set outputsvg;
+949            do i=2 to length(output)-1;
+950                c0=substr(output,i-1,1);
+951                c1=substr(output,i,1);
+952                c2=substr(output,i+1,1);
+953                if c1='_' and '0'<=c0<='9'  and '0'<=c2<='9' then substr(output,i,1)='.' ;
+954            end ;
+955        run ;
+956
+957        data alloutputfiles;
+958             merge outputlst (in=a) outputtxt (in=b) outputpdf (in=c) outputlog (in=d) modified_outputsvg(in=e);
+959             by output;
+960             if a or b or c or e then tlf=1;
+961             if missing(pathtxt) then pathtxt='';
+962             if missing(pathpdf) then pathpdf='';
+963             if missing(pathsvg) then pathsvg='';
+964             if missing(lastModifiedBylst) then lastModifiedBylst='';
+965             if missing(lastModifiedBytxt) then lastModifiedBytxt='';
+966             if missing(lastModifiedBysvg) then lastModifiedBysvg='';
+                                                           The SAS System
+
+967             if missing(lastModifiedBypdf) then lastModifiedBypdf='';
+968             if missing(dateLastModifiedlst) then dateLastModifiedlst=.;
+969             if missing(dateLastModifiedtxt) then dateLastModifiedtxt=.;
+970             if missing(dateLastModifiedsvg) then dateLastModifiedsvg=.;
+971             if missing(dateLastModifiedpdf) then dateLastModifiedpdf=.;
+972             if missing(dateLastModifiedlog) then dateLastModifiedlog=.;
+973        run;
+974        proc sql;
+975             create table repoutputs2 as
+976             select a.*, b.manifestname, b.lastModifiedBy as lastModifiedByprg
+977             from repoutputs as a left join mnfprograms as b
+978             on a.sas_program=b.sas_program
+979             order by order;
+980
+981             create table repoutputs3 as
+982             select a.*, b.pathlst, b.pathtxt, b.pathsvg, b.pathpdf, b.pathlog, b.lastModifiedBylst, b.lastModifiedBytxt,
+982      ! b.lastModifiedBysvg, b.lastModifiedBypdf, b.lastModifiedBylog
+983             , b.dateLastModifiedlst, b.dateLastModifiedtxt, b.dateLastModifiedsvg, b.dateLastModifiedpdf, b.dateLastModifiedlog
+984             from repoutputs2 as a left join alloutputfiles as b
+985             on a.output=b.output
+986             order by order;
+987
+988        quit;
+989        data dsets;
+990             set mnffiles (where=(index(path,'.sas7bdat')>0));
+991             if index(path,'repemeta')=0 and  index(path,'repesource')=0;
+992             if missing(dataset) then dataset="";
+993        run;
+994        data dsetlogs;
+995             set mnffiles (where=(index(path,'.log')>0));
+996             if not missing(referenceProgram);
+997        run;
+998        proc sql;
+999             create table repoutputs5 as
+1000            select a.*, b.path as datasetpath
+1001            from repoutputs3 as a left join dsets as b
+1002            on a.sas_program=b.sas_program and index(lowcase(b.path),lowcase(strip(a.dataset)))>0
+1003            order by order;
+1004       quit;
+1005       proc sql;
+1006            create table repoutputs6 as
+1007            select a.*, b.path as datasetlogpath
+1008            from repoutputs5 as a left join dsetlogs as b
+1009            on a.sas_program=b.sas_program and not missing(a.dataset)
+1010            order by order;
+1011       quit;
+1012            /*retrieve programmer of datasets*/
+1013       %macro noneed;
+1014            data dsetlogpath;
+1015                 set repoutputs6 (keep=datasetlogpath);
+1016                 where not missing(datasetlogpath);
+1017                 logname = scan(datasetlogpath,-1,'/\');
+1018                 logfolder = substr(datasetlogpath,1,index(datasetlogpath,strip(logname))-2);
+1019                 lf = strip(tranwrd(logfolder, "&repath", ''));
+1020                 if substr(lf,1,1)in ('/' '\') then lf=strip(substr(lf,2));
+1021            run;
+1022            proc sort data=dsetlogpath nodupkey;
+1023                 by logfolder;
+                                                           The SAS System
+
+1024            run;
+1025            data &docmeta.._dsetlogpath;
+1026                 set dsetlogpath;
+1027            run;
+1028            %let nbdsetfolders=0;
+1029            data _null_;
+1030                 set dsetlogpath end=last;
+1031                 call symputx("dsetfolder"||strip(put(_n_,8.)),strip(lf));
+1032                 if last then call symputx("nbdsetfolders",strip(put(_n_,8.)));
+1033            run;
+1034            %do lf=1 %to &nbdsetfolders;
+1035                 %put dsetfolder&lf=&&dsetfolder&lf;
+1036                 %let fldrx = %sysfunc(tranwrd(&&dsetfolder&lf,/,_));
+1037                 %if %sysfunc(exist(fi_&fldrx))=0 %then %do;
+1038                 %getlsaffolderinfo(folder=&&dsetfolder&lf);
+1039                 %end;
+1040                 data &docmeta.._fi&lf fi&lf;
+1041                      set fi_&fldrx;
+1042                 run;
+1043            %end;
+1044       %mend noneed;
+1045
+1046       data adddsetlog;
+1047            set repoutputs6;
+1048            if not missing (dataset) then do;
+1049                 pathlog=datasetlogpath;
+1050            end;
+1051       run;
+1052       proc sql;
+1053            create table repoutputs7 as
+1054            select a.*, b.*
+1055            from adddsetlog as a left join mnflog (where=(message="Summary")) as b
+1056            on strip(a.pathlog)=strip(b.path)
+1057            order by order;
+1058       quit;
+1059
+1060       %if &splistonlsaf=yes and &eventtype=reportingevent %then %do;
+1061            data qcstatus;
+1062                 set splist;
+1063                 length qcpath $1000;
+1064                 clinidx = index(href,'/clinical');
+1065                 qcpath = substr(href,clinidx);
+1066                 keep qcpath href status reviewer reviewmethod;
+1067            run;
+1068            proc sql;
+1069                 create table repoutputs8 as
+1070                 select a.*, b.status as qcstatus length=100, b.reviewer, b.reviewmethod
+1071                 from repoutputs7 as a left join qcstatus as b
+1072                 on (strip(a.datasetpath)=strip(b.qcpath) or strip(a.pathtxt)=strip(b.qcpath) or
+1072     ! strip(a.pathlst)=strip(b.qcpath))
+1073                 order by order;
+1074            quit;
+1075       /*     data _null_;*/
+1076       /*          set repoutputs8;*/
+1077       /*          if _n_<10 then do;*/
+1078       /*          put _all_;*/
+1079       /*          end;*/
+1080       /*     run;*/
+                                                           The SAS System
+
+1081       %end;
+1082       %else %do;
+1083            data repoutputs8;
+1084                 set repoutputs7;
+1085            run;
+1086       %end;
+1087
+1088       data report2a;
+1089            length logcheck qcstatus $100 txtoutput pdfoutput $2 programmer $50 ;
+1090            set repoutputs8;
+1091            logcheck = "clean";
+1092            if war ne 0 or err ne 0 or un ne 0 or note ne 0 then
+1093                 logcheck=strip(put(err,8.))||' E'||'rrors, '||strip(put(war,8.))||' W'||'arnings, '||strip(put(un,8.))||'
+1093     ! U'||'ninitialized, '||strip(put(note,8.))||' N'||'otes';
+1094            if missing(pathlog) then logcheck='no log!';
+1095            if missing(pathlst) and missing(dataset) then logcheck='';
+1096            if not missing(pathlst) or not missing(pathtxt) or not missing(pathsvg) then txtoutput='Y';
+1097            else txtoutput='N';
+1098            if not missing(pathpdf) then pdfoutput='Y';
+1099            else pdfoutput='N';
+1100
+1101            if not missing (dataset) then do;
+1102                 txtoutput='NA';
+1103                 pdfoutput='NA';
+1104                 output = dataset;
+1105            end;
+1106            if not missing(lastModifiedByprg) then programmer = lastModifiedByprg;
+1107            else do;
+1108                 if not missing(lastModifiedBytxt) then programmer = lastModifiedBytxt;
+1109                 if not missing(lastModifiedBylst) then programmer = lastModifiedBylst;
+1110                 if missing(programmer) and not missing(dataset) and not missing(lastModifiedBylog) then programmer =
+1110     ! lastModifiedBylog;
+1111            end;
+1112
+1113            if missing(pathtxt) and not missing(pathlst) then pathtxt=pathlst;
+1114
+1115            if missing(qcstatus) then qcstatus="";
+1116            tlf_log = dateLastModifiedlog;
+1117       /*      format tlf_log yymmdd10.; */
+1118            if missing(tlf_log) and not missing(dateLastModifiedlst) then tlf_log = dateLastModifiedlst;
+1119
+1120            * if we have svg then use that for figure in txt column ;
+1121            if type='Figure' and not missing(pathsvg) then pathtxt=pathsvg ;
+1122       run;
+1123       data report2;
+1124            set report2a;
+1125            keep Analysis_Set DATASET Num Section Title datasetlogpath datasetpath dateLastModifiedlog dateLastModifiedlst
+1125     ! logcheck message outputfilename
+1126                 pathlog programmer qcstatus sas_program type line war err un note f_msg;
+1127       run;
+1128       data report2;
+1129            set report2a;
+1130       run;
+1131        filename r2  "&workpath/report2.json";
+1132        proc json out=r2 pretty nosastags;
+1133           export report2 ;
+1134        run;
+1135       data outputlogissuessumm (keep=output logcheck order path);
+                                                           The SAS System
+
+1136            set mnflog (where=(message eq "Summary"));
+1137            length logcheck output $100;
+1138            output = tranwrd(jsonfile,'.json','.log');
+1139            if output=:'log_' then output=substr(output,5);
+1140            order=1;
+1141            if war ne 0 or err ne 0 or un ne 0 or note ne 0 then do;
+1142                 logcheck=strip(put(err,8.))||' E'||'rrors, '||strip(put(war,8.))||' W'||'arnings, '||strip(put(un,8.))||'
+1142     ! U'||'ninitialized, '||strip(put(note,8.))||' N'||'otes';
+1143                 output;
+1144            end;
+1145       run;
+1146       proc sort data=outputlogissuessumm;
+1147            by output;
+1148       run;
+1149       data outputlogissues;
+1150            set mnflog (where=(message ne "Summary"));
+1151            length output $100;
+1152            output = tranwrd(jsonfile,'.json','.log');
+1153            if output=:'log_' then output=substr(output,5);
+1154            length issuetype $13;
+1155            if err then issuetype='E'||'rror';
+1156            else if war then issuetype='W'||'arning';
+1157            else if un then issuetype='Un'||'initialized';
+1158            else if note then issuetype='N'||'ote';
+1159            order = 2;
+1160       run;
+1161       proc sort data=outputlogissues;
+1162            by output order descending err descending war descending un message;
+1163       run;
+1164       data outputlogissues;
+1165            set outputlogissues;
+1166            by output order descending err descending war descending un message;
+1167            if first.output then issuenr = 0;
+1168            issuenr + 1;
+1169       run;
+1170       data outputlogreport;
+1171            length col1 col2 $1500;
+1172            set outputlogissuessumm (in=a) outputlogissues (in=b);
+1173            by output order;
+1174            if a then col1 = output;
+1175            if a then issuenr=0;
+1176            if b then col1 = put(issuenr,5.);
+1177
+1178            if a then col2=logcheck;
+1179            if b then col2=message;
+1180       run;
+1181
+1182       /***************************/
+1183       /*   oversight documents   */
+1184       /***************************/
+1185       %if &oversight.=Y %then %do;
+1186           proc sort data=fi____documents; by name datelastmodified; run;
+1187           data dSAP;
+1188               set fi____documents(where=(index(lowcase(name),"sap") or index(lowcase(name),"statistical analysis plan")))
+1188     ! end=eof;
+1189               by name datelastmodified;
+1190               if eof;
+1191           run;
+                                                           The SAS System
+
+1192           data dBSOP;
+1193               set fi____documents(where=(index(lowcase(name),"bsop"))) end=eof;
+1194               by name datelastmodified;
+1195               if eof;
+1196           run;
+1197
+1198           data croshell;
+1199               length doc $10;
+1200               ord=1; doc="SAP"; output;
+1201               ord=2; doc="BSOP"; output;
+1202           run;
+1203
+1204           data croosdocs1;
+1205               set dsap(in=a) dbsop(in=b);
+1206               length doc $10;
+1207               if a then doc="SAP";
+1208               if b then doc="BSOP";
+1209               keep doc name path datelastmodified;
+1210           run;
+1211
+1212           proc sort data=croshell; by doc; run;
+1213           proc sort data=croosdocs1; by doc; run;
+1214
+1215           data croosdocs;
+1216               merge croshell croosdocs1;
+1217               by doc;
+1218               if ord=1 and name="" then name="<missing>";
+1219               if ord=2 and name="" then name="<missing>";
+1220           run;
+1221
+1222           proc sort data=croosdocs; by ord; run;
+1223
+1224           filename crd  "&workpath/croosdocs.json";
+1225           proc json out=crd pretty;
+1226               export croosdocs / nosastags;
+1227           run;
+1228       %end;
+1229
+1230
+1231       /*********************/
+1232       /* create report     */
+1233       /*********************/
+1234       %let logviewer=https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A///general/biostat/tools/logviewer/index.html;
+1235       %let fileviewer=https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html;
+1236       data _null_;
+1237            retext = tranwrd(tranwrd(upcase(strip("&REPATH")),'/CLINICAL',''),'BIOSTAT/STAGING/','');
+1238            call symputx('retext',compress(lowcase(strip(retext))));
+1239       run;
+1240
+1241       * gather together other bits of info that will be needed to create the dashboard ;
+1242       data info ;
+1243           retext="%superq(retext)";
+1244           REPATH="%superq(REPATH)";
+1245           splistmessage="%superq(splistmessage)";
+1246           splisturl="%superq(splisturl)";
+1247           SPLISTISS="%superq(SPLISTISS)";
+1248           SPLISTONLSAF="%superq(SPLISTONLSAF)";
+1249           SPLISTSTATUS="%superq(SPLISTSTATUS)";
+                                                           The SAS System
+
+1250           statusReportCreateDate="&sysdate";
+1251           statusReportCreateTime="&systime";
+1252           study="%superq(study)";
+1253           compound="%superq(compound)";
+1254           EVENTTYPE="%superq(EVENTTYPE)";
+1255           INDICATION="%superq(INDICATION)";
+1256           REVENT="%superq(REVENT)";
+1257       run ;
+1258       * make dummy dataset so that we avoid some errors in proc json;
+1259       data outputsummary ;
+1260           delete;
+1261       run ;
+1262
+1263       options ls=160 ps=50;
+1264
+1265       /* %let icon=%str(<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0
+1265     ! 100 100%22><text y=%22.90em%22 font-size=%2290%22>👽</text></svg>">); */
+1266       %let icon=%str(<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100
+1266     ! 100%22><text y=%22.90em%22 font-size=%2290%22>😷</text></svg>">);
+1267
+1268       ods html5
+1269           style=Meadow
+1270           path="&_sasws_.&repath./documents"
+1271           body="projectstatus.html" (TITLE="&study")
+1272           options(svg_mode="inline" title="dashboard")
+1273           HEADTEXT= "%superq(icon)";
+1274
+1275       title; footnote; options nodate missing=' ' ps=45 ls=140;
+1276       ods escapechar="^";
+1277       ods layout gridded advance=explicit columns=2 column_gutter=2;
+1278       /*ods text="&compound./&indication./&study./&revent - Status report created on &sysdate &systime GMT";*/
+1279       ods text="&retext - Status report created on &sysdate &systime GMT";
+1280       ods region column=1;
+1281       ods text="placeholder docs";
+1282       %if &oversight.=Y %then %do;
+1283            proc report data=croosdocs split='!' headline;
+1284                 column path doc name datelastmodified;
+1285                 define path               / noprint;
+1286                 define doc                / width = 10 "Document" flow        style(column)=[cellwidth=0.5in];
+1287                 define name               / width = 60 "Name" flow            style(column)=[cellwidth=3.5in];
+1288                 define datelastmodified   / width = 20 "Last Modified" flow   style(column)=[cellwidth=1in];
+1289
+1290                 compute name ;
+1291                      if name = "<missing>" then do;
+1292                           call define(_col_, 'style', 'style=[backgroundcolor=red]');
+1293                           end;
+1294                      else if name ^in ("","<missing>") then do;
+1295                          call define(_col_, 'URL', "https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A//"||strip(path));
+1296                          call define(_col_, 'style', 'style={flyover="Click to go to file"}');
+1297                      end;
+1298                 endcomp;
+1299
+1300            run;
+1301       %end;
+1302            proc report data=report1 split='!' headline;
+1303                 column sas_program sasprog_exist jobname logcheck headercheck;
+1304                 define sas_program    / width = 40 "SAS program" flow                           style(column)=[cellwidth=1.4in]
+1304     ! ;
+                                                           The SAS System
+
+1305                 define sasprog_exist  / width = 15 format=$3. "Program file!exists" flow        style(column)=[cellwidth=0.7in]
+1305     ! ;
+1306                 define jobname      / width = 40  "Job file" flow            style(column)=[cellwidth=0.7in];
+1307                 define logcheck       / width = 15 "Job log file" flow
+1307     ! style(column)=[cellwidth=2.5in];
+1308                 define headercheck    / width = 15 "Program header checks" flow                 style(column)=[cellwidth=1in];
+1309            run;
+1310            proc report data=report1 (where=(lowcase(strip(headerfailmess)) not in ("" "all pass"))) split='!' headline;
+1311                 column sas_program headercheck headerfailmess;
+1312                 define sas_program / width = 40 "SAS program" flow             style(column)=[cellwidth=1.4in];
+1313                 define headercheck / width = 15 "Program header checks" flow   style(column)=[cellwidth=1in];
+1314                 define headerfailmess / width = 120 "detail" flow                 style(column)=[cellwidth=4.6in];
+1315            run;
+1316            proc report data=outputlogreport split='!' headline;
+1317                 column output order issuenr path col1 col2;
+1318                 define output      / order noprint;
+1319                 define order       / order noprint;
+1320                 define issuenr     / order noprint;
+1321                 define path        / noprint;
+1322                 define col1        / width = 30 "Log output" flow style(column)=[cellwidth=1.4in];
+1323                 define col2        / width = 60 "Message" flow    style(column)=[cellwidth=5.5in];
+1324                 compute col1 ;
+1325                      if index(col1,'.log') >0 then do;
+1326                      call define(_col_, 'URL',
+1326     ! "%superq(logviewer)?log=https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A//"||strip(path));
+1327                      call define(_col_, 'style', 'style={flyover="Click to go to log file"}');
+1328                      end;
+1329                 endcomp;
+1330                 compute col2 ;
+1331                      if index(col2,'ERROR:')>0 then call define (_col_,'style',"style={background=pink}");
+1332                      if index(col2,'WARNING:')>0 then call define (_col_,'style',"style={background=lightgreen}");
+1333                 endcomp;
+1334            run;
+1335
+1336            ods region column=2;
+1337
+1338       ods text="&splistmessage";
+1339            proc report data=report2 split='!' headline;
+1340                 column section type output pathtxt pathpdf txtoutput pdfoutput logcheck tlf_log programmer %if
+1340     ! &eventtype=reportingevent %then qcstatus;;
+1341                 define section    / width = 30 "SAP section" flow;
+1342                 define type       / width = 10 "Output!type" flow;
+1343                 define output   / width = 25 "Output" flow;
+1344                 define pathtxt   / noprint;
+1345                 define pathpdf   / noprint;
+1346                 define txtoutput   / width = 25 "txt" flow;
+1347                 define pdfoutput   / width = 25 "pdf" flow;
+1348                 define logcheck       / width = 15 "Output log file" flow ;
+1349                 define tlf_log    / width = 19 format=datetime19. "Last!Modification" flow;
+1350                 define programmer     / width = 25 "Programmer" flow;
+1351                 %if &eventtype=reportingevent %then %do;
+1352                 define qcstatus     / width = 25 "QC status" flow;
+1353                 %end;
+1354                 compute txtoutput ;
+1355                      if txtoutput="Y" then do;
+1356                      call define(_col_, 'URL', "https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A//"||strip(pathtxt));
+1357                      call define(_col_, 'style', 'style={flyover="Click to go to txt file"}');
+1358                      call define('type', 'URL',
+                                                           The SAS System
+
+1358     ! "%superq(fileviewer)?file=https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A//"||strip(pathtxt));
+1359                      call define('type', 'style', 'style={flyover="File Viewer"}');
+1360                      end;
+1361                 endcomp;
+1362                 compute pdfoutput ;
+1363                      if pdfoutput="Y" then do;
+1364                      call define(_col_, 'URL', "https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A//"||strip(pathpdf));
+1365                      call define(_col_, 'style', 'style={flyover="Click to go download pdf file"}');
+1366                      end;
+1367                 endcomp;
+1368                 compute logcheck ;
+1369                      if logcheck="no log!" then do;
+1370                      call define(_col_, 'style', 'style=[backgroundcolor=red]');
+1371                      end;
+1372                 endcomp;
+1373            run;
+1374
+1375            ods layout end;
+1376            ods _all_ close;
+1377            ods listing;
+1378
+1379
+1380
+1381       %mend;
+1382       %createdashboard;
+1383
+1384
+1385               /*********************/
+1386                 /* create summaries  */
+1387                 /*********************/
+1388                 /*PROGRAMS*/
+1389                 data perexprogram;
+1390                      set report1;
+1391                      denomline = (not missing(SAS_Program));
+1392                 run;
+1393
+1394                 proc freq data=perexprogram noprint;
+1395                      table denomline / norow nocol nocum nopercent out=f_progr1 (rename=(count=expectedprograms));
+1396                      where sasprog_exist in ("Yes" "No");
+1397                 run;
+1398                 proc freq data=perexprogram noprint;
+1399                      table denomline / norow nocol nocum nopercent out=f_progr2 (rename=(count=cleanprograms));
+1400                      where sasprog_exist="Yes" and logcheck="clean" and headerfailmess="All pass";
+1401                 run;
+1402                 proc freq data=perexprogram noprint;
+1403                      table denomline / norow nocol nocum nopercent out=f_progr3 (rename=(count=issueprograms));
+1404                      where sasprog_exist="Yes" and (logcheck ne "clean" or  headerfailmess ne "All pass");
+1405                 run;
+1406                 %let ep=0;
+1407                 %let expected_program=0;
+1408                 %let clean_program=0;
+1409                 %let issue_program=0;
+1410                 data programsummary;
+1411                      merge f_progr1 f_progr2 f_progr3;
+1412                      if missing(expectedprograms) then expectedprograms = 0;
+1413                      if missing(cleanprograms) then cleanprograms = 0;
+1414                      if missing(issueprograms) then issueprograms = 0;
+1415                      if cleanprograms + issueprograms > expectedprograms then put 'W' 'ARNING: check number of programs';
+                                                           The SAS System
+
+1416                      call symputx('ep',strip(put(expectedprograms,8.)));
+1417                      call symputx('expected_program',strip(put(expectedprograms-cleanprograms-issueprograms,8.)));
+1418                      call symputx('clean_program',strip(put(cleanprograms,8.)));
+1419                      call symputx('issue_program',strip(put(issueprograms,8.)));
+1420                 run;
+1421                 %put &=ep &=expected_program &=clean_program &=issue_program ;
+1422
+1423                 /*OUTPUTS*/
+1424                 data dashboard;
+1425                      set report2;
+1426                      denomline = (not missing(output));
+1427                 run;
+1428
+1429                 proc freq data=dashboard noprint;
+1430                      table denomline / norow nocol nocum nopercent out=f_out1 (rename=(count=expectedoutputs));
+1431                      where not missing(SAS_Program) or not missing(title) or not missing(dataset);
+1432                 run;
+1433                 proc freq data=dashboard noprint;
+1434                      table denomline / norow nocol nocum nopercent out=f_out2 (rename=(count=createdoutputs));
+1435                      where not missing(manifestname);
+1436                 run;
+1437                 proc freq data=dashboard noprint;
+1438                      table denomline / norow nocol nocum nopercent out=f_out3 (rename=(count=cleanoutputs));
+1439                      where not missing(manifestname) and logcheck eq "clean";
+1440                 run;
+1441                 proc freq data=dashboard noprint;
+1442                      table denomline / norow nocol nocum nopercent out=f_out4 (rename=(count=issueoutputs));
+1443                      where not missing(manifestname) and logcheck ne "clean";
+1444                 run;
+1445                 %let eo=0;
+1446                 %let expected_outputs=0;
+1447                 %let clean_outputs=0;
+1448                 %let issue_outputs=0;
+1449                 data outputsummary;
+1450                      merge f_out1 f_out2 f_out3 f_out4;
+1451                      if missing(expectedoutputs) then expectedoutputs = 0;
+1452                      if missing(createdoutputs) then createdoutputs = 0;
+1453                      if missing(cleanoutputs) then cleanoutputs = 0;
+1454                      if missing(issueoutputs) then issueoutputs = 0;
+1455                      if cleanoutputs + issueoutputs > createdoutputs then put 'W' 'ARNING: check number of outputs';
+1456                      if createdoutputs > expectedoutputs then put 'W' 'ARNING: check number of outputs';
+1457                      call symputx('eo',strip(put(expectedoutputs,8.)));
+1458                      call symputx('expected_outputs',strip(put(expectedoutputs-createdoutputs,8.)));
+1459                      call symputx('clean_outputs',strip(put(cleanoutputs,8.)));
+1460                      call symputx('issue_outputs',strip(put(issueoutputs,8.)));
+1461                 run;
+1462                 %put &=eo  &=expected_outputs &=clean_outputs &=issue_outputs ;
+1463
+1464
+1465        %macro addjs;
+1466
+1467                      %let pathprefix=&_sasws_.;
+1468                      %let expected_docs=0;
+1469
+1470                      DATA _HTMLCODE0;
+1471                           LENGTH htmlcode $ 1500;
+1472                           INFILE "&_sasws_.&repath./documents/projectstatus.html"
+1473                           DLM = "€" TRUNCOVER LRECL=1500;
+                                                           The SAS System
+
+1474                           INPUT htmlcode;
+1475                           ID=_N_;
+1476                      RUN;
+1477
+1478            %let crolistexists=no;
+1479            options nomprint;
+1480            %lsaf_exists(lsaf_path=&splistiss);
+1481            options mprint;
+1482            %put &=_lsafExists_;
+1483            %if &_lsafExists_=1 %then %do;
+1484                 %let crolistexists=yes;
+1485            %end;
+1486
+1487                      DATA jsscriptstart;
+1488                           LENGTH htmlcode $ 1500;
+1489                           htmlcode='<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>';
+1489     ! output;
+1490       /*                    %if &runenvironment ne local %then*/
+1491       /*                    htmlcode='<script src="/general/biostat/jobs/dashboard/dev/programs/chart-bundle-min.js"></script>'
+1491     ! ; */
+1492       /*                    %else */
+1493       /*                    htmlcode='<script src="'
+1493     ! ||"&_sasws_./general/biostat/jobs/dashboard/dev/programs/chart-bundle-min.js"||'"></script>'; */
+1494                           htmlcode='<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>';
+1495                           output;
+1496                           %if &crolistexists=yes %then %do;
+1497                           htmlcode='<script
+1497     ! src="https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A///general/biostat/jobs/dashboard/dev/programs/doughnut.js"
+1497     ! ></script>'; output;
+1498                           htmlcode='<script
+1498     ! src="https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A//'||strip("&splistiss")||'"></script>'; output;
+1499                           htmlcode='<script
+1499     ! src="https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A//'||strip("&spliststatus")||'"></script>'; output;
+1500                           %end;
+1501                      run;
+1502                      DATA jsscript;
+1503                           LENGTH htmlcode $ 1500;
+1504                           INFILE "&pathprefix.&progpath.jsscript.txt"
+1505                           DLM = "€" TRUNCOVER LRECL=1500;
+1506                           INPUT htmlcode;
+1507                           ID=_N_;
+1508                      RUN;
+1509                      %let nb_bars=1;
+1510                      /*assume programs always exist*/
+1511                      data h;
+1512                           length h1 h2 h3 h4 $150 h 8;
+1513                           h=1;
+1514                           %if &expected_docs>0 %then %do;
+1515                                h1 = "'Documents','Programs ("||"&ep"||")'";
+1516                                h2 = "&clean_docs,&clean_program";
+1517                                h3 = "&issue_docs,&issue_program";
+1518                                h4 = "&expected_docs,&expected_program";
+1519                           %end;
+1520                           %else %do;
+1521                                h1 = "'Programs ("||"&ep"||")'";
+1522                                h2 = "&clean_program";
+1523                                h3 = "&issue_program";
+1524                                h4 = "&expected_program";
+                                                           The SAS System
+
+1525                           %end;
+1526                      run;
+1527                      %if &eo>0 %then %do;
+1528                           data h;
+1529                                set h;
+1530                                h1 = strip(h1)||",'Outputs ("||"&eo"||")'";
+1531                                h2 = strip(h2)||",&clean_outputs";
+1532                                h3 = strip(h3)||",&issue_outputs";
+1533                                h4 = strip(h4)||",&expected_outputs";
+1534                           run;
+1535                      %end;
+1536                      %if &crolistexists=yes %then %do;
+1537                      DATA doughnuthtml;
+1538                           LENGTH htmlcode $ 1500;
+1539                           INFILE "&pathprefix.&progpath.doughnut.txt"
+1540                           DLM = "€" TRUNCOVER LRECL=1500;
+1541                           INPUT htmlcode;
+1542                           ID=_N_;
+1543                           h=1;
+1544                      run;
+1545                      %end;
+1546                      DATA barXX;
+1547                           LENGTH htmlcode $ 1500;
+1548                           INFILE "&pathprefix.&progpath.bar.txt"
+1549                           DLM = "€" TRUNCOVER LRECL=1500;
+1550                           INPUT htmlcode;
+1551                           ID=_N_;
+1552                           h=1;
+1553                      run;
+1554                      data bar;
+1555                           merge barXX h;
+1556                           by h;
+1557
+1558                           htmlcode = tranwrd(htmlcode,'barlabels',strip(h1));
+1559                           htmlcode = tranwrd(htmlcode,'datacompleted',strip(h2));
+1560                           htmlcode = tranwrd(htmlcode,'dataissues',strip(h3));
+1561                           htmlcode = tranwrd(htmlcode,'dataexpected',strip(h4));
+1562                      RUN;
+1563
+1564       /*               DATA bar;*/
+1565       /*                    LENGTH htmlcode $ 1500;*/
+1566       /*                    INFILE "&pathprefix.&progpath.bar.txt"*/
+1567       /*                    DLM = "€" TRUNCOVER LRECL=1500;*/
+1568       /*                    INPUT htmlcode;*/
+1569       /*                    ID=_N_;*/
+1570       /*                    htmlcode = tranwrd(htmlcode,'barlabels',"'Documents','Programs','Outputs'");*/
+1571       /*                    htmlcode = tranwrd(htmlcode,'datacompleted',"3,&clean_program, 12");*/
+1572       /*                    htmlcode = tranwrd(htmlcode,'dataissues',"1,&issue_program,1");*/
+1573       /*                    htmlcode = tranwrd(htmlcode,'dataexpected',"0,&expected_program,2");*/
+1574
+1575       /*                    htmlcode = tranwrd(htmlcode,'barlabels',"'Programs'");*/
+1576       /*                    htmlcode = tranwrd(htmlcode,'datacompleted',"&clean_program");*/
+1577       /*                    htmlcode = tranwrd(htmlcode,'dataissues',"&issue_program");*/
+1578       /*                    htmlcode = tranwrd(htmlcode,'dataexpected',"&expected_program");*/
+1579       /*               RUN;*/
+1580
+1581                      data h1 p1 p2;
+1582                           retain h f 0;
+                                                           The SAS System
+
+1583                           set _HTMLCODE0;
+1584
+1585                           idhead = index(htmlcode,'<meta content="SAS 9.4" name="generator"/>');
+1586                           if h = 0 then do;
+1587                                output h1;
+1588                                if idhead>0 then h=1;
+1589                           end;
+1590                           else do;
+1591                                idx = index(htmlcode,'<p class="m usertext" style="border-spacing: 0">placeholder docs</p>');
+1592
+1593                                if idx>0 then do;
+1594                                     f = 1;
+1595                                     part1 = substr(htmlcode,1,idx-1);
+1596                                     part2 = substr(htmlcode,idx+length('<p class="m usertext" style="border-spacing:
+1596     ! 0">placeholder docs</p>'));
+1597                                     htmlcode=part1;
+1598                                     output p1;
+1599
+1600                                     htmlcode=part2;
+1601                                     output p2;
+1602                                end;
+1603                                if f=0 then output p1;
+1604                                if f=1 then output p2;
+1605                           end;
+1606                      run;
+1607                      data p1;
+1608                           set p1;
+1609                           htmlcode = tranwrd(htmlcode, '<a href', '<a target="_blank" href');
+1610                      run;
+1611                      data p2;
+1612                           set p2;
+1613                           htmlcode = tranwrd(htmlcode, '<a href', '<a target="_blank" href');
+1614                      run;
+1615                      data result;
+1616                           set h1 jsscriptstart jsscript p1 %if &crolistexists=yes %then doughnuthtml; bar p2;
+1617                      run;
+1618                        ** Produce revised HTML file **;
+1619                       data _null_;
+1620                            set result;
+1621                            file "&_sasws_.&repath./documents/projectstatus.html";
+1622                            varlen=length(htmlcode);
+1623                            put @1 htmlcode $varying1500. varlen;
+1624                       run;
+1625                 %mend addjs;
+1626                 %addjs;
+1627
+1628       %clock(&dbstartdatetime);
+1629
+1630       %macro fix_empty_file(file) ;
+1631           %let dsid=%sysfunc(open(&file));
+1632           %let nobs=%sysfunc(attrn(&dsid,nobs));
+1633           %if &nobs=0 %then %do ;
+1634               data _&file ;
+1635                   empty=1;
+1636               run ;
+1637           %end ;
+1638           %else %do ;
+1639               data _&file ;
+                                                           The SAS System
+
+1640                   set &file ;
+1641               run ;
+1642           %end ;
+1643           %let dsid=%sysfunc(close(&dsid));
+1644       %mend fix_empty_file ;
+1645       %fix_empty_file(programsummary);
+1646       %fix_empty_file(outputsummary);
+1647
+1648       *** Create JSON files needed for dashboard ;
+1649       filename dashjson  "&_sasws_.&repath./documents/meta/dashstudy.json" ;
+1650       /*  filename dashjson "dashstudy.json"; */
+1651        proc json out=dashjson pretty;
+1652           write open object;
+1653               write value "report1";
+1654               write open array ;
+1655                   export report1 / nosastags;
+1656               write close ;
+1657               write value "croosdocs";
+1658               write open array ;
+1659                   export croosdocs / nosastags;
+1660               write close ;
+1661               write value "report2";
+1662               write open array ;
+1663                   export report2 / nosastags;
+1664               write close ;
+1665               write value "outputlogreport";
+1666               write open array ;
+1667                   export outputlogreport / nosastags;
+1668               write close ;
+1669               write value "info";
+1670               write open array ;
+1671                   export info / nosastags;
+1672               write close;
+1673               write value 'graph1';
+1674               write open object;
+1675                   write value "Programs";
+1676                       export _programsummary / nosastags;
+1677                   write value "Outputs";
+1678                       export _outputsummary / nosastags;
+1679               write close;
+1680            write close ;
+1681       run;
+1682
+1683       %lsaf_search(lsaf_name=dashstudy.json);
+1684       data lsafsearchinfo ;
+1685           dsid=open('lsafsearch');
+1686           nobs=attrn(dsid,'nobs');
+1687          if &_lsafSearchLimitReached_ then do ;
+1688           all_data='Not all data was loaded since the limit was reached.';
+1689           complete=0;
+1690           end;
+1691          else do ;
+1692          all_data='';
+1693          complete=1;
+1694          end;
+1695          info="Data created using lsaf_search(lsaf_name=dashstudy.json) on %sysfunc(datetime(),datetime.). "||all_data;
+1696          dsid=close(dsid);
+1697       run ;
+                                                           The SAS System
+
+1698       proc sort data=lsafsearch ;
+1699           by descending datelastmodified  ;
+1700       run ;
+1701       proc json out="&_sasws_./general/biostat/jobs/dashboard/dev/metadata/dash-study-files.json" pretty ;
+1702          export lsafsearch ;
+1703          export lsafsearchinfo ;
+1704       run ;
+1705
+1706       /* proc printto; */
+1707       /* run; */
+1708
+1709       /*filename logf "&_sasws_.&repath./documents/meta/dashboard.log";*/
+1710       filename logf "&workpath/dashboard.log";
+1711       options nomprint;
+1712       %logchecker (pgend=0);
+1713       options mprint;
+1714
+1715       %log2json (repoloc=&_sasws_.&repath./documents/meta/);
+1716
+1717       %macro copyfiles (__file);
+1718       data _null_;
+1719            LENGTH logtxtline $ 1500;
+1720            INFILE "&workpath/&__file"
+1721            DLM = "€" TRUNCOVER LRECL=1500;
+1722            INPUT logtxtline;
+1723            file "&_sasws_.&repath./documents/meta/&__file";
+1724            varlen=length(logtxtline);
+1725            put @1 logtxtline $varying1500. varlen;
+1726       run;
+1727       %mend copyfiles;
+1728       %copyfiles (dashboard.log);
+1729       %copyfiles (refreshedoutputs.json);
+1730       %copyfiles (report1.json);
+1731       %copyfiles (report2.json);
+1732
+1733       %end; /*if &repemetaexists=yes*/
+1734       %else %do;
+1735            ods html5 style=Meadow  path="&_sasws_.&repath./documents" body="projectstatus.html" options(svg_mode="inline");
+1736            title; footnote; options nodate missing=' ' ps=45 ls=180;
+1737            title1 "Status report &revent - created &sysdate";
+1738            title2 "&compound./&indication./&study";
+1739            data chk;
+1740                 length txt $180;
+1741                 txt = "Excel meta data is missing"; output;
+1742                 txt = "repemeta.sas7bdat doesn't exist in &_sasws_./&repevpath.documents"; output;
+1743                 label txt = "Message";
+1744            run;
+1745            proc print data=chk width=min noobs label;
+1746            run;
+1747            ods html close;
+1748       %end;
+1749       %end; /*if &isrepevent=yes*/
+1750       %mend ppmacro;
+1751       %ppmacro;
+MPRINT(PPMACRO):   data _null_;
+MPRINT(PPMACRO):  ;
+MPRINT(PPMACRO):   run;
+
+                                                           The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+
+
+COMPOUND=argx-113
+INDICATION=pemphigus
+STUDY=argx-113-1904
+REVENT=testrun2
+OVERSIGHT=Y
+MPRINT(PPMACRO):   options linesize=MAX;
+MPRINT(PPMACRO):   proc printto log="/saswork/sas_tmp/SAS_workB0530018E564_xar08auv.vsp.sas.com/SAS_workD71B0018E564_xar08auv.vsp.sas.com/dashboard.log" new;
+MPRINT(PPMACRO):   run;
+
+
+/**********************************************************************************************************************
+ * Submission End: postprocessing.sas
+ * Jun 07, 2023 12:19:57 GMT
+ *********************************************************************************************************************/
