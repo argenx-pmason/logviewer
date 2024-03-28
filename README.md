@@ -33,7 +33,7 @@ Your app is ready to be deployed!
 
 ## Building for use on SharePoint
 
-- To build app for SharePoint we need to use this as the homepage in package.json
+- To build app for SharePoint we need to use this as the homepage in package.json (NOTE: Do not include the <> if you are copying from the md file directly)
   "homepage": "<https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared%20Documents/Log%20Viewer>",
 
 ## Building for use on LSAF
