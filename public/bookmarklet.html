@@ -31,11 +31,6 @@
     else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
     " >LSAF🔍</a>
     <br/>
-    <b>Next version (coming soon): </b><a
-    alt="View LSAF file (next version)"
-    href="
-    javascript:(function(document) {const iframe=document.getElementById('sasLSAF_iframe'),  iWindow = iframe.contentWindow, iDocument = iWindow.document,repo=iDocument.querySelector('[aria-label="Selected, Workspace"]') ? %27work%27 : %27repo%27,full=repo===%27work%27?%27WORKSPACE%27:%27REPOSITORY%27,  qs=iDocument.getElementById(%27HLS_LSAF_%27+full+%27--navLinkInput-inner%27), v = qs ? qs.value : null, lastPart = v.split(%27/%27).pop(), type=lastPart.split(%27.%27).pop(),{ href, protocol, host } = window.location, urlPrefix = protocol + %27//%27 + host,    filelink=urlPrefix+%27/lsaf/webdav/%27+repo+v;  console.log(window);  if (lastPart===%27documents%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/dashstudy/index.html?file=%27+v+%27/meta/dashstudy.json%27);    else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+v);    else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer2/index.html?log=%27+filelink);    else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
-    " >View🔍 </a>
   <p>Once that is done you will be able to use it:</p>
   <li>
     go to
@@ -72,6 +67,11 @@ else alert(%27Please select a file type that is supported. Or let Phil know if y
 })}) (document);"
     >Clip📋</a
     <p></p>
+    <hr />
+    <h2>Paste path from clipboard into LSAF to be used</h2>
+    <a href="
+    javascript:(function(){const iframe=document.getElementById('sasLSAF_iframe'),iWindow=iframe.contentWindow,iDocument=iWindow.document,repo=iDocument.querySelector('[aria-label=%22Selected, Workspace%22]')?%22work%22:%22repo%22,full=%22work%22===repo?%22WORKSPACE%22:%22REPOSITORY%22;qs=iDocument.getElementById(%22HLS_LSAF_%22+full+%22--navLinkInput-inner%22),navigator.clipboard.readText().then((e=>{qs.focus(),qs.value=e}));}());
+">LSAF🧷</a>
     <hr />
     <h2>Prompt the user and search SharePoint for something</h2>
     <a href="
