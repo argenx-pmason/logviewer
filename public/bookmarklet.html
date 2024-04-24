@@ -1,18 +1,21 @@
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>LSAF Bookmarklets</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>👽</text></svg>">
-   </head>
-  <a href="https://en.wikipedia.org/wiki/Bookmarklet">What is a bookmarklet?</a><br/>
-  <a href="https://make-bookmarklets.com/">This</a> is a great site if you want to make your own bookmarklets.
-  <h1>
-    Drag the link(s) below to your bookmarks or favorites bar in order to use the
-    bookmarklet
-  </h1>
-<b>Production version: </b>  <a
-    alt="View LSAF file"
-    href="
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LSAF Bookmarklets</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>👽</text></svg>">
+</head>
+<a href="https://en.wikipedia.org/wiki/Bookmarklet">What is a bookmarklet?</a><br />
+<a href="https://make-bookmarklets.com/">This</a> is a great site if you want to make your own bookmarklets.
+<hr />
+<h3>
+  Drag the link(s) below to your bookmarks or favorites bar in order to use the
+  bookmarklet
+</h3>
+<a alt="View LSAF file" href="
     javascript:(function(document) {const iframe=document.getElementById('sasLSAF_iframe'),
     iWindow = iframe.contentWindow,
     iDocument = iWindow.document,
@@ -24,36 +27,47 @@
     type=lastPart.split(%27.%27).pop(),
     { href, protocol, host } = window.location,
     urlPrefix = protocol + %27//%27 + host,
-    filelink=urlPrefix+%27/lsaf/webdav/%27+repo+v;
+    filelink=repo==='work'? urlPrefix+%27/lsaf/webdav/%27+repo+v : urlPrefix+%27/lsaf/filedownload/sdd%3A//%27+v;
     if (lastPart==='documents') open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/dashstudy/index.html?file=%27+v+'/meta/dashstudy.json');
     else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+v);
     else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer/index.html?log=%27+filelink);
     else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
-    " >LSAF🔍</a>
-    <br/>
-  <p>Once that is done you will be able to use it:</p>
+    ">LSAF🔍</a>
+<br />
+<p>Once that is done you will be able to use it:</p>
+<ol>
   <li>
     go to
-    <a href="https://xarprod.ondemand.sas.com/lsaf/resources/lsaf/index.jsp"
-      >LSAF</a
-    >
+    <a href="https://xarprod.ondemand.sas.com/lsaf/resources/lsaf/index.jsp">LSAF PROD</a> or <a
+      href="https://xartest.ondemand.sas.com/lsaf/resources/lsaf/index.jsp">LSAF TEST</a>
   </li>
   <li>
     Go to the Repository view (click on Repository icon in the left vertical
     toolbar)
   </li>
-  <li>
-    Find a text file you want to look at (currently supports these file types:
-    js, job, css, cmd, mnf, html, lst, txt, csv, sas, json)
+  <li>Either:
+    <ul>
+      <li>File<ol>
+          <li>
+            Find a file you want to look at (currently supports these file types:
+            js, job, css, cmd, mnf, html, lst, txt, csv, sas, json, svg, png, jpg, pdf, xlsx)
+          </li>
+          <li>Select it, by clicking next to it (shows a tick)</li>
+          <li>Click on the bookmark, which will open a new tab to show the file</li>
+        </ol>
+      </li>
+      <li>Folder<ol>
+          <li>Navigate to a folder you want to examine</li>
+          <li>Click on the bookmark, which will open a new tab to show the contents of the folder</li>
+        </ol>
+      </li>
+    </ul>
   </li>
-  <li>Click next to it to select (shows a tick)</li>
-  <li>Click on the bookmark, which will open a new tab to show the file</li>
-  <p></p>
-  <hr />
-  <h2>The following bookmarklet opens file viewer on a path from clipboard</h2>
-  <a
-    alt="View from Clipboard"
-    href="javascript:(function(document) {
+</ol>
+<p></p>
+<hr />
+<h3>The following bookmarklet opens file viewer on a path from clipboard</h3>
+<a alt="View from Clipboard" href="javascript:(function(document) {
 const qs = navigator.clipboard.readText().then(v =>{
 const lastPart = v.split(%27/%27).pop(),
 type=lastPart.split(%27.%27).pop(),
@@ -61,83 +75,66 @@ type=lastPart.split(%27.%27).pop(),
 urlPrefix = protocol + %27//%27 + host,
 filelink=urlPrefix+%27/lsaf/filedownload/sdd%27+ encodeURIComponent(%27%3A%27)+%27//%27+v;
 if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+v);
-else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer2/index.html?log=%27+filelink);
+else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer/index.html?log=%27+filelink);
 else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);
 else alert(%27Please select a file type that is supported. Or let Phil know if you would like other file types supported.%27);
-})}) (document);"
-    >Clip📋</a
-    <p></p>
-    <hr />
-    <h2>Paste path from clipboard into LSAF to be used</h2>
-    <a href="
+})}) (document);">Clip📋</a <p></p>
+<hr />
+<h3>Paste path from clipboard into LSAF to be used (then press enter)</h3>
+<a href="
     javascript:(function(){const iframe=document.getElementById('sasLSAF_iframe'),iWindow=iframe.contentWindow,iDocument=iWindow.document,repo=iDocument.querySelector('[aria-label=%22Selected, Workspace%22]')?%22work%22:%22repo%22,full=%22work%22===repo?%22WORKSPACE%22:%22REPOSITORY%22;qs=iDocument.getElementById(%22HLS_LSAF_%22+full+%22--navLinkInput-inner%22),navigator.clipboard.readText().then((e=>{qs.focus(),qs.value=e}));}());
 ">LSAF🧷</a>
-    <hr />
-    <h2>Prompt the user and search SharePoint for something</h2>
-    <a href="
+<hr />
+<h3>Prompt the user and search SharePoint for something</h3>
+<a href="
     javascript:void(window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q='+prompt ('Search SharePoint:')));
 ">SP🤓</a>
 <hr />
-<h2>Prompt the user and search SharePoint Study Programmer role for something</h2>
-<a href="javascript:(function(){window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?id=%2Fsites%2FBiostatistics%2FShared Documents%2FSTAR processes%2FStatistical Programmer - role_tasks_processes%2Fsubtasks%26q='+prompt('Search SharePoint SP Role Docs:'));}());"
->SPR🔑</a>
-<a href="javascript:(function(){window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared Documents/Forms/AllItems.aspx?id=%2Fsites%2FBiostatistics%2FShared Documents%2FSTAR processes%2FStatistical Programmer - role_tasks_processes%26view=7%26q=%27+prompt(%27Search SharePoint SP Role Docs:%27));}());"
->SPR🧲</a>
+<h3>Prompt the user and search SharePoint Study Programmer role for something</h3>
+<a
+  href="javascript:(function(){window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?id=%2Fsites%2FBiostatistics%2FShared Documents%2FSTAR processes%2FStatistical Programmer - role_tasks_processes%2Fsubtasks%26q='+prompt('Search SharePoint SP Role Docs:'));}());">SPR🔑</a><b>
+  - Broader search with previews returned</b>
+<p /><a
+  href="javascript:(function(){window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared Documents/Forms/AllItems.aspx?id=%2Fsites%2FBiostatistics%2FShared Documents%2FSTAR processes%2FStatistical Programmer - role_tasks_processes%26view=7%26q=%27+prompt(%27Search SharePoint SP Role Docs:%27));}());">SPR🧲</a><b>
+  - More specific search with list of files returned</b>
 <p></p>
 <hr />
-<h2>Prompt the user and search Jira for something</h2>
+<h3>Prompt the user and search Jira for something</h3>
 <a href='
 javascript:void(window.open(%27https://argenx.atlassian.net/issues/?jql=text%20~%20%22%27+prompt%20(%27Search%20Jira:%27)+%27*%22%27));
 '>Jira👽</a>
 <p></p>
 <hr />
-<h2>Prompt the user and search Jira using some JQL</h2>
+<h3>Prompt the user and search Jira using some JQL</h3>
 <a href="
 javascript:void(window.open(%27https://argenx.atlassian.net/issues/?jql=%27+prompt(%27Enter JQL:%27,%27text ~ gadam%27)));
 ">Jira👾</a>
 <p></p>
 <hr />
 <h3>Technology used in our Dashboards and Viewers</h3>
-    <p>If you are interested in what we use to build things, or want to learn how to do so yourself then here are links to get you started.</p>
-    <ul><a href="https://code.visualstudio.com/">Visual Studio Code</a> - the editor user to develop and test our apps.</ul>
-    <ul><a href="https://reactjs.org/"">React</a> - JavaScript library for building User Interfaces</ul>
-    <ul><a href="https://www.npmjs.com/">npm</a> - collection of JavaScript libraries for building things</ul>
-    <ul><a href="https://mui.com/material-ui/">Material-UI</a> components from Google</ul>
-    <ul><a href="https://mui.com/x/react-data-grid/"">Data Grid</a> - part of Material-UI</ul>
-    <ul><a href="https://www.highcharts.com/demo">Highcharts</a> for graphs & maps</ul>
-    <h3>Notes</h3>
-    <ul>
-      <li>Hit ctrl + shift + j in Chrome. That should open the JavaScript console.
-          This is useful if you are having problems with a web page and want to check if there are any errors. </li>
-    </ul>
-    <hr/>
-    <h2>Experimental</h2>
-    <b>Don't use these experimental bookmarklets as they are not ready for general use.</b>
-    <li><a href="
-javascript:(function(document) {
-const iframe=document.getElementById('sasLSAF_iframe'),
-iWindow = iframe.contentWindow,
-iDocument = iWindow.document,
-repoButton=iDocument.getElementById('sasLSAF--sasLSAF_appContainer_lfn_3_icn'),
-searchButton=iDocument.getElementById('HLS_LSAF_REPOSITORY--searchButton');
-repoButton.click();
-console.log('repoButton',repoButton,'searchButton',searchButton);
-searchButton.style.border='3px solid red';
-searchButton.click();
-})(document);
-">Test1</a>
-    </li>
-    <li><a href="
-javascript:(function() {
-  var targetUrl = 'https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q=';
-  new Promise (
-      (setQuery) => {var input = window.prompt('Search SharePoint:'); if (input) setQuery(input);}
-  )
-  .then (
-      (query) => window.open(targetUrl + query)
-  );
-})();
-})(document);
-">Test2</a>
-    </li>
+<p>If you are interested in what we use to build things, or want to learn how to do so yourself then here are links to
+  get you started.</p>
+<ul>
+  <li><a href="https://code.visualstudio.com/">Visual Studio Code</a> - the editor user to develop and test our apps.
+  </li>
+  <li><a href="https://reactjs.org/"">React</a> - JavaScript library for building User Interfaces</li>
+  <li><a href=" https://www.npmjs.com/">npm</a> - collection of JavaScript libraries for building things</li>
+  <li><a href="https://mui.com/material-ui/">Material-UI</a> components from Google</li>
+  <li><a href="https://mui.com/x/react-data-grid/"">Data Grid</a> - part of Material-UI</li>
+  <li><a href=" https://www.highcharts.com/demo">Highcharts</a> for graphs & maps</li>
+</ul>
+<h3>Notes</h3>
+<ul>
+  <li>Hit ctrl + shift + J in Chrome/Edge. That should open the JavaScript console.
+    This is useful if you are having problems with a web page and want to check if there are any errors. </li>
+</ul>
+<hr />
+<h2>Useful links for some inspiration!</h2>
+<ul>
+  <li><a
+      href="https://www.bing.com/videos/search?q=100%20seconds%20of%20fireship&qs=n&form=QBVR&=%25eManage%20Your%20Search%20History%25E&sp=-1&lq=0&pq=100%20seconds%20of%20fireship&sc=9-23&sk=&cvid=83143F4422E74B56A504608CD7501F59&ghsh=0&ghacc=0&ghpl=">100
+      second videos on wide range of tech</a></li>
+  <li><a href="https://www.react-graph-gallery.com/">Building unique graphs</a></li>
+  <li><a href="https://friendly.github.io/6135/">Psychology of Data Visualization</a></li>
+</ul>
 </html>

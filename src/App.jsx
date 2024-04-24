@@ -72,7 +72,7 @@ function App() {
     [openModal, setOpenModal] = useState(false),
     [verticalSplit, setVerticalSplit] = useState(3),
     urlPrefix = window.location.protocol + "//" + window.location.host,
-    filePrefix = "/lsaf/filedownload/sdd%3A//",
+    filePrefix = urlPrefix + "/lsaf/filedownload/sdd%3A//",
     webDavPrefix = urlPrefix + "/lsaf/webdav/repo",
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
@@ -95,6 +95,15 @@ function App() {
     // },
     handleCloseRulesModal = () => {
       setOpenRulesModal(false);
+    },
+    formatTime = (seconds) => {
+      return [
+        parseInt(seconds / 60 / 60),
+        parseInt((seconds / 60) % 60),
+        parseInt(seconds % 60),
+      ]
+        .join(":")
+        .replace(/\b(\d)\b/g, "0$1");
     },
     [localUrl, setLocalUrl] = useState(null),
     [scale, setScale] = useState(1),
@@ -156,6 +165,7 @@ function App() {
         });
       }
     },
+    [programElapsedTime, setProgramElapsedTime] = useState(null),
     [listOfLogs, setListOfLogs] = useState(null),
     [listOfDirs, setListOfDirs] = useState(null),
     [fontSize, setFontSize] = useState(12),
@@ -453,9 +463,9 @@ function App() {
           getLog(logPrefix + selection);
           setSelection(logPrefix + selection); // added
         } else {
-          console.log("webDavPrefix:", webDavPrefix);
-          getLog(webDavPrefix + selection);
-          setSelection(webDavPrefix + selection); // added
+          console.log("filePrefix:", filePrefix);
+          getLog(filePrefix + selection);
+          setSelection(filePrefix + selection); // added
         }
       } else {
         getLog(selection);
@@ -514,7 +524,7 @@ function App() {
     // server = href.split("//")[1].split("/")[0],
     [rulesDirectory, setRulesDirectory] = useState(
       navigator.platform.startsWith("Win") && mode === "remote"
-        ? "/general/biostat/tools/logviewer2/rules"
+        ? "/general/biostat/tools/logviewer/rules"
         : navigator.platform.startsWith("Win") && mode === "local"
         ? "C:/github/logviewer/src"
         : "/Users/philipmason/Documents/GitHub/logviewer/src"
@@ -560,7 +570,6 @@ function App() {
       setWaitGetDir(false);
     },
     getLogVersions = async (dir) => {
-      // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
       await getVersions(webDavPrefix + dir, processRulesXml);
       setWaitGetDir(false);
     },
@@ -1322,7 +1331,7 @@ function App() {
       const splitEquals = splitQuestionMarks[1].split("="),
         partialFile = splitEquals[1].startsWith("http")
           ? splitEquals[1]
-          : urlPrefix + filePrefix + splitEquals[1],
+          : filePrefix + splitEquals[1],
         log1 =
           splitQuestionMarks.length > 2
             ? partialFile + "?" + splitQuestionMarks[2]
@@ -1370,8 +1379,10 @@ function App() {
       }
       const tempLogDir = logDirBits.filter((element) => element),
         logDir0 = tempLogDir.join("/"),
-        logDir = logDir0.startsWith("lsaf/webdav/")
-          ? logDir0.substring(17)
+        // logDir = logDir0.startsWith("lsaf/webdav/")
+        logDir = logDir0.startsWith("lsaf/filedownload/sdd:/")
+          ? // ? logDir0.substring(17)
+            logDir0.substring(23)
           : logDir0;
       console.log("logDir", logDir);
       setLogDirectory("/" + logDir);
@@ -1393,6 +1404,30 @@ function App() {
       window.removeEventListener("resize", detectSize);
     };
   }, [windowDimension]);
+
+  useEffect(() => {
+    if (submitted === null || submitEnd === null) return;
+    // console.log(
+    //   "*** submitted",
+    //   submitted,
+    //   submitted.substring(0, 25),
+    //   "submitEnd",
+    //   submitEnd
+    // );
+    const began = new Date(submitted.substring(0, 25)).getTime(),
+      completed = new Date(submitEnd).getTime(),
+      diff = completed - began;
+    // console.log(
+    //   "began",
+    //   began,
+    //   "completed",
+    //   completed,
+    //   "diff",
+    //   diff,
+    //   formatTime(diff / 1000)
+    // );
+    setProgramElapsedTime(formatTime(diff / 1000));
+  }, [submitted, submitEnd]);
 
   // for remote mode
   useEffect(() => {
@@ -2221,6 +2256,7 @@ function App() {
           {program && <b>Program:</b>} {program} &nbsp;{" "}
           {submitted && <b>Submitted:</b>} {submitted} &nbsp;{" "}
           {submitEnd && <b>Ended:</b>} {submitEnd} &nbsp;{" "}
+          {programElapsedTime && <b>Elapsed:</b>} {programElapsedTime} &nbsp;{" "}
           {nLines && <b>Lines:</b>} {nLines}
         </Grid>
         <Grid item xs={leftPanelWidth}>

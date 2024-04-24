@@ -1,0 +1,165 @@
+1                                       The SAS System              08:06 Monday, June 30, 2014
+
+NOTE: Unable to open SASUSER.PROFILE. WORK.PROFILE will be opened instead.
+NOTE: All profile changes will be lost at the end of the session.
+NOTE: Copyright (c) 2002-2010 by SAS Institute Inc., Cary, NC, USA.
+NOTE: SAS (r) Proprietary Software 9.3 (TS1M1)
+      Licensed to CABOT  GRID CONTROL SVR - KINGSHILL 1, Site 51211877.
+NOTE: This session is executing on the X64_ES08R2  platform.
+
+
+
+NOTE: Updated analytical products:
+
+SAS/STAT 9.3_M1, SAS/ETS 9.3_M1, SAS/OR 9.3_M1
+
+NOTE: The paths specified with the UTILLOC option do not exist.  UTILLOC=WORK will be used
+      instead.
+NOTE: SAS initialization used:
+      real time           0.15 seconds
+      cpu time            0.12 seconds
+
+1          *** This code is written in SAS since it just populates tables for the Proof of
+1        ! Concept.
+2          	I would suggest that SAS be used to do this, unless it is easy to write data
+2        ! manipulation like this in SQL/Server.
+3          	The content of the tables can be moved to SQL/Server for their Proof of Concept.
+4          ;
+5
+6          %include '\\kh-pre-gman\SASDATA\Strategies\init.sas' ;
+NOTE: Libref CICDM was successfully assigned as follows:
+      Engine:        OLEDB
+      Physical Name: SQLNCLI10
+NOTE: Libref SASIDM was successfully assigned as follows:
+      Engine:        OLEDB
+      Physical Name: SQLNCLI10
+NOTE: Libref MATABLES was successfully assigned as follows:
+      Engine:        BASE
+      Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\pmason
+NOTE: Libref APEX was successfully assigned as follows:
+      Engine:        BASE
+      Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\APEX
+NOTE: Libref CABOT was successfully assigned as follows:
+      Engine:        BASE
+      Physical Name: Y:\SASDATA\Decision Engine\CCM Business Context\MATables\cabot_allocations
+WARNING: Libname USER is not assigned.
+226
+227        %let treatmentCode=DCG120180 ;
+228        %let letterCode=CABOT_CAB007 ;
+229
+230        /*this populates the create clause of SQL statement, with the name of table to
+230      ! create*/
+231        data matables._sqlCreate ;
+2                                       The SAS System              08:06 Monday, June 30, 2014
+
+232        	attrib
+233        		treatmentCode	length=$16		label='Treatment Code'
+234        		letterCode		length=$16		label='Letter Code'
+235        		table			length=$32		label='Name of table'
+236        	;
+237        	retain treatmentCode "&treatmentCode" letterCode "&letterCode" ;
+238        	table='letterTest' ;
+239        	sequence+1 ;
+240        run ;
+
+NOTE: The data set MATABLES._SQLCREATE has 1 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.03 seconds
+
+
+241
+242        /*this populates the select clause of SQL statement, building the value for each
+242      ! column. It uses SQL from the CI Studio Audit Log.*/
+243        data matables._sqlSelect(keep=treatmentCode letterCode source outputName format
+243      ! label sequence) ;
+244        	attrib
+245        		treatmentCode	length=$16		label='Treatment Code'
+246        		letterCode		length=$16		label='Letter Code'
+247        		source			length=$1024	label='Source of column'
+248        		outputName		length=$32		label='Name of output column'
+249        		format			length=$32		label='Format to apply to output column'
+250        		label			length=$32		label='Label'
+251        		sequence		length=8		label='Output column sequence'
+252        	;
+253        	retain treatmentCode "&treatmentCode" letterCode "&letterCode" ;
+254        	infile cards missover ;
+255        	input ;
+256        	sequence+1 ;
+257        	as=index(lowcase(_infile_),' as ') ;
+258        	lab=index(lowcase(_infile_),' LABEL=') ;
+259        	form=index(lowcase(_infile_),' FORMAT=') ;
+260        	if as>0 then source=strip(substr(_infile_,1,as)) ;
+261        	if as>0 then outputName=scan(substr(_infile_,as+4),1,' ;,') ;
+262        	if form>0 then format=scan(substr(_infile_,form),2,' =,') ;
+263        	if lab>0 then label=scan(substr(_infile_,lab),2,'''"') ;
+264        cards4 ;
+
+WARNING: Truncated record.
+NOTE: The data set MATABLES._SQLSELECT has 140 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.01 seconds
+
+
+3                                       The SAS System              08:06 Monday, June 30, 2014
+
+405        ;;;;
+406        run ;
+407
+408        /*this populates the from clause of SQL statement, joining tables together as
+408      ! needed. It uses SQL from the CI Studio Audit Log.*/
+409        data matables._sqlFrom ;
+410        	attrib
+411        		treatmentCode	length=$16		label='Treatment Code'
+412        		letterCode		length=$16		label='Letter Code'
+413        		source			length=$1024	label='SQL for part of FROM section'
+414        		sequence		length=8		label='Output column sequence'
+415        	;
+416        	retain treatmentCode "&treatmentCode" letterCode "&letterCode" ;
+417        	infile cards missover ;
+418        	input ;
+419        	source=strip(_infile_) ;
+420        	sequence+1 ;
+421        cards4 ;
+
+NOTE: The data set MATABLES._SQLFROM has 16 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.00 seconds
+
+
+438        ;;;;
+439        run ;
+440
+441        /*this populates the where clause of SQL statement, and is equivalent to Refine
+441      ! Output in CI Studio. It uses SQL from the CI Studio Audit Log.*/
+442        data matables._sqlWhere ;
+443        	attrib
+444        		treatmentCode	length=$16		label='Treatment Code'
+445        		letterCode		length=$16		label='Letter Code'
+446        		source			length=$1024	label='SQL for part of FROM section'
+447        		sequence		length=8		label='Output column sequence'
+448        	;
+449        	retain treatmentCode "&treatmentCode" letterCode "&letterCode" ;
+450        	infile cards missover ;
+451        	input ;
+452        	source=strip(_infile_) ;
+453        	sequence+1 ;
+454        cards4 ;
+
+NOTE: The data set MATABLES._SQLWHERE has 0 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.00 seconds
+
+
+4                                       The SAS System              08:06 Monday, June 30, 2014
+
+455        ;;;;
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           0.46 seconds
+      cpu time            0.21 seconds
+
