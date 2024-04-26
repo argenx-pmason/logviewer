@@ -22,10 +22,10 @@
   {
     "ruleType": "regex",
     "regex": "(SAS Life Science Analytics Framework Macro:)",
-    "prefix": "<span style='color: #ac00e6'>",
+    "prefix": "<span style='color: blue'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "#ac00e6",
+    "linkColor": "blue",
     "type": "LSAF",
     "interesting": false
   }

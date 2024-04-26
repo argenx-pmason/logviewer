@@ -402,7 +402,7 @@ function App() {
       const modified = html
         .map((h, hid) => {
           let extra = "";
-          if (showLineNumbers) extra = zeroPad(hid, 7) + "|" + h;
+          if (showLineNumbers) extra = zeroPad(hid, 7) + "|";
           if (h !== null) return `<span id="${hid}">` + extra + h + "</span>";
           return null;
         })
@@ -1228,49 +1228,54 @@ function App() {
           url = "http://localhost:3001/dir/" + dir;
         setLogDirectory(decodeURIComponent(dir));
         console.log("url", url);
-        fetch(url).then(function (response) {
-          console.log(response);
-          response.text().then(function (text) {
-            const dirObject = JSON.parse(text);
-            // const { dirs, files } = dirObject;
-            const files = dirObject,
-              dirs = dirObject.filter((d) => !d.includes("."));
-            console.log(
-              "dirObject",
-              dirObject,
-              "localDir",
-              localDir,
-              "dirs",
-              dirs,
-              "files",
-              files
-            );
-            setSelectedLog(null);
-            setListOfDirs(dirs);
-            setLogOriginalText(text);
-            makeDirListing(dirs);
-            setListOfLogs(
-              files
-                .filter((log) => {
-                  return log !== null && log.endsWith(".log");
-                })
-                .map((log) => {
-                  return { value: log, label: log };
-                })
-                .sort((a, b) => {
-                  const x = a.label.toLowerCase(),
-                    y = b.label.toLowerCase();
-                  if (x < y) {
-                    return -1;
-                  }
-                  if (x > y) {
-                    return 1;
-                  }
-                  return 0;
-                })
-            );
+        fetch(url)
+          .then(function (response) {
+            console.log("response", response);
+            response.text().then(function (text) {
+              const dirObject = JSON.parse(text);
+              console.log("dirObject", dirObject, "localDir", localDir);
+              const { dirs, files } = dirObject;
+              // const files = files,
+              // dirs = dirObject.filter((d) => !d.includes("."));
+              console.log(
+                "dirObject",
+                dirObject,
+                "localDir",
+                localDir,
+                "dirs",
+                dirs,
+                "files",
+                files
+              );
+              setSelectedLog(null);
+              setListOfDirs(dirs);
+              setLogOriginalText(text);
+              makeDirListing(dirs);
+              setListOfLogs(
+                files
+                  .filter((log) => {
+                    return log !== null && log.endsWith(".log");
+                  })
+                  .map((log) => {
+                    return { value: log, label: log };
+                  })
+                  .sort((a, b) => {
+                    const x = a.label.toLowerCase(),
+                      y = b.label.toLowerCase();
+                    if (x < y) {
+                      return -1;
+                    }
+                    if (x > y) {
+                      return 1;
+                    }
+                    return 0;
+                  })
+              );
+            });
+          })
+          .catch((error) => {
+            console.log("fetch error", error);
           });
-        });
       }
     };
   let counts = {};
@@ -1379,10 +1384,10 @@ function App() {
       }
       const tempLogDir = logDirBits.filter((element) => element),
         logDir0 = tempLogDir.join("/"),
-        // logDir = logDir0.startsWith("lsaf/webdav/")
-        logDir = logDir0.startsWith("lsaf/filedownload/sdd:/")
-          ? // ? logDir0.substring(17)
-            logDir0.substring(23)
+        logDir = logDir0.startsWith("lsaf/webdav/")
+          ? logDir0.substring(17)
+          : logDir0.startsWith("lsaf/filedownload/sdd:/")
+          ? logDir0.substring(23)
           : logDir0;
       console.log("logDir", logDir);
       setLogDirectory("/" + logDir);

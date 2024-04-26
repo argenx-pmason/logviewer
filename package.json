@@ -1,7 +1,7 @@
 {
   "name": "logviewer",
   "version": "1.1.0",
-  "homepage": "/lsaf/webdav/repo/general/biostat/tools/logviewer",
+  "homepage": "<https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared%20Documents/Log%20Viewer>",
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
