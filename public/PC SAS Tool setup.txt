@@ -1,0 +1,7 @@
+program ; submit 'filename clipper clipbrd;' ; LOG ; FILE clipper REPLACE ; wbrowse "https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared%20Documents/Log%20Viewer/index.aspx?paste=1" ;
+SP Log Viewer
+Open the SharePoint Log Viewer (not all functionality available)
+
+program;sub 'filename clipper clipbrd;';log;file clipper replace;wbrowse "https://xarprod.ondemand.sas.com/lsaf/webdav/repo/general/biostat/tools/logviewer2/index.html?paste=1"
+LSAF Log Viewer
+Open the LSAF Log Viewer
