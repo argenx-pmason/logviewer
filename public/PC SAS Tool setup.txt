@@ -1,7 +1,12 @@
-program ; submit 'filename clipper clipbrd;' ; LOG ; FILE clipper REPLACE ; wbrowse "https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared%20Documents/Log%20Viewer/index.aspx?paste=1" ;
-SP Log Viewer
-Open the SharePoint Log Viewer (not all functionality available)
+This is more fully described in a document on sharepoint here - https://argenxbvba.sharepoint.com/:w:/r/sites/Biostatistics/Shared%20Documents/STAR%20processes/Statistical%20Programmer%20-%20role_tasks_processes/subtasks/Add%20SAS%20Tools.docx?d=w66dfbf8eb03544f8931725396fceca26&csf=1&web=1&e=QuJxnr
 
-program;sub 'filename clipper clipbrd;';log;file clipper replace;wbrowse "https://xarprod.ondemand.sas.com/lsaf/webdav/repo/general/biostat/tools/logviewer2/index.html?paste=1"
-LSAF Log Viewer
-Open the LSAF Log Viewer
+However the following lines can be selected and copied into each of the fields for a tool in PC SAS, to help you create them.
+
+Command:    program ; submit 'filename clipper clipbrd;' ; LOG ; FILE clipper REPLACE ; wbrowse "https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared%20Documents/Log%20Viewer/index.aspx?paste=1" ;
+Help text:  SP Log Viewer
+Tip text:   Open the SharePoint Log Viewer (not all functionality available)
+
+
+Command:    program;sub 'filename clipper clipbrd;';log;file clipper replace;wbrowse "https://xarprod.ondemand.sas.com/lsaf/webdav/repo/general/biostat/tools/logviewer2/index.html?paste=1"
+Help text:  LSAF Log Viewer
+Tip text:   Open the LSAF Log Viewer
