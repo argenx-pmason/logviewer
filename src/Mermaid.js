@@ -6,7 +6,8 @@ mermaid.initialize({
   theme: "forest",
   securityLevel: "loose",
   logLevel: 4,
-  maxTextSize: 500000,
+  maxTextSize: 1000000,
+  maxEdges: 10000,
   flowchart: {
     useMaxWidth: false,
   },

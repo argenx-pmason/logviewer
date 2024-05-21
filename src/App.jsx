@@ -3,6 +3,8 @@ import Select from "react-select";
 import {
   Box,
   Grid,
+  AppBar,
+  Toolbar,
   Badge,
   Tooltip,
   IconButton,
@@ -23,6 +25,7 @@ import {
   Snackbar,
   DialogActions,
   DialogContentText,
+  Autocomplete
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -80,8 +83,9 @@ function App() {
     [dirListing, setDirListing] = useState(null),
     logRef = createRef(),
     // localFileRef = createRef(),
-    iconPadding = 0.1,
+    iconPadding = 0.25,
     [openInfo, setOpenInfo] = useState(false),
+    [direction, setDirection] = useState(true),
     // [showFileSelector, setShowFileSelector] = useState(false),
     [lastUrl, setLastUrl] = useState(null),
     [search, setSearch] = useState(null),
@@ -96,6 +100,8 @@ function App() {
     handleCloseRulesModal = () => {
       setOpenRulesModal(false);
     },
+    [lineVar, setLineVar] = useState(null),
+    lineVarOptions = ['real','obs'],
     [localUrl, setLocalUrl] = useState(null),
     [scale, setScale] = useState(1),
     [mermaidInfo, setMermaidInfo] = useState({ characters: null, lines: null }),
@@ -162,13 +168,13 @@ function App() {
     [leftPanelWidth, setLeftPanelWidth] = useState(6),
     [rightPanelWidth, setRightPanelWidth] = useState(6),
     [windowDimension, detectHW] = useState({
-      winWidth: window.innerWidth,
-      winHeight: window.innerHeight,
+      winWidth: window.innerWidth - 50,
+      winHeight: window.innerHeight - 50,
     }),
     detectSize = () => {
       detectHW({
-        winWidth: window.innerWidth,
-        winHeight: window.innerHeight,
+        winWidth: window.innerWidth - 50,
+        winHeight: window.innerHeight - 50,
       });
     },
     zeroPad = (num, places) => String(num).padStart(places, "0"),
@@ -307,7 +313,7 @@ function App() {
           let matchFound = false;
           // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
           if (/The SAS System/.test(element)) return null;
-          if (!showSource && /^(\d+ )/.test(element)) return null;
+          if (!showSource && /^(\d+)/.test(element)) return null;
           // mprint
           if (element.startsWith("MPRINT(")) {
             if (!showMacroLines) return null;
@@ -541,19 +547,19 @@ function App() {
         ? "/general/biostat/tools/logviewer2/rules"
         : navigator.platform.startsWith("Win") && mode === "local"
         ? "C:/github/logviewer/src"
-        : "/Users/philipmason/Documents/GitHub/logviewer/src"
+        : "/Users/philipmason/github/logviewer/src"
     ),
     [listOfRules, setListOfRules] = useState([]),
     [openRulesMenu, setOpenRulesMenu] = useState(false),
-    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Ftests/a.log
-    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2FGitHub%2Flogviewer%2Fsrc%2Flogs.json
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2Fgithub%2Flogviewer%2Ftests/a.log
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2Fgithub%2Flogviewer%2Fsrc%2Flogs.json
     handleCloseRulesMenu = (item) => {
       console.log(item);
       const url =
         mode === "local"
-          ? "http://localhost:3001/getfile/" +
+          ? "http://localhost:3001/getfile/%2f" +
             encodeURIComponent(rulesDirectory) +
-            "/" +
+            "%2F" +
             item
           : item;
       // console.log(
@@ -1147,6 +1153,7 @@ function App() {
           if (item.type === "real") step++;
           return { step: item.type === "real" ? step - 1 : step, ...item };
         });
+      console.log("all", all);
       const inputRows = all.filter((item) => item.type === "input"),
         outputRows = all.filter((item) => item.type === "output"),
         realRows = all.filter((item) => item.type === "real");
@@ -1158,6 +1165,7 @@ function App() {
           });
         return {
           i: i.libname + "." + i.dataset,
+          obs: i.obs || "?",
           outputsForInputs: outputsForInputs,
         };
       });
@@ -1184,14 +1192,16 @@ function App() {
         else {
           item.outputsForInputs.forEach((o, oIndex) => {
             const stepInfo = realRows.filter((r) => r.step === o.step);
-            const seconds =
-              stepInfo.length > 0 ? " |" + stepInfo[0].seconds + "| " : null;
+            const seconds = stepInfo.length > 0 ? stepInfo[0].seconds : null,
+              obs = item.obs ? item.obs : null,
+              arrowLabel = lineVar==="obs" ? obs : lineVar==="real" ? seconds : seconds;
             dot.push(
               item.i +
                 "([" +
                 item.i +
-                "]) -->" +
-                seconds +
+                "]) --> |" +
+                arrowLabel +
+                "| " +
                 o.table +
                 "[[" +
                 o.table +
@@ -1201,7 +1211,8 @@ function App() {
         }
       });
       const uniqueDot = [...new Set(dot)],
-        mermaid = `flowchart TB\n${uniqueDot.join("\n")}`;
+        dir = direction ? "TB" : "LR",
+        mermaid = `flowchart ${dir}\n${uniqueDot.join("\n")}`;
       setChart(mermaid);
       setMermaidInfo({ characters: mermaid.length, lines: uniqueDot.length });
     },
@@ -1263,11 +1274,15 @@ function App() {
               "dirs",
               dirs,
               "files",
-              files
+              files,
+              "text",
+              text
             );
             setSelectedLog(null);
             setListOfDirs(dirs);
-            setLogOriginalText(text);
+            const parsedText = JSON.parse(text);
+            console.log("parsedText", parsedText);
+            setLogOriginalText(parsedText.join("\n") || text);
             makeDirListing(dirs);
             setListOfLogs(
               files
@@ -1430,7 +1445,7 @@ function App() {
     console.log("*** remote");
     const defaultDirectory = navigator.platform.startsWith("Win")
       ? "/general/biostat/jobs/dashboard/dev/logs"
-      : "/Users/philipmason/Documents/GitHub/logviewer/tests";
+      : "/Users/philipmason/github/logviewer/tests";
     setLogDirectory(defaultDirectory);
     getLogWebDav(defaultDirectory); // get the list of logs by reading directory
     setLogText(analyse(logOriginalText));
@@ -1448,7 +1463,7 @@ function App() {
     // console.log(navigator);
     const defaultDirectory = navigator.platform.startsWith("Win")
       ? "C:/github/logviewer/tests"
-      : "/Users/philipmason/Documents/GitHub/logviewer/tests";
+      : "/Users/philipmason/github/logviewer/tests";
     setLogDirectory(defaultDirectory);
     readLocalFiles(defaultDirectory);
 
@@ -1493,13 +1508,16 @@ function App() {
     if (selectedLocalFile === "") return;
     console.log("*** selectedLocalFile", selectedLocalFile);
     // const dir = encodeURIComponent(
-    //     "/Users/philipmason/Documents/GitHub/logviewer/src"
+    //     "/Users/philipmason/Documents/github/logviewer/src"
     //   ),
     //   file = "sample.log",
     //   url = "http://localhost:3001/getfile/" + dir + "/" + file;
     const file = selectedLocalFile.split("/").pop(),
       dir = encodeURIComponent(logDirectory),
-      url = "http://localhost:3001/getfile/" + dir + "/" + file;
+      url = "http://localhost:3001/getfile/" + dir + "%2F" + file;
+    console.log(url);
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2Fgithub%2Flogviewer%2Ftests%2Fpp.log
+    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2Fgithub%2Flogviewer%2Ftests/pp.log
     setLocalUrl(url);
     // console.log(
     //   "selectedLocalFile",
@@ -1550,6 +1568,651 @@ function App() {
 
   return (
     <Box>
+      <AppBar position="static">
+        <Toolbar variant="dense" disableGutters>
+          <Tooltip title="Move center to the left">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                // setLeftPanelWidth(2);
+                // setRightPanelWidth(10);
+                setLeftPanelWidth(Math.max(leftPanelWidth - 3, 0));
+                setRightPanelWidth(Math.min(rightPanelWidth + 3, 12));
+              }}
+            >
+              <ArrowCircleLeft />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Reset to middle">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                setLeftPanelWidth(6);
+                setRightPanelWidth(6);
+              }}
+            >
+              <RestartAlt />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Move center to the right">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                // setLeftPanelWidth(10);
+                // setRightPanelWidth(2);
+                setLeftPanelWidth(Math.min(leftPanelWidth + 3, 12));
+                setRightPanelWidth(Math.max(rightPanelWidth - 3, 0));
+              }}
+            >
+              <ArrowCircleRight />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Smaller">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                setFontSize(fontSize - 1);
+              }}
+            >
+              <Remove />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Reset to 12">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                setFontSize(12);
+              }}
+            >
+              <RestartAlt />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Larger">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                setFontSize(fontSize + 1);
+              }}
+            >
+              <Add />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Download SAS Log">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                openInNewTab(`${selection}`);
+              }}
+            >
+              <Download />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Show Source Lines">
+            <FormControlLabel
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "#555555",
+                mr: iconPadding,
+                ml: iconPadding,
+              }}
+              control={
+                <Switch
+                  checked={showSource}
+                  onChange={() => {
+                    setShowSource(!showSource);
+                    setAnalyseAgain(!analyseAgain);
+                  }}
+                  name="source"
+                  size="small"
+                  color="warning"
+                />
+              }
+            />
+          </Tooltip>
+          <Tooltip title="Show Mprint/Mlogic/Symbolgen/Mautocomploc Lines">
+            <FormControlLabel
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "#555555",
+                mr: iconPadding,
+                ml: iconPadding,
+              }}
+              control={
+                <Switch
+                  checked={showMacroLines}
+                  onChange={() => {
+                    setshowMacroLines(!showMacroLines);
+                    setAnalyseAgain(!analyseAgain);
+                  }}
+                  name="mprint"
+                  size="small"
+                  color="warning"
+                  sx={{ ml: 0.5 }}
+                />
+              }
+            />
+          </Tooltip>
+          <Tooltip title="Show Line numbers">
+            <FormControlLabel
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "#555555",
+                mr: iconPadding,
+                ml: iconPadding,
+              }}
+              control={
+                <Switch
+                  checked={showLineNumbers}
+                  onChange={() => {
+                    setshowLineNumbers(!showLineNumbers);
+                  }}
+                  name="mprint"
+                  size="small"
+                  color="warning"
+                  sx={{ ml: 0.5, mr: 0.5 }}
+                />
+              }
+            />
+          </Tooltip>
+          <Tooltip title="Show Chart">
+            <IconButton
+              size="small"
+              onClick={() => setOpenModal(true)}
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+                ml: iconPadding,
+              }}
+            >
+              <BarChart />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Choose rules used to parse logs">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={(e) => {
+                setAnchorEl(e.currentTarget);
+                setOpenRulesMenu(true);
+              }}
+            >
+              <SquareFoot />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="View rules">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={(e) => {
+                setOpenRulesModal(true);
+              }}
+            >
+              <Visibility />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Extract SAS code (if possible)">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={(e) => {
+                extractSasCode();
+              }}
+            >
+              <Colorize />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Paste Clipboard as new contents of Log">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={(e) => {
+                pasteClipboard();
+              }}
+            >
+              <ContentPaste />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Email">
+            <IconButton
+              onClick={() => {
+                const email =
+                  "mailto:qs_tech_prog@argenx.com?subject=Log Viewer: " +
+                  selection +
+                  "&body=You can open the log in the Log Viewer using this link: " +
+                  encodeURIComponent(href);
+                console.log("email", email);
+                window.open(email, "_blank");
+              }}
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+            >
+              <Email />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Refresh view by analysing the log again">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={(e) => {
+                setAnalyseAgain(!analyseAgain);
+              }}
+            >
+              <Refresh />
+            </IconButton>
+          </Tooltip>
+          <Snackbar
+            open={openPopUp}
+            onClose={() => setOpenPopUp(false)}
+            autoHideDuration={3000}
+            message={popUpMessage}
+          />
+          <Menu
+            open={openRulesMenu}
+            onClose={handleCloseRulesMenu}
+            anchorEl={anchorEl}
+          >
+            {listOfRules &&
+              listOfRules.length > 0 &&
+              listOfRules.map((rule, id) => (
+                <MenuItem
+                  key={id}
+                  onClick={(e) => handleCloseRulesMenu(rule.value)}
+                >
+                  {rule.label}
+                </MenuItem>
+              ))}
+          </Menu>
+          <Tooltip title={`Compress by ${increment}`}>
+            <IconButton
+              size="small"
+              onClick={() => {
+                setVerticalSplit(verticalSplit + increment);
+              }}
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+            >
+              <Compress />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={`Expand by ${increment}`}>
+            <IconButton
+              size="small"
+              onClick={() => {
+                setVerticalSplit(verticalSplit - increment);
+              }}
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+            >
+              <Expand />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Page Down">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                const clientHeight = logRef.current.clientHeight;
+                logRef.current.scrollBy(0, clientHeight - 20);
+              }}
+            >
+              <ArrowDownward />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Page Up">
+            <IconButton
+              size="small"
+              sx={{
+                color: "black",
+                backgroundColor: "#aaaaff",
+                borderRadius: 3,
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                const clientHeight = logRef.current.clientHeight;
+                logRef.current.scrollBy(0, -(clientHeight - 10));
+              }}
+            >
+              <ArrowUpward />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Next Interesting thing">
+            <IconButton
+              size="small"
+              onClick={() => {
+                const interesting = links.filter(
+                  (link) => link.interesting && link.lineNumber > currentLine
+                );
+                if (interesting.length > 0) {
+                  jumpTo(interesting[0].id);
+                  setCurrentLine(interesting[0].lineNumber);
+                }
+              }}
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "lightblue",
+                mr: iconPadding,
+              }}
+            >
+              <ArrowDownward />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Previous Interesting thing">
+            <IconButton
+              size="small"
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "lightblue",
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                const interesting = links.filter(
+                  (link) => link.interesting && link.lineNumber < currentLine
+                );
+                if (interesting.length > 0) {
+                  const last = interesting.pop();
+                  jumpTo(last.id);
+                  setCurrentLine(last.lineNumber);
+                }
+              }}
+            >
+              <ArrowUpward />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Next Error">
+            <IconButton
+              size="small"
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "red",
+                color: "white",
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                const errors = links.filter(
+                  (link) =>
+                    link.type === "ERROR" && link.lineNumber > currentLine
+                );
+                if (errors.length > 0) {
+                  jumpTo(errors[0].id);
+                  setCurrentLine(errors[0].lineNumber);
+                }
+              }}
+            >
+              <ArrowDownward />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Previous Error">
+            <IconButton
+              size="small"
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "red",
+                color: "white",
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                const errors = links.filter(
+                  (link) =>
+                    link.type === "ERROR" && link.lineNumber < currentLine
+                );
+                if (errors.length > 0) {
+                  const last = errors.pop();
+                  jumpTo(last.id);
+                  setCurrentLine(last.lineNumber);
+                }
+              }}
+            >
+              <ArrowUpward />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Next Warning">
+            <IconButton
+              size="small"
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "lightgreen",
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                const warnings = links.filter(
+                  (link) =>
+                    link.type === "WARN" && link.lineNumber > currentLine
+                );
+                if (warnings.length > 0) {
+                  jumpTo(warnings[0].id);
+                  setCurrentLine(warnings[0].lineNumber);
+                }
+              }}
+            >
+              <ArrowDownward />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Previous Warning">
+            <IconButton
+              size="small"
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "lightgreen",
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                const warnings = links.filter(
+                  (link) =>
+                    link.type === "WARN" && link.lineNumber < currentLine
+                );
+                if (warnings.length > 0) {
+                  const last = warnings.pop();
+                  jumpTo(last.id);
+                  setCurrentLine(last.lineNumber);
+                }
+              }}
+            >
+              <ArrowUpward />
+            </IconButton>
+          </Tooltip>
+          <TextField
+            label="Search"
+            value={search}
+            size={"small"}
+            inputProps={{ style: { fontSize: 10, height: "1.1em" } }}
+            onChange={(event) => {
+              setSearch(event.target.value);
+            }}
+            color="secondary"
+            sx={{
+              flexGrow: 1,
+              mt: 0.6,
+              mr: 1,
+              ml: 1,
+              backgroundColor: "lightblue",
+            }}
+          />
+          <Tooltip title="Next search term">
+            <IconButton
+              size="small"
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "#e0ccff",
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                const found = logText.indexOf(
+                    search,
+                    currentLine ? currentLine + 1 : 0
+                  ),
+                  id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+                  section = logText.substring(id1, found),
+                  id = /\d+/.exec(section),
+                  { current } = logRef;
+                window.location.hash = "#" + id;
+                console.log(
+                  "currentLine",
+                  currentLine,
+                  "found",
+                  found,
+                  "id1",
+                  id1,
+                  "section",
+                  section,
+                  "id",
+                  id,
+                  "current",
+                  current
+                );
+                if (found > 0) setCurrentLine(found);
+                else setCurrentLine(0);
+              }}
+            >
+              <ArrowDownward />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Previous search term">
+            <IconButton
+              size="small"
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "#e0ccff",
+                mr: iconPadding,
+              }}
+              onClick={() => {
+                const found = logText
+                    .substring(0, currentLine ? currentLine - 1 : nLines - 1)
+                    .lastIndexOf(search),
+                  id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+                  section = logText.substring(id1, found),
+                  id = /\d+/.exec(section),
+                  { current } = logRef;
+                window.location.hash = "#" + id;
+                console.log(
+                  "currentLine",
+                  currentLine,
+                  "found",
+                  found,
+                  "id1",
+                  id1,
+                  "section",
+                  section,
+                  "id",
+                  id,
+                  "current",
+                  current
+                );
+                if (found > 0) setCurrentLine(found);
+                else setCurrentLine(nLines - 1);
+              }}
+            >
+              <ArrowUpward />
+            </IconButton>
+          </Tooltip>{" "}
+          <Tooltip title="Information about this screen">
+            <IconButton
+              size="small"
+              // aria-label="account of current user"
+              // aria-controls="menu-appbar"
+              // aria-haspopup="true"
+              onClick={() => {
+                setOpenInfo(true);
+              }}
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "#0000ff",
+                color: "white",
+                mr: iconPadding,
+              }}
+            >
+              <Info />
+            </IconButton>
+          </Tooltip>
+        </Toolbar>
+      </AppBar>
+
       <Grid container spacing={1}>
         <Grid item xs={leftPanelWidth} sx={{ mt: 1 }}>
           {logDirectory ? (
@@ -1671,574 +2334,6 @@ function App() {
                 sx={{ mt: 1, color: "green" }}
               >
                 <Download fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-          <Box
-            // disableGutters={true}
-            variant={"dense"}
-            sx={{
-              // mt: 2,
-              // display: "flex",
-              // alignItems: "right",
-              // width: "fit-content",
-              // border: (theme) => `1px solid ${theme.palette.divider}`,
-              // borderRadius: 1,
-              // padding: iconPadding,
-              bgcolor: "background.paper",
-              color: "text.secondary",
-            }}
-          >
-            <Tooltip title="Move center to the left">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  // setLeftPanelWidth(2);
-                  // setRightPanelWidth(10);
-                  setLeftPanelWidth(Math.max(leftPanelWidth - 3, 0));
-                  setRightPanelWidth(Math.min(rightPanelWidth + 3, 12));
-                }}
-              >
-                <ArrowCircleLeft fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Reset to middle">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  setLeftPanelWidth(6);
-                  setRightPanelWidth(6);
-                }}
-              >
-                <RestartAlt fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Move center to the right">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  // setLeftPanelWidth(10);
-                  // setRightPanelWidth(2);
-                  setLeftPanelWidth(Math.min(leftPanelWidth + 3, 12));
-                  setRightPanelWidth(Math.max(rightPanelWidth - 3, 0));
-                }}
-              >
-                <ArrowCircleRight fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Smaller">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  setFontSize(fontSize - 1);
-                }}
-              >
-                <Remove fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Reset to 12">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  setFontSize(12);
-                }}
-              >
-                <RestartAlt fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Larger">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  setFontSize(fontSize + 1);
-                }}
-              >
-                <Add fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Download SAS Log">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  openInNewTab(`${selection}`);
-                }}
-              >
-                <Download fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Show Source Lines">
-              <FormControlLabel
-                sx={{ marginRight: iconPadding + 0.5 }}
-                control={
-                  <Switch
-                    checked={showSource}
-                    onChange={() => {
-                      setShowSource(!showSource);
-                      setAnalyseAgain(!analyseAgain);
-                    }}
-                    name="source"
-                    size="small"
-                  />
-                }
-              />
-            </Tooltip>
-            <Tooltip title="Show Mprint/Mlogic/Symbolgen/Mautocomploc Lines">
-              <FormControlLabel
-                sx={{ marginRight: iconPadding }}
-                control={
-                  <Switch
-                    checked={showMacroLines}
-                    onChange={() => {
-                      setshowMacroLines(!showMacroLines);
-                      setAnalyseAgain(!analyseAgain);
-                    }}
-                    name="mprint"
-                    size="small"
-                  />
-                }
-              />
-            </Tooltip>
-            <Tooltip title="Show Line numbers">
-              <FormControlLabel
-                sx={{ marginRight: iconPadding }}
-                control={
-                  <Switch
-                    checked={showLineNumbers}
-                    onChange={() => {
-                      setshowLineNumbers(!showLineNumbers);
-                    }}
-                    name="mprint"
-                    size="small"
-                  />
-                }
-              />
-            </Tooltip>
-            <Tooltip title="Show Chart">
-              <IconButton size="small" onClick={() => setOpenModal(true)}>
-                <BarChart fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Choose rules used to parse logs">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={(e) => {
-                  setAnchorEl(e.currentTarget);
-                  setOpenRulesMenu(true);
-                }}
-              >
-                <SquareFoot fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="View rules">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={(e) => {
-                  setOpenRulesModal(true);
-                }}
-              >
-                <Visibility fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Extract SAS code (if possible)">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={(e) => {
-                  extractSasCode();
-                }}
-              >
-                <Colorize fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Paste Clipboard as new contents of Log">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={(e) => {
-                  pasteClipboard();
-                }}
-              >
-                <ContentPaste fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Email">
-              <IconButton
-                onClick={() => {
-                  const email =
-                    "mailto:qs_tech_prog@argenx.com?subject=Log Viewer: " +
-                    selection +
-                    "&body=You can open the log in the Log Viewer using this link: " +
-                    encodeURIComponent(href);
-                  console.log("email", email);
-                  window.open(email, "_blank");
-                }}
-                size="small"
-              >
-                <Email fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Refresh view by analysing the log again">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={(e) => {
-                  setAnalyseAgain(!analyseAgain);
-                }}
-              >
-                <Refresh fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Snackbar
-              open={openPopUp}
-              onClose={() => setOpenPopUp(false)}
-              autoHideDuration={3000}
-              message={popUpMessage}
-            />
-            <Menu
-              open={openRulesMenu}
-              onClose={handleCloseRulesMenu}
-              anchorEl={anchorEl}
-            >
-              {listOfRules &&
-                listOfRules.length > 0 &&
-                listOfRules.map((rule, id) => (
-                  <MenuItem
-                    key={id}
-                    onClick={(e) => handleCloseRulesMenu(rule.value)}
-                  >
-                    {rule.label}
-                  </MenuItem>
-                ))}
-            </Menu>
-            <Tooltip title={`Compress by ${increment}`}>
-              <IconButton
-                size="small"
-                onClick={() => {
-                  setVerticalSplit(verticalSplit + increment);
-                }}
-                // sx={{
-                //   backgroundColor: buttonBackground,
-                //   color: "yellow",
-                // }}
-              >
-                <Compress fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={`Expand by ${increment}`}>
-              <IconButton
-                size="small"
-                onClick={() => {
-                  setVerticalSplit(verticalSplit - increment);
-                }}
-              >
-                <Expand fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Page Down">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const clientHeight = logRef.current.clientHeight;
-                  logRef.current.scrollBy(0, clientHeight - 20);
-                }}
-              >
-                <ArrowDownward fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Page Up">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const clientHeight = logRef.current.clientHeight;
-                  logRef.current.scrollBy(0, -(clientHeight - 10));
-                }}
-              >
-                <ArrowUpward fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Next Interesting thing">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const interesting = links.filter(
-                    (link) => link.interesting && link.lineNumber > currentLine
-                  );
-                  if (interesting.length > 0) {
-                    jumpTo(interesting[0].id);
-                    setCurrentLine(interesting[0].lineNumber);
-                  }
-                }}
-              >
-                <ArrowDownward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "lightblue",
-                    border: 0.5,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Previous Interesting thing">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const interesting = links.filter(
-                    (link) => link.interesting && link.lineNumber < currentLine
-                  );
-                  if (interesting.length > 0) {
-                    const last = interesting.pop();
-                    jumpTo(last.id);
-                    setCurrentLine(last.lineNumber);
-                  }
-                }}
-              >
-                <ArrowUpward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "lightblue",
-                    border: 0.5,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Next Error">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const errors = links.filter(
-                    (link) =>
-                      link.type === "ERROR" && link.lineNumber > currentLine
-                  );
-                  if (errors.length > 0) {
-                    jumpTo(errors[0].id);
-                    setCurrentLine(errors[0].lineNumber);
-                  }
-                }}
-              >
-                <ArrowDownward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "red",
-                    color: "white",
-                    border: 0.5,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Previous Error">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const errors = links.filter(
-                    (link) =>
-                      link.type === "ERROR" && link.lineNumber < currentLine
-                  );
-                  if (errors.length > 0) {
-                    const last = errors.pop();
-                    jumpTo(last.id);
-                    setCurrentLine(last.lineNumber);
-                  }
-                }}
-              >
-                <ArrowUpward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "red",
-                    color: "white",
-                    border: 0.5,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Next Warning">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const warnings = links.filter(
-                    (link) =>
-                      link.type === "WARN" && link.lineNumber > currentLine
-                  );
-                  if (warnings.length > 0) {
-                    jumpTo(warnings[0].id);
-                    setCurrentLine(warnings[0].lineNumber);
-                  }
-                }}
-              >
-                <ArrowDownward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "lightgreen",
-                    border: 0.5,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Previous Warning">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const warnings = links.filter(
-                    (link) =>
-                      link.type === "WARN" && link.lineNumber < currentLine
-                  );
-                  if (warnings.length > 0) {
-                    const last = warnings.pop();
-                    jumpTo(last.id);
-                    setCurrentLine(last.lineNumber);
-                  }
-                }}
-              >
-                <ArrowUpward
-                  fontSize="small"
-                  sx={{
-                    padding: iconPadding,
-                    backgroundColor: "lightgreen",
-                    border: 0.5,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <TextField
-              label="Search"
-              value={search}
-              size={"small"}
-              inputProps={{ style: { fontSize: 10, height: "1.1em" } }}
-              onChange={(event) => {
-                setSearch(event.target.value);
-              }}
-              sx={{
-                width: 250,
-                mt: 1,
-              }}
-            />
-            <Tooltip title="Next search term">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const found = logText.indexOf(
-                      search,
-                      currentLine ? currentLine + 1 : 0
-                    ),
-                    id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
-                    section = logText.substring(id1, found),
-                    id = /\d+/.exec(section),
-                    { current } = logRef;
-                  window.location.hash = "#" + id;
-                  console.log(
-                    "currentLine",
-                    currentLine,
-                    "found",
-                    found,
-                    "id1",
-                    id1,
-                    "section",
-                    section,
-                    "id",
-                    id,
-                    "current",
-                    current
-                  );
-                  if (found > 0) setCurrentLine(found);
-                  else setCurrentLine(0);
-                }}
-              >
-                <ArrowDownward
-                  fontSize="small"
-                  sx={{
-                    mt: 1,
-                    padding: iconPadding,
-                    backgroundColor: "#e0ccff",
-                    border: 0.5,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Previous search term">
-              <IconButton
-                size="small"
-                sx={{ padding: iconPadding }}
-                onClick={() => {
-                  const found = logText
-                      .substring(0, currentLine ? currentLine - 1 : nLines - 1)
-                      .lastIndexOf(search),
-                    id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
-                    section = logText.substring(id1, found),
-                    id = /\d+/.exec(section),
-                    { current } = logRef;
-                  window.location.hash = "#" + id;
-                  console.log(
-                    "currentLine",
-                    currentLine,
-                    "found",
-                    found,
-                    "id1",
-                    id1,
-                    "section",
-                    section,
-                    "id",
-                    id,
-                    "current",
-                    current
-                  );
-                  if (found > 0) setCurrentLine(found);
-                  else setCurrentLine(nLines - 1);
-                }}
-              >
-                <ArrowUpward
-                  fontSize="small"
-                  sx={{
-                    mt: 1,
-                    padding: iconPadding,
-                    backgroundColor: "#e0ccff",
-                    border: 0.5,
-                    borderRadius: 3,
-                  }}
-                />
-              </IconButton>
-            </Tooltip>{" "}
-            <Tooltip title="Information about this screen">
-              <IconButton
-                size="small"
-                // aria-label="account of current user"
-                // aria-controls="menu-appbar"
-                // aria-haspopup="true"
-                onClick={() => {
-                  setOpenInfo(true);
-                }}
-                color="info"
-                sx={{ padding: iconPadding }}
-              >
-                <Info />
               </IconButton>
             </Tooltip>
           </Box>
@@ -2775,6 +2870,44 @@ function App() {
               JSON files with rules defined.
             </li>
           </ul>
+          Direction of Chart
+          <Tooltip title="Toggle diagram direction">
+            <FormControlLabel
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "#cccccc",
+                mr: iconPadding,
+                ml: iconPadding,
+              }}
+              control={
+                <Switch
+                  checked={direction}
+                  onChange={() => {
+                    setDirection(!direction);
+                  }}
+                  name="direction"
+                  size="small"
+                  color="warning"
+                  sx={{ ml: 0.5, mr: 0.5 }}
+                />
+              }
+              label={direction ? "Left to Right." : "Top to Bottom."}
+            />
+          </Tooltip>
+          <Autocomplete
+            value={lineVar}
+            onChange={(event, newValue) => {
+              setLineVar(newValue);
+            }}
+            // inputValue={inputValue}
+            // onInputChange={(event, newInputValue) => {
+            //   setInputValue(newInputValue);
+            // }}
+            id="lineVarId"
+            options={lineVarOptions}
+            sx={{ width: 300 }}
+            renderInput={(params) => <TextField {...params} label="Choose measurement for lines" />}
+          />
         </DialogContent>
       </Dialog>
     </Box>
