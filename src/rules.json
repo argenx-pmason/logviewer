@@ -1,7 +1,7 @@
 [
   {
     "ruleType": "regex",
-    "regex": "(?:^ERROR:|^\\s*ERROR\\s+)(?!.*\\*\\*\\* PROBLEM: LINE|.*WITHOUT ERROR|.*MPRINT|.*MLOGIC|.*SYMBOLGEN)",
+    "regex": "(?:^\\s*ERROR:|^\\s*ERROR\\s+)(?!.*\\*\\*\\* PROBLEM: LINE|.*WITHOUT ERROR|.*MPRINT|.*MLOGIC|.*SYMBOLGEN)",
     "prefix": "<span style='color: red'>",
     "suffix": "</span>",
     "anchor": true,
@@ -11,7 +11,7 @@
   },
   {
     "ruleType": "regex",
-    "regex": "(?:^WARNING:|^WARNING\\s)(?!.*PRODUCT WITH WHICH|.*PRODUCT WITH WHICH|.*IS ASSOCIATED WILL EXPIRE|.*MPRINT|.*MLOGIC|.*SYMBOLGEN|.*IS ASSOCIATED IS SCHEDULED TO EXPIRE|.*YOUR SYSTEM IS SCHEDULED TO EXPIRE)",
+    "regex": "(?:^\\s*WARNING:|^\\s*WARNING\\s)(?!.*PRODUCT WITH WHICH|.*PRODUCT WITH WHICH|.*IS ASSOCIATED WILL EXPIRE|.*MPRINT|.*MLOGIC|.*SYMBOLGEN|.*IS ASSOCIATED IS SCHEDULED TO EXPIRE|.*YOUR SYSTEM IS SCHEDULED TO EXPIRE)",
     "prefix": "<span style='color: green'>",
     "suffix": "</span>",
     "anchor": true,
@@ -31,7 +31,7 @@
   },
   {
     "ruleType": "regex",
-    "regex": "NOTE: MISSING",
+    "regex": "\\s*NOTE: MISSING",
     "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
@@ -41,7 +41,7 @@
   },
   {
     "ruleType": "regex",
-    "regex": "NOTE: AT LEAST ONE W.D FORMAT WAS TOO SMALL FOR THE NUMBER TO BE PRINTED.",
+    "regex": "\\s*NOTE: AT LEAST ONE W.D FORMAT WAS TOO SMALL FOR THE NUMBER TO BE PRINTED.",
     "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
@@ -51,7 +51,7 @@
   },
   {
     "ruleType": "regex",
-    "regex": "NOTE: NUMERIC VALUES HAVE BEEN CONVERTED TO CHARACTER VALUES AT THE PLACES GIVEN BY:",
+    "regex": "\\s*NOTE: NUMERIC VALUES HAVE BEEN CONVERTED TO CHARACTER VALUES AT THE PLACES GIVEN BY:",
     "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
@@ -61,7 +61,7 @@
   },
   {
     "ruleType": "regex",
-    "regex": "NOTE: THE SAS SYSTEM STOPPED PROCESSING THIS STEP BECAUSE OF ERRORS.",
+    "regex": "\\s*NOTE: THE SAS SYSTEM STOPPED PROCESSING THIS STEP BECAUSE OF ERRORS.",
     "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
@@ -71,7 +71,7 @@
   },
   {
     "ruleType": "regex",
-    "regex": "NOTE: ERROR DETECTED",
+    "regex": "\\s*NOTE: ERROR DETECTED",
     "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
@@ -91,7 +91,7 @@
   },
   {
     "ruleType": "regex",
-    "regex": "Note: Missing",
+    "regex": "\\s*Note: Missing",
     "prefix": "<span style='color: orange'>",
     "suffix": "</span>",
     "anchor": true,
@@ -137,86 +137,6 @@
     "anchor": true,
     "linkColor": "blue",
     "type": "NOTICE",
-    "interesting": false
-  },
-  {
-    "ruleType": "regex",
-    "regex": "real time",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "regex",
-    "regex": "cpu time",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "regex",
-    "regex": "user cpu time",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "regex",
-    "regex": "system cpu time",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "regex",
-    "regex": "memory",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "regex",
-    "regex": "OS Memory",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      Timestamp ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
-    "interesting": false
-  },
-  {
-    "ruleType": "startswith",
-    "startswith": "      Step Count ",
-    "prefix": "<span style='color: blue'>",
-    "suffix": "</span>",
-    "anchor": false,
-    "linkColor": "blue",
-    "type": null,
     "interesting": false
   },
   {

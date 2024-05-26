@@ -1,0 +1,82 @@
+[
+    {
+        "ruleType": "startswith",
+        "startswith": "      real time           ",
+        "prefix": "<span style='color: blue'>",
+        "suffix": "</span>",
+        "anchor": false,
+        "linkColor": "blue",
+        "type": null,
+        "interesting": false
+    },
+    {
+        "ruleType": "startswith",
+        "startswith": "      cpu time            ",
+        "prefix": "<span style='color: blue'>",
+        "suffix": "</span>",
+        "anchor": false,
+        "linkColor": "blue",
+        "type": null,
+        "interesting": false
+    },
+    {
+        "ruleType": "startswith",
+        "startswith": "      user cpu time ",
+        "prefix": "<span style='color: blue'>",
+        "suffix": "</span>",
+        "anchor": false,
+        "linkColor": "blue",
+        "type": null,
+        "interesting": false
+    },
+    {
+        "ruleType": "startswith",
+        "startswith": "      system cpu time ",
+        "prefix": "<span style='color: blue'>",
+        "suffix": "</span>",
+        "anchor": false,
+        "linkColor": "blue",
+        "type": null,
+        "interesting": false
+    },
+    {
+        "ruleType": "startswith",
+        "startswith": "      memory ",
+        "prefix": "<span style='color: blue'>",
+        "suffix": "</span>",
+        "anchor": false,
+        "linkColor": "blue",
+        "type": null,
+        "interesting": false
+    },
+    {
+        "ruleType": "startswith",
+        "startswith": "      OS Memory ",
+        "prefix": "<span style='color: blue'>",
+        "suffix": "</span>",
+        "anchor": false,
+        "linkColor": "blue",
+        "type": null,
+        "interesting": false
+    },
+    {
+        "ruleType": "startswith",
+        "startswith": "      Timestamp ",
+        "prefix": "<span style='color: blue'>",
+        "suffix": "</span>",
+        "anchor": false,
+        "linkColor": "blue",
+        "type": null,
+        "interesting": false
+    },
+    {
+        "ruleType": "startswith",
+        "startswith": "      Step Count ",
+        "prefix": "<span style='color: blue'>",
+        "suffix": "</span>",
+        "anchor": false,
+        "linkColor": "blue",
+        "type": null,
+        "interesting": false
+    }
+]

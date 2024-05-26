@@ -25,7 +25,7 @@ import {
   Snackbar,
   DialogActions,
   DialogContentText,
-  Autocomplete
+  Autocomplete,
 } from "@mui/material";
 // import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -35,6 +35,7 @@ import { getDir, getVersions, xmlToJson } from "./utility";
 import "./App.css";
 // rules are kept on LSAF in /general/biostat/tools/common/metadata/rules.json
 import defaultRules from "./rules.json";
+import requiredRules from "./required-rules.json";
 import {
   Add,
   Remove,
@@ -100,12 +101,12 @@ function App() {
     handleCloseRulesModal = () => {
       setOpenRulesModal(false);
     },
-    [lineVar, setLineVar] = useState(null),
-    lineVarOptions = ['real','obs'],
+    [lineVar, setLineVar] = useState("obs"),
+    lineVarOptions = ["real", "obs"],
     [localUrl, setLocalUrl] = useState(null),
     [scale, setScale] = useState(1),
     [mermaidInfo, setMermaidInfo] = useState({ characters: null, lines: null }),
-    [rules, setRules] = useState(defaultRules),
+    [rules, setRules] = useState([...defaultRules, ...requiredRules]),
     [anchorEl, setAnchorEl] = useState(null),
     getLog = (url) => {
       // const username = "",
@@ -578,7 +579,7 @@ function App() {
           console.log(
             `${tempRules.length} rules were read from rules file: ${url}`
           );
-          setRules(tempRules);
+          setRules([...tempRules, ...requiredRules]);
         });
       });
       setOpenRulesMenu(false);
@@ -658,6 +659,7 @@ function App() {
         },
       },
     ],
+    [searchField, setSearchField] = useState(null),
     [realTime, setRealTime] = useState(null),
     ColDefnCpuTime = [
       { field: "id", headerName: "ID", width: 90, hide: true },
@@ -1193,8 +1195,13 @@ function App() {
           item.outputsForInputs.forEach((o, oIndex) => {
             const stepInfo = realRows.filter((r) => r.step === o.step);
             const seconds = stepInfo.length > 0 ? stepInfo[0].seconds : null,
-              obs = item.obs ? item.obs : null,
-              arrowLabel = lineVar==="obs" ? obs : lineVar==="real" ? seconds : seconds;
+              obs = item.obs ? item.obs.toLocaleString() : null,
+              arrowLabel =
+                lineVar === "obs"
+                  ? obs
+                  : lineVar === "real"
+                  ? seconds
+                  : seconds;
             dot.push(
               item.i +
                 "([" +
@@ -1307,6 +1314,28 @@ function App() {
           });
         });
       }
+    },
+    previousSearchTerm = () => {
+      const found = logText
+          .substring(0, currentLine ? currentLine - 1 : nLines - 1)
+          .lastIndexOf(search),
+        id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+        section = logText.substring(id1, found),
+        id = /\d+/.exec(section);
+      // { current } = logRef;
+      window.location.hash = "#" + id;
+      if (found > 0) setCurrentLine(found);
+      else setCurrentLine(nLines - 1);
+    },
+    nextSearchItem = () => {
+      const found = logText.indexOf(search, currentLine ? currentLine + 1 : 0),
+        id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
+        section = logText.substring(id1, found),
+        id = /\d+/.exec(section);
+      // { current } = logRef;
+      window.location.hash = "#" + id;
+      if (found > 0) setCurrentLine(found);
+      else setCurrentLine(0);
     };
   let counts = {};
 
@@ -2098,12 +2127,23 @@ function App() {
             </IconButton>
           </Tooltip>
           <TextField
-            label="Search"
+            label="Search (case-sensitive)"
             value={search}
             size={"small"}
             inputProps={{ style: { fontSize: 10, height: "1.1em" } }}
             onChange={(event) => {
               setSearch(event.target.value);
+            }}
+            inputRef={(input) => input && setSearchField(input)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                // console.log("Input value", e.target.value);
+                e.preventDefault();
+                nextSearchItem();
+                setTimeout(() => {
+                  searchField.focus();
+                }, 100);
+              }
             }}
             color="secondary"
             sx={{
@@ -2122,33 +2162,7 @@ function App() {
                 backgroundColor: "#e0ccff",
                 mr: iconPadding,
               }}
-              onClick={() => {
-                const found = logText.indexOf(
-                    search,
-                    currentLine ? currentLine + 1 : 0
-                  ),
-                  id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
-                  section = logText.substring(id1, found),
-                  id = /\d+/.exec(section),
-                  { current } = logRef;
-                window.location.hash = "#" + id;
-                console.log(
-                  "currentLine",
-                  currentLine,
-                  "found",
-                  found,
-                  "id1",
-                  id1,
-                  "section",
-                  section,
-                  "id",
-                  id,
-                  "current",
-                  current
-                );
-                if (found > 0) setCurrentLine(found);
-                else setCurrentLine(0);
-              }}
+              onClick={nextSearchItem}
             >
               <ArrowDownward />
             </IconButton>
@@ -2161,32 +2175,7 @@ function App() {
                 backgroundColor: "#e0ccff",
                 mr: iconPadding,
               }}
-              onClick={() => {
-                const found = logText
-                    .substring(0, currentLine ? currentLine - 1 : nLines - 1)
-                    .lastIndexOf(search),
-                  id1 = logText.substring(0, found).lastIndexOf("id=") + 4,
-                  section = logText.substring(id1, found),
-                  id = /\d+/.exec(section),
-                  { current } = logRef;
-                window.location.hash = "#" + id;
-                console.log(
-                  "currentLine",
-                  currentLine,
-                  "found",
-                  found,
-                  "id1",
-                  id1,
-                  "section",
-                  section,
-                  "id",
-                  id,
-                  "current",
-                  current
-                );
-                if (found > 0) setCurrentLine(found);
-                else setCurrentLine(nLines - 1);
-              }}
+              onClick={previousSearchTerm}
             >
               <ArrowUpward />
             </IconButton>
@@ -2214,7 +2203,7 @@ function App() {
       </AppBar>
 
       <Grid container spacing={1}>
-        <Grid item xs={leftPanelWidth} sx={{ mt: 1 }}>
+        <Grid item xs={leftPanelWidth} sx={{ mt: 0.5 }}>
           {logDirectory ? (
             <TextField
               id="logDirectory"
@@ -2293,7 +2282,7 @@ function App() {
           ) : null}
           {waitSelectLog ? <CircularProgress sx={{ ml: 9, mt: 2 }} /> : null}
         </Grid>
-        <Grid item xs={rightPanelWidth}>
+        <Grid item xs={rightPanelWidth} sx={{ mt: 0.5 }}>
           <Box
             variant={"dense"}
             sx={{
@@ -2346,17 +2335,6 @@ function App() {
           {uniqueTypes &&
             // uniqueTypes.length === badgeCount.length &&
             uniqueTypes.map((t) => {
-              // console.log(
-              //   "t",
-              //   t,
-              //   // badgeCount,
-              //   "badgeCount[t]",
-              //   badgeCount[t],
-              //   "uniqueTypes.length",
-              //   uniqueTypes.length,
-              //   "Object.keys(badgeCount).length",
-              //   Object.keys(badgeCount).length
-              // );
               if (uniqueTypes.length >= Object.keys(badgeCount).length)
                 return (
                   <FormControlLabel
@@ -2613,7 +2591,7 @@ function App() {
                 border: 2,
                 fontSize: fontSize,
                 fontFamily: "courier",
-                maxHeight: windowDimension.winHeight - 50 * verticalSplit,
+                maxHeight: windowDimension.winHeight - 42 * verticalSplit,
                 maxWidth:
                   (windowDimension.winWidth / 12) * rightPanelWidth - 25,
                 overflow: "auto",
@@ -2870,7 +2848,7 @@ function App() {
               JSON files with rules defined.
             </li>
           </ul>
-          Direction of Chart
+          Direction of Chart -
           <Tooltip title="Toggle diagram direction">
             <FormControlLabel
               sx={{
@@ -2903,10 +2881,13 @@ function App() {
             // onInputChange={(event, newInputValue) => {
             //   setInputValue(newInputValue);
             // }}
+            size="small"
             id="lineVarId"
             options={lineVarOptions}
-            sx={{ width: 300 }}
-            renderInput={(params) => <TextField {...params} label="Choose measurement for lines" />}
+            sx={{ width: 300, mt: 2 }}
+            renderInput={(params) => (
+              <TextField {...params} label="Choose measurement for lines" />
+            )}
           />
         </DialogContent>
       </Dialog>
