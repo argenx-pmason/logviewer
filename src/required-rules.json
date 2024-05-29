@@ -1,7 +1,7 @@
 [
     {
-        "ruleType": "startswith",
-        "startswith": "      real time           ",
+        "ruleType": "regex",
+        "startswith": "^\\s{6,7}real time\\s{6}",
         "prefix": "<span style='color: blue'>",
         "suffix": "</span>",
         "anchor": false,
@@ -10,8 +10,8 @@
         "interesting": false
     },
     {
-        "ruleType": "startswith",
-        "startswith": "      cpu time            ",
+        "ruleType": "regex",
+        "startswith": "^\\s{6,7}cpu time\\s{6}",
         "prefix": "<span style='color: blue'>",
         "suffix": "</span>",
         "anchor": false,
@@ -20,8 +20,8 @@
         "interesting": false
     },
     {
-        "ruleType": "startswith",
-        "startswith": "      user cpu time ",
+        "ruleType": "regex",
+        "startswith": "^\\s{6,7}user cpu time\\s",
         "prefix": "<span style='color: blue'>",
         "suffix": "</span>",
         "anchor": false,
@@ -30,8 +30,8 @@
         "interesting": false
     },
     {
-        "ruleType": "startswith",
-        "startswith": "      system cpu time ",
+        "ruleType": "regex",
+        "startswith": "^\\s{6,7}system cpu time\\s",
         "prefix": "<span style='color: blue'>",
         "suffix": "</span>",
         "anchor": false,
@@ -40,8 +40,8 @@
         "interesting": false
     },
     {
-        "ruleType": "startswith",
-        "startswith": "      memory ",
+        "ruleType": "regex",
+        "startswith": "^\\s{6,7}memory ",
         "prefix": "<span style='color: blue'>",
         "suffix": "</span>",
         "anchor": false,
@@ -50,8 +50,8 @@
         "interesting": false
     },
     {
-        "ruleType": "startswith",
-        "startswith": "      OS Memory ",
+        "ruleType": "regex",
+        "startswith": "^\\s{6,7}OS Memory\\s",
         "prefix": "<span style='color: blue'>",
         "suffix": "</span>",
         "anchor": false,
@@ -60,8 +60,8 @@
         "interesting": false
     },
     {
-        "ruleType": "startswith",
-        "startswith": "      Timestamp ",
+        "ruleType": "regex",
+        "startswith": "^\\s{6,7}Timestamp\\s",
         "prefix": "<span style='color: blue'>",
         "suffix": "</span>",
         "anchor": false,
@@ -70,8 +70,8 @@
         "interesting": false
     },
     {
-        "ruleType": "startswith",
-        "startswith": "      Step Count ",
+        "ruleType": "regex",
+        "startswith": "^\\s{6,7}Step Count\\s",
         "prefix": "<span style='color: blue'>",
         "suffix": "</span>",
         "anchor": false,

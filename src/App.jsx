@@ -809,6 +809,7 @@ function App() {
         tempSymbolgen = {};
       // console.log("logArray", logArray);
       logArray.forEach((line, lineNumber) => {
+        if (shiftLineSpaces) line = line.substring(shiftLineSpaces);
         // Inputs
         if (line.startsWith("NOTE: There were ")) {
           const split = line.split(" "),
@@ -1336,7 +1337,8 @@ function App() {
       window.location.hash = "#" + id;
       if (found > 0) setCurrentLine(found);
       else setCurrentLine(0);
-    };
+    },
+    [shiftLineSpaces, setShiftLineSpaces] = useState(null);
   let counts = {};
 
   // update when rules change
@@ -1388,6 +1390,7 @@ function App() {
     console.log("*** href", href);
     document.title = "Log Viewer";
     const splitQuestionMarks = href.split("?");
+    console.log('splitQuestionMarks', splitQuestionMarks)
     // if a log was passed in then extract log and logDir
     if (splitQuestionMarks.length > 1 && href.includes("log=")) {
       const splitEquals = splitQuestionMarks[1].split("="),
@@ -1453,6 +1456,13 @@ function App() {
           pasteClipboard();
         }, 1000);
       }
+    } else if (
+      splitQuestionMarks.length > 1 &&
+      href.includes("shiftlinespaces=")
+    ) {
+      const ls = splitQuestionMarks[1].split("=");
+      console.log("ls", ls);
+      setShiftLineSpaces(ls[1]);
     }
     // eslint-disable-next-line
   }, [href]);
