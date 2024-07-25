@@ -1,19 +1,20 @@
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>LSAF Bookmarklets</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>👽</text></svg>">
-   </head>
-  <a href="https://en.wikipedia.org/wiki/Bookmarklet">What is a bookmarklet?</a><br/>
-  <a href="https://make-bookmarklets.com/">This</a> is a great site if you want to make your own bookmarklets.
-  <h1>
-    Drag the link(s) below to your bookmarks or favorites bar in order to use the
-    bookmarklet
-  </h1>
-<b>Production version: </b>  <a
-    alt="View LSAF file"
-    href="
-    javascript:(function(document) {const iframe=document.getElementById('sasLSAF_iframe'),
+<html lang='en'>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LSAF Bookmarklets</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>👽</text></svg>">
+</head>
+<a href="https://en.wikipedia.org/wiki/Bookmarklet">What is a bookmarklet?</a><br />
+<a href="https://make-bookmarklets.com/">This</a> is a great site if you want to make your own bookmarklets.
+<h1>
+  Drag the link(s) below to your bookmarks or favorites bar in order to use the
+  bookmarklet
+</h1>
+<a alt="View LSAF file" href="
+    javascript:(/*-- Open a viewer web app using selected item --*/ function(document) {const iframe=document.getElementById('sasLSAF_iframe'),
     iWindow = iframe.contentWindow,
     iDocument = iWindow.document,
     repo=iDocument.querySelector('[aria-label=%22Selected, Workspace%22]') ? 'work' : 'repo',
@@ -28,20 +29,15 @@
     if (lastPart==='documents') open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/dashstudy/index.html?file=%27+v+'/meta/dashstudy.json');
     else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+v);
     else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer/index.html?log=%27+filelink);
+    else if (type==='json') open(urlPrefix+'/lsaf/webdav/repo/general/biostat/tools/view/index.html?lsaf='+v);
     else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
-    " >LSAF🔍</a>
-    <br/>
-    <b>Next version (coming soon): </b><a
-    alt="View LSAF file (next version)"
-    href="
-    javascript:(function(document) {const iframe=document.getElementById('sasLSAF_iframe'),  iWindow = iframe.contentWindow, iDocument = iWindow.document,repo=iDocument.querySelector('[aria-label="Selected, Workspace"]') ? %27work%27 : %27repo%27,full=repo===%27work%27?%27WORKSPACE%27:%27REPOSITORY%27,  qs=iDocument.getElementById(%27HLS_LSAF_%27+full+%27--navLinkInput-inner%27), v = qs ? qs.value : null, lastPart = v.split(%27/%27).pop(), type=lastPart.split(%27.%27).pop(),{ href, protocol, host } = window.location, urlPrefix = protocol + %27//%27 + host,    filelink=urlPrefix+%27/lsaf/webdav/%27+repo+v;  console.log(window);  if (lastPart===%27documents%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/dashstudy/index.html?file=%27+v+%27/meta/dashstudy.json%27);    else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+v);    else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer2/index.html?log=%27+filelink);    else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
-    " >View🔍 </a>
-  <p>Once that is done you will be able to use it:</p>
+    ">LSAF🔍</a>
+<br />
+<p>Once that is done you will be able to use them:</p>
+<ul>
   <li>
     go to
-    <a href="https://xarprod.ondemand.sas.com/lsaf/resources/lsaf/index.jsp"
-      >LSAF</a
-    >
+    <a href="https://xarprod.ondemand.sas.com/lsaf/resources/lsaf/index.jsp">LSAF</a>
   </li>
   <li>
     Go to the Repository view (click on Repository icon in the left vertical
@@ -53,12 +49,21 @@
   </li>
   <li>Click next to it to select (shows a tick)</li>
   <li>Click on the bookmark, which will open a new tab to show the file</li>
-  <p></p>
-  <hr />
-  <h2>The following bookmarklet opens file viewer on a path from clipboard</h2>
-  <a
-    alt="View from Clipboard"
-    href="javascript:(function(document) {
+</ul>
+<p>Note: it will open different files selected in different ways. most files are opened in the File Viewer, logs in the
+  log viewer, JSON files in the JSON editor. This bookmarklet works on any LSAF instance (PROD, TEST, etc.)</p>
+<h2>Switch between location in Workspace and Repository</h2>
+<a href="javascript:(/*-- Switch between LSAF Repository and Workspace locations --*/ function(){const iframe=document.getElementById(%22sasLSAF_iframe%22),iWindow=iframe.contentWindow,iDocument=iWindow.document,repo=iDocument.querySelector(%27[aria-label=%22Selected, Workspace%22]%27)?%22work%22:%22repo%22,full=%22work%22===repo?%22WORKSPACE%22:%22REPOSITORY%22,qs=iDocument.getElementById(%22HLS_LSAF_%22+full+%22--navLinkInput-inner%22),full2=%22work%22===repo?%22REPOSITORY%22:%22WORKSPACE%22,qs2=iDocument.getElementById(%22HLS_LSAF_%22+full2+%22--navLinkInput-inner%22),wrk=iDocument.getElementById(%22sasLSAF--sasLSAF_appContainer_lfn_4_icn%22),wrk2=%22true%22===iDocument.getElementById(%22sasLSAF--sasLSAF_appContainer_lfn_4%22).getAttribute(%22aria-selected%22),rp=iDocument.getElementById(%22sasLSAF--sasLSAF_appContainer_lfn_3_icn%22),rp2=%22true%22===iDocument.getElementById(%22sasLSAF--sasLSAF_appContainer_lfn_3%22).getAttribute(%22aria-selected%22),current=qs.value;wrk2&&rp.click(),rp2&&wrk.click(),qs2.value=current,qs2.dispatchEvent(keyboardEvent=new KeyboardEvent(%22keydown%22,{code:%22Enter%22,key:%22Enter%22,charCode:13,keyCode:13,view:window,bubbles:!0})),setTimeout((()=>{const e=iDocument.querySelectorAll(%27[aria-selected=%22true%22]%27);console.log(%22sel%22,e),e[2].scrollIntoViewIfNeeded()}),2e3);}());"
+  ICON="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB+klEQVQ4jX2SPU8VURCGnzl7ztmzC0ZiwCB+xKCABTHU/ggrxcTSgsLSQqPewkJNtCKxM8TCmoIfYCyoKCyMhQGMsTPE3MLg9e7H3d2xAK8X8DLJVPPOk3lnRlRVGBJzz1hUeDusLrBphxUBImG9UiqBdIjkojkO8PkROwaWgHLoFIMWZl7h+cllgPJ3h7IsKTsd3Gg87Vx63RgTwkg6jci1/ZbdAxbcL05Vhk+oGht76qbGxJ7ubpcia9Mriub83NxqSEf6PQcs7I/8TkSInCNOkoFMcXEwWjf5YM+RHSjcAd3oQ9J0PxPiNKEsi1WgD5HZp3qrqWtf5jl5llPmOb0iN877BYmYGps43RbM3SLLKLOMuinmx89cmAVWAGsVWmLMvPUOV9doU6NNRdHtUuQZ1LI2fu4scZIgQNVzbD1m7dIL3puSBWuUZRVZiawjDgNGFBSlof4uIkTWEicJJi4A+PqAXWDdbLZ4g3JPRNqRc/gQ8CHBJ4E4JPSK4iOwLiIYa/Fu9MDODMBWi+UTE0xVRibF+qt7kL10cdo0hhsqrIpIdXjp/T/4sEQF/Jh+DlZc34kxhi8PaQOLV14yenKM/L+Av/FthvbstuxY5yZRRey/S2/ep3NYf/QPbtKo8kREsN4TQjgsOR4AsN3itcJtEdmQyHWPA/wBGZyw943uVMMAAAAASUVORK5CYII=">🔁</a>
+<h2>Choose LSAF link to move to</h2>
+<a
+  href="javascript:(/*-- Jump to LSAF path defined in localStorage --*/ function(){const iframe=document.getElementById(%22sasLSAF_iframe%22),iWindow=iframe.contentWindow,iDocument=iWindow.document,repo=iDocument.querySelector(%27[aria-label=%22Selected, Workspace%22]%27)?%22work%22:%22repo%22,full=%22work%22===repo?%22WORKSPACE%22:%22REPOSITORY%22,qs=iDocument.getElementById(%22HLS_LSAF_%22+full+%22--navLinkInput-inner%22),w=window.open(%22%22,%22%22,%22width=800,height=200%22),links=JSON.parse(localStorage.getItem(%22lsafLinks%22)),keys=Object.keys(links),text=keys.map((e=>e+%22 = %22+links[e])).join(%22<br/>%22);w.document.write(text),w.focus(),setTimeout((function(){w.close()}),2e3),w.document.addEventListener(%22keydown%22,(e=>{links[e.key]&&(qs.value=links[e.key],qs.dispatchEvent(keyboardEvent=new KeyboardEvent(%22keydown%22,{code:%22Enter%22,key:%22Enter%22,charCode:13,keyCode:13,view:window,bubbles:!0})))})),setTimeout((()=>{const e=iDocument.querySelectorAll(%27[aria-selected=%22true%22]%27);e[e.length-1].scrollIntoViewIfNeeded()}),2e3);}());">❓</a>
+<p>You need to create an object with the links you want to use in localStorage. You can run the code to set it up by
+  going into the Developers Console (cntl-shift-i) and running some code like this - here is an example:</p>
+<code>localStorage.setItem("lsafLinks",JSON.stringify({a:"/general/biostat/jobs/gadam_ongoing_studies/dev/output",b:"/general/biostat/tools/sdtm-last"}))
+</code>
+<h2>The following bookmarklet opens file viewer on a path from clipboard</h2>
+<a alt="View from Clipboard" href="javascript:(/*-- Open Log or File viewer from path on clipboard --*/ function(document) {
 const qs = navigator.clipboard.readText().then(v =>{
 const lastPart = v.split(%27/%27).pop(),
 type=lastPart.split(%27.%27).pop(),
@@ -69,69 +74,48 @@ if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/filedownload/sdd
 else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer2/index.html?log=%27+filelink);
 else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);
 else alert(%27Please select a file type that is supported. Or let Phil know if you would like other file types supported.%27);
-})}) (document);"
-    >Clip📋</a
-    <p></p>
-    <hr />
-    <h2>Prompt the user and search SharePoint for something</h2>
-    <a href="
-    javascript:void(window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q='+prompt ('Search SharePoint:')));
+})}) (document);">Clip📋</a>
+<hr />
+<h2>Prompt the user and search TLF Bundles for something</h2>
+<a href="
+javascript:(/*-- Prompt user and search TLF bundles --*/ function(){window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/Final TLF bundles/Forms/AllItems.aspx?view=7&q=%27+ prompt(%27Search TLF Bundles content:%27));}());
+">TLF👓</a>
+<h2>Prompt the user and search SharePoint for something</h2>
+<a href="
+    javascript:void(/*-- Prompt user and search SharePoint --*/ window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q='+prompt ('Search SharePoint:')));
 ">SP🤓</a>
-<p></p>
+<h2>Prompt the user and search SP role docs for something (narrower search) </h2>
+<a
+  href="javascript:(/*-- Prompt and search SP role docs with narrow search --*/ function(){window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/Shared Documents/Forms/AllItems.aspx?id=%2Fsites%2FBiostatistics%2FShared Documents%2FSTAR processes%2FStatistical Programmer - role_tasks_processes%26view=7%26q=%27+prompt(%27Search SharePoint SP Role Docs:%27));}());">SPR🧲</a>
+<h2>Prompt the user and search SP role docs for something (wider search)</h2>
+<a
+  href="javascript:(/*-- Prompt and search SP role docs with wider search --*/ function(){window.open('https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/sitefiles?id=%2Fsites%2FBiostatistics%2FShared Documents%2FSTAR processes%2FStatistical Programmer - role_tasks_processes%2Fsubtasks%26q=%27+prompt(%27Search SharePoint SP Role Docs:%27));}());">SPR🔑</a>
 <hr />
 <h2>Prompt the user and search Jira for something</h2>
 <a href='
-javascript:void(window.open(%27https://argenx.atlassian.net/issues/?jql=text%20~%20%22%27+prompt%20(%27Search%20Jira:%27)+%27*%22%27));
+javascript:void(/*-- Prompt user and search Jira --*/ window.open(%27https://argenx.atlassian.net/issues/?jql=text%20~%20%22%27+prompt%20(%27Search%20Jira:%27)+%27*%22%27));
 '>Jira👽</a>
-<p></p>
-<hr />
 <h2>Prompt the user and search Jira using some JQL</h2>
 <a href="
-javascript:void(window.open(%27https://argenx.atlassian.net/issues/?jql=%27+prompt(%27Enter JQL:%27,%27text ~ gadam%27)));
+javascript:void(/*-- Prompt user and search Jira with JQL --*/ window.open(%27https://argenx.atlassian.net/issues/?jql=%27+prompt(%27Enter JQL:%27,%27text ~ gadam%27)));
 ">Jira👾</a>
-<p></p>
 <hr />
 <h3>Technology used in our Dashboards and Viewers</h3>
-    <p>If you are interested in what we use to build things, or want to learn how to do so yourself then here are links to get you started.</p>
-    <ul><a href="https://code.visualstudio.com/">Visual Studio Code</a> - the editor user to develop and test our apps.</ul>
-    <ul><a href="https://reactjs.org/"">React</a> - JavaScript library for building User Interfaces</ul>
-    <ul><a href="https://www.npmjs.com/">npm</a> - collection of JavaScript libraries for building things</ul>
-    <ul><a href="https://mui.com/material-ui/">Material-UI</a> components from Google</ul>
-    <ul><a href="https://mui.com/x/react-data-grid/"">Data Grid</a> - part of Material-UI</ul>
-    <ul><a href="https://www.highcharts.com/demo">Highcharts</a> for graphs & maps</ul>
-    <h3>Notes</h3>
-    <ul>
-      <li>Hit ctrl + shift + j in Chrome. That should open the JavaScript console.
-          This is useful if you are having problems with a web page and want to check if there are any errors. </li>
-    </ul>
-    <hr/>
-    <h2>Experimental</h2>
-    <b>Don't use these experimental bookmarklets as they are not ready for general use.</b>
-    <li><a href="
-javascript:(function(document) {
-const iframe=document.getElementById('sasLSAF_iframe'),
-iWindow = iframe.contentWindow,
-iDocument = iWindow.document,
-repoButton=iDocument.getElementById('sasLSAF--sasLSAF_appContainer_lfn_3_icn'),
-searchButton=iDocument.getElementById('HLS_LSAF_REPOSITORY--searchButton');
-repoButton.click();
-console.log('repoButton',repoButton,'searchButton',searchButton);
-searchButton.style.border='3px solid red';
-searchButton.click();
-})(document);
-">Test1</a>
-    </li>
-    <li><a href="
-javascript:(function() {
-  var targetUrl = 'https://argenxbvba.sharepoint.com/sites/Biostatistics/_layouts/15/search.aspx/siteall?q=';
-  new Promise (
-      (setQuery) => {var input = window.prompt('Search SharePoint:'); if (input) setQuery(input);}
-  )
-  .then (
-      (query) => window.open(targetUrl + query)
-  );
-})();
-})(document);
-">Test2</a>
-    </li>
+<p>If you are interested in what we use to build things, or want to learn how to do so yourself then here are links to
+  get you started.</p>
+<ul>
+  <li><a href="https://code.visualstudio.com/">Visual Studio Code</a> - the editor user to develop and test our apps.
+  </li>
+  <li><a href="https://reactjs.org/"">React</a> - JavaScript library for building User Interfaces</li>
+  <li><a href=" https://www.npmjs.com/">npm</a> - collection of JavaScript libraries for building things</li>
+  <li><a href="https://mui.com/material-ui/">Material-UI</a> components from Google</li>
+  <li><a href="https://mui.com/x/react-data-grid/"">Data Grid</a> - part of Material-UI</li>
+  <li><a href=" https://www.highcharts.com/demo">Highcharts</a> for graphs & maps</li>
+</ul>
+<h3>Notes</h3>
+<ul>
+  <li>Hit ctrl + shift + j in Chrome. That should open the JavaScript console.
+    This is useful if you are having problems with a web page and want to check if there are any errors. </li>
+</ul>
+
 </html>
