@@ -29,7 +29,6 @@ Your app is ready to be deployed!
 - Navigate to /general/biostat/tools/logviewer
 - Use the **Upload and expand** tool from the LSAF toolbar to upload the build zip file and expand the contents. This will overwrite the previous app with the uploaded one.
 - Click on **index.html** to open the application.
--
 
 ## Building for use on SharePoint
 
@@ -51,3 +50,8 @@ Your app is ready to be deployed!
   - switches to LOG window
   - copies the contents of log window to clipboard
   - starts the log viewer web app on SharePoint with a parameter that causes it to paste the clipboard in
+
+## Test with express-server
+We have a server you can run on your computer which will server local files to the log viewer. You can run this by cloning the express-server project. Then use the following command to start the node server.
+* cd c:\github\express-server
+* node server

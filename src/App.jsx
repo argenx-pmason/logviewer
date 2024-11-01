@@ -67,7 +67,7 @@ import Mermaid from "./Mermaid";
 
 function App() {
   LicenseInfo.setLicenseKey(
-    "369a1eb75b405178b0ae6c2b51263cacTz03MTMzMCxFPTE3MjE3NDE5NDcwMDAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
+    "6b1cacb920025860cc06bcaf75ee7a66Tz05NDY2MixFPTE3NTMyNTMxMDQwMDAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
   );
   const rowHeight = 22,
     increment = 0.25,
@@ -1271,9 +1271,9 @@ function App() {
           console.log(response);
           response.text().then(function (text) {
             const dirObject = JSON.parse(text);
-            // const { dirs, files } = dirObject;
-            const files = dirObject,
-              dirs = dirObject.filter((d) => !d.includes("."));
+            const { dirs, files } = dirObject;
+            // const files = dirObject,
+            //   dirs = dirObject.filter((d) => !d.includes("."));
             console.log(
               "dirObject",
               dirObject,
@@ -1288,9 +1288,9 @@ function App() {
             );
             setSelectedLog(null);
             setListOfDirs(dirs);
-            const parsedText = JSON.parse(text);
-            console.log("parsedText", parsedText);
-            setLogOriginalText(parsedText.join("\n") || text);
+            // const parsedText = JSON.parse(text);
+            // console.log("parsedText", parsedText);
+            // setLogOriginalText(parsedText.join("\n") || text);
             makeDirListing(dirs);
             setListOfLogs(
               files
@@ -1390,7 +1390,7 @@ function App() {
     console.log("*** href", href);
     document.title = "Log Viewer";
     const splitQuestionMarks = href.split("?");
-    console.log('splitQuestionMarks', splitQuestionMarks)
+    console.log("splitQuestionMarks", splitQuestionMarks);
     // if a log was passed in then extract log and logDir
     if (splitQuestionMarks.length > 1 && href.includes("log=")) {
       const splitEquals = splitQuestionMarks[1].split("="),
@@ -1553,7 +1553,7 @@ function App() {
     //   url = "http://localhost:3001/getfile/" + dir + "/" + file;
     const file = selectedLocalFile.split("/").pop(),
       dir = encodeURIComponent(logDirectory),
-      url = "http://localhost:3001/getfile/" + dir + "%2F" + file;
+      url = "http://localhost:3001/getfile/" + dir + "/" + file;
     console.log(url);
     // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2Fgithub%2Flogviewer%2Ftests%2Fpp.log
     // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2Fgithub%2Flogviewer%2Ftests/pp.log
@@ -1573,7 +1573,6 @@ function App() {
     fetch(url).then(function (response) {
       response.text().then(function (text) {
         console.log(`${text.length} characters were read from file ${url}`);
-        // setAnalyseAgain(!analyseAgain);
         setLogOriginalText(text);
         setLogText(analyse(text));
       });
@@ -1594,7 +1593,6 @@ function App() {
       tempMacrosSelected.push(mprint[item - 1].name);
     });
     setMacrosSelected(tempMacrosSelected);
-    // setAnalyseAgain(!analyseAgain);
     // eslint-disable-next-line
   }, [showSource, showMacroLines, selectionModel]);
 
@@ -1608,14 +1606,15 @@ function App() {
   return (
     <Box>
       <AppBar position="static">
-        <Toolbar variant="dense" disableGutters>
+        <Toolbar
+          variant="dense"
+          disableGutters
+          sx={{ backgroundColor: "#f7f7f7" }}
+        >
           <Tooltip title="Move center to the left">
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -1632,9 +1631,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -1649,9 +1645,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -1668,9 +1661,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -1684,9 +1674,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -1700,9 +1687,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -1716,9 +1700,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -1731,8 +1712,6 @@ function App() {
           <Tooltip title="Show Source Lines">
             <FormControlLabel
               sx={{
-                borderRadius: 3,
-                backgroundColor: "#555555",
                 mr: iconPadding,
                 ml: iconPadding,
               }}
@@ -1745,7 +1724,7 @@ function App() {
                   }}
                   name="source"
                   size="small"
-                  color="warning"
+                  color="info"
                 />
               }
             />
@@ -1753,8 +1732,6 @@ function App() {
           <Tooltip title="Show Mprint/Mlogic/Symbolgen/Mautocomploc Lines">
             <FormControlLabel
               sx={{
-                borderRadius: 3,
-                backgroundColor: "#555555",
                 mr: iconPadding,
                 ml: iconPadding,
               }}
@@ -1767,7 +1744,7 @@ function App() {
                   }}
                   name="mprint"
                   size="small"
-                  color="warning"
+                  color="info"
                   sx={{ ml: 0.5 }}
                 />
               }
@@ -1776,8 +1753,6 @@ function App() {
           <Tooltip title="Show Line numbers">
             <FormControlLabel
               sx={{
-                borderRadius: 3,
-                backgroundColor: "#555555",
                 mr: iconPadding,
                 ml: iconPadding,
               }}
@@ -1789,7 +1764,7 @@ function App() {
                   }}
                   name="mprint"
                   size="small"
-                  color="warning"
+                  color="info"
                   sx={{ ml: 0.5, mr: 0.5 }}
                 />
               }
@@ -1800,9 +1775,6 @@ function App() {
               size="small"
               onClick={() => setOpenModal(true)}
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
                 ml: iconPadding,
               }}
@@ -1814,9 +1786,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={(e) => {
@@ -1831,9 +1800,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={(e) => {
@@ -1847,9 +1813,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={(e) => {
@@ -1863,9 +1826,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={(e) => {
@@ -1888,9 +1848,6 @@ function App() {
               }}
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
             >
@@ -1901,9 +1858,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={(e) => {
@@ -1942,9 +1896,6 @@ function App() {
                 setVerticalSplit(verticalSplit + increment);
               }}
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
             >
@@ -1958,9 +1909,6 @@ function App() {
                 setVerticalSplit(verticalSplit - increment);
               }}
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
             >
@@ -1971,9 +1919,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -1988,9 +1933,6 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                color: "black",
-                backgroundColor: "#aaaaff",
-                borderRadius: 3,
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -2014,8 +1956,7 @@ function App() {
                 }
               }}
               sx={{
-                borderRadius: 3,
-                backgroundColor: "lightblue",
+                color: "blue",
                 mr: iconPadding,
               }}
             >
@@ -2026,8 +1967,7 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                borderRadius: 3,
-                backgroundColor: "lightblue",
+                color: "blue",
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -2048,9 +1988,7 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                borderRadius: 3,
-                backgroundColor: "red",
-                color: "white",
+                color: "red",
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -2071,9 +2009,7 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                borderRadius: 3,
-                backgroundColor: "red",
-                color: "white",
+                color: "red",
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -2095,8 +2031,7 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                borderRadius: 3,
-                backgroundColor: "lightgreen",
+                color: "green",
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -2117,8 +2052,7 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                borderRadius: 3,
-                backgroundColor: "lightgreen",
+                color: "green",
                 mr: iconPadding,
               }}
               onClick={() => {
@@ -2137,7 +2071,7 @@ function App() {
             </IconButton>
           </Tooltip>
           <TextField
-            label="Search (case-sensitive)"
+            label="Search"
             value={search}
             size={"small"}
             inputProps={{ style: { fontSize: 10, height: "1.1em" } }}
@@ -2161,15 +2095,13 @@ function App() {
               mt: 0.6,
               mr: 1,
               ml: 1,
-              backgroundColor: "lightblue",
             }}
           />
           <Tooltip title="Next search term">
             <IconButton
               size="small"
               sx={{
-                borderRadius: 3,
-                backgroundColor: "#e0ccff",
+                color: "purple",
                 mr: iconPadding,
               }}
               onClick={nextSearchItem}
@@ -2181,8 +2113,7 @@ function App() {
             <IconButton
               size="small"
               sx={{
-                borderRadius: 3,
-                backgroundColor: "#e0ccff",
+                color: "purple",
                 mr: iconPadding,
               }}
               onClick={previousSearchTerm}
@@ -2200,9 +2131,6 @@ function App() {
                 setOpenInfo(true);
               }}
               sx={{
-                borderRadius: 3,
-                backgroundColor: "#0000ff",
-                color: "white",
                 mr: iconPadding,
               }}
             >
@@ -2862,7 +2790,7 @@ function App() {
           <Tooltip title="Toggle diagram direction">
             <FormControlLabel
               sx={{
-                borderRadius: 3,
+                borderRadius: 7,
                 backgroundColor: "#cccccc",
                 mr: iconPadding,
                 ml: iconPadding,
