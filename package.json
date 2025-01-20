@@ -2,7 +2,7 @@
   "name": "logviewer",
   "version": "1.1.0",
   "private": true,
-  "homepage": "/lsaf/webdav/repo/general/biostat/tools/logviewer",
+  "homepage": "/lsaf/webdav/repo/general/biostat/apps/logviewer",
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",

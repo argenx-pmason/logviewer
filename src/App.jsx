@@ -24,13 +24,14 @@ import {
   MenuItem,
   Snackbar,
   DialogActions,
+  LinearProgress,
+  Typography,
   DialogContentText,
   Autocomplete,
 } from "@mui/material";
-// import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { DataGridPro } from "@mui/x-data-grid-pro";
-import { LicenseInfo } from "@mui/x-data-grid-pro";
-
+import PropTypes from "prop-types";
+import { DataGridPro, LicenseInfo } from "@mui/x-data-grid-pro";
+import worker_script from "./worker";
 import { getDir, getVersions, xmlToJson } from "./utility";
 import "./App.css";
 // rules are kept on LSAF in /general/biostat/tools/common/metadata/rules.json
@@ -61,15 +62,36 @@ import {
   Email,
   ContentPaste,
 } from "@mui/icons-material";
-// import { Routes, Route, useNavigate } from "react-router-dom";
-// import Mermaid from "react-mermaid";
 import Mermaid from "./Mermaid";
+
+function LinearProgressWithLabel(props) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center" }}>
+      <Box sx={{ width: "100%", mr: 1 }}>
+        <LinearProgress variant="determinate" {...props} />
+      </Box>
+      <Box sx={{ minWidth: 35 }}>
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          {`${Math.round(props.value)}%`}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+LinearProgressWithLabel.propTypes = {
+  /**
+   * The value of the progress indicator for the determinate and buffer variants.
+   * Value between 0 and 100.
+   */
+  value: PropTypes.number.isRequired,
+};
 
 function App() {
   LicenseInfo.setLicenseKey(
     "6b1cacb920025860cc06bcaf75ee7a66Tz05NDY2MixFPTE3NTMyNTMxMDQwMDAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI="
   );
-  const rowHeight = 22,
+  const myWorker = new Worker(worker_script),
+    rowHeight = 22,
     increment = 0.25,
     [chart, setChart] = useState(`flowchart TD
     Start --> Stop`),
@@ -80,7 +102,7 @@ function App() {
     webDavPrefix = urlPrefix + "/lsaf/webdav/repo",
     [logText, setLogText] = useState(null),
     [logOriginalText, setLogOriginalText] = useState(null),
-    [showLineNumbers, setshowLineNumbers] = useState(null),
+    [showLineNumbers, setShowLineNumbers] = useState(null),
     [dirListing, setDirListing] = useState(null),
     logRef = createRef(),
     // localFileRef = createRef(),
@@ -109,12 +131,6 @@ function App() {
     [rules, setRules] = useState([...defaultRules, ...requiredRules]),
     [anchorEl, setAnchorEl] = useState(null),
     getLog = (url) => {
-      // const username = "",
-      //   password = "",
-      //   credentials = btoa(username + ":" + password),
-      //   headers = { headers: { Authorization: `Basic ${credentials}` } };
-      // fetch(url, headers)
-      // fetch(url, { credentials: "include" })
       if (
         url === lastUrl &&
         showSource === lastShowSource &&
@@ -125,7 +141,6 @@ function App() {
         setLastShowMacroLines(showMacroLines);
         setLastShowSource(showSource);
         fetch(localUrl).then(function (response) {
-          // console.log(response);
           if (response.type !== "basic") {
             if (response.ok) {
               response.text().then(function (text) {
@@ -133,7 +148,7 @@ function App() {
                   `${text.length} characters read from file ${localUrl}`
                 );
                 setLogOriginalText(text);
-                setLogText(analyse(text));
+                analyse(1, text);
               });
             } else {
               const message =
@@ -145,15 +160,14 @@ function App() {
         });
       } else {
         console.log("getLog:- url = ", url);
-        // updateRules();
-        fetch(url).then(function (response) {
+        fetch(url).then((response) => {
           setLastUrl(url);
           setLastShowMacroLines(showMacroLines);
           setLastShowSource(showSource);
           if (response.ok) {
-            response.text().then(function (text) {
+            response.text().then((text) => {
               setLogOriginalText(text);
-              setLogText(analyse(text));
+              analyse(2, text);
             });
           } else {
             const message = "Getting log failed, response = " + response.status;
@@ -168,12 +182,12 @@ function App() {
     [fontSize, setFontSize] = useState(12),
     [leftPanelWidth, setLeftPanelWidth] = useState(6),
     [rightPanelWidth, setRightPanelWidth] = useState(6),
-    [windowDimension, detectHW] = useState({
+    [windowDimension, setWindowDimension] = useState({
       winWidth: window.innerWidth - 50,
       winHeight: window.innerHeight - 50,
     }),
     detectSize = () => {
-      detectHW({
+      setWindowDimension({
         winWidth: window.innerWidth - 50,
         winHeight: window.innerHeight - 50,
       });
@@ -181,12 +195,7 @@ function App() {
     zeroPad = (num, places) => String(num).padStart(places, "0"),
     // [counts, setCounts] = useState({}),
     [selectedLocalFile, setSelectedLocalFile] = useState(""),
-    incrementCount = (type) => {
-      if (!counts.hasOwnProperty(type)) counts[type] = 0;
-      counts[type]++;
-      return counts[type];
-    },
-    [tabValue, changeTabValue] = useState(0),
+    [tabValue, setTabValue] = useState(0),
     [badgeCount, setBadgeCount] = useState({}),
     [check, setCheck] = useState({}),
     changeCheck = (type) => {
@@ -204,14 +213,6 @@ function App() {
     [macrosSelected, setMacrosSelected] = useState(null),
     resetCounts = () => {
       console.log("resetCounts");
-      // const tempBadgeCount = {},
-      //   tempCheck = {};
-      // uniqueTypes.forEach((type) => {
-      //   tempBadgeCount[type] = 0;
-      // tempBadgeCheck[type] = 0;
-      // });
-      // setBadgeCount(tempBadgeCount);
-      // setCheck(tempCheck);
       if (!uniqueTypes) return;
       uniqueTypes.forEach((type) => {
         badgeCount[type] = 0;
@@ -243,6 +244,7 @@ function App() {
       // }),
     },
     [popUpMessage, setPopUpMessage] = useState(null),
+    [processingTime, setProcessingTime] = useState(null),
     [openPopUp, setOpenPopUp] = useState(false),
     extractSasCode = (text) => {
       if (!logOriginalText) return;
@@ -270,7 +272,6 @@ function App() {
       const text = await navigator.clipboard.readText();
       if (text.length > 100) {
         text.replace(/\r\n/g, "\n");
-        // text.replace(/\r/g, "");
         const lines = text.split("\n");
         // show first element of lines in hex
         let hex,
@@ -286,7 +287,7 @@ function App() {
         setOpenPopUp(true);
         setPopUpMessage("Pasting contents of clipboard");
         setLogOriginalText(text);
-        setLogText(analyse(text));
+        analyse(3, text);
       } else {
         setOpenPopUp(true);
         setPopUpMessage(
@@ -294,157 +295,31 @@ function App() {
         );
       }
     },
+    [progress, setProgress] = useState(null),
     // use rules to analyse text and modify it
-    analyse = (text) => {
-      if (text === null || text.length === 0) return;
-      console.log("analyse", text.length);
+    analyse = (calledFrom, text) => {
+      if (text === null || text.length === 0 || !uniqueTypes) return;
+      console.log("analyse - calledFrom=", calledFrom, "length=", text.length);
       resetCounts();
-      // Object.keys(badgeCount).forEach((key) => {
-      //   badgeCount[key] = 0;
-      //   counts[key] = 0;
-      // });
-      let id = 0;
-      // console.log("rules", rules);
+      setProgress(0);
       const lines = text.split("\n"),
-        tempLinks = [],
-        // tempLineNumberToLink = [],
-        html = lines.map((element, lineNumber) => {
-          // console.log(lineNumber)
-          // const lineNumber = ln + 1; // so the first line will be line 1, not line 0
-          let matchFound = false;
-          // if (/^\W(\d+)\s+The SAS System\s+/.test(element)) return null;
-          if (/The SAS System/.test(element)) return null;
-          if (!showSource && /^(\d+)/.test(element)) return null;
-          // mprint
-          if (element.startsWith("MPRINT(")) {
-            if (!showMacroLines) return null;
-            else {
-              const tempMacroName = element.split("(")[1].split(")")[0];
-              if (macrosSelected && !macrosSelected.includes(tempMacroName)) {
-                return null;
-              }
-            }
-          }
-          if (
-            !showMacroLines &&
-            (element.startsWith("MLOGIC(") ||
-              element.startsWith("SYMBOLGEN: ") ||
-              element.startsWith("MAUTOCOMPLOC: "))
-          )
-            return null;
-          let preparedToReturn = element;
-          // make sure we have rules that handle all the things we might want to link to, so that there will be a link to be used
-          // we only handle the first match to a rule, and then ignore any further ones
-          rules.forEach((rule) => {
-            if (
-              !matchFound &&
-              ((rule.ruleType === "startswith" &&
-                element.startsWith(rule.startswith)) ||
-                (rule.ruleType === "regex" &&
-                  rule.regularExpression.test(element)))
-            ) {
-              // id++;
-              id = lineNumber;
-              // console.log('id',id)
-              matchFound = true; // set this showing we have matched a rule for this line, so we dont want to match any other rules for this line
-              const tag = rule.prefix,
-                prefix = tag.substring(0, tag.length - 1) + ` id='${id}'>`;
-              if (rule.anchor)
-                tempLinks.push({
-                  text: element,
-                  id: id,
-                  lineNumber: lineNumber,
-                  linkColor: rule.linkColor,
-                  type: rule.type,
-                  interesting: rule.interesting,
-                });
-              // tempLineNumberToLink.push({ id: id, lineNumber: lineNumber });
-              incrementCount(rule.type);
-              preparedToReturn = prefix + preparedToReturn + rule.suffix;
-              // handle link creation, where we have a regex and want to make something using the matching text
-              if (
-                rule.ruleType === "regex" &&
-                rule.substitute &&
-                rule.regularExpression.test(element)
-              ) {
-                // if (id>648) console.log('-')
-                const matches = element.match(rule.regularExpression);
-                // if (id>648) console.log('-')
-                matches.forEach((match) => {
-                  preparedToReturn = element;
-                  // preparedToReturn = element;
-                  if (rule.prefix.includes("{{matched}}")) {
-                    //TODO: if match ends in . then remove it when making link
-                    const a = rule.prefix.replace("{{matched}}", match),
-                      b = rule.suffix.replace("{{matched}}", match);
-                    preparedToReturn = element.replace(match, a + b);
-                  }
-                  if (rule.prefix.includes("{{line}}")) {
-                    const c = rule.prefix.replace(
-                        "{{line}}",
-                        encodeURI(element)
-                      ),
-                      d = rule.suffix.replace("{{line}}", element);
-                    preparedToReturn = c + d;
-                  }
-                });
-              }
-            }
-          });
-          // console.log("-");
-          setLinks(tempLinks);
-          return preparedToReturn;
-        });
+        linesPackage = {
+          lines: lines,
+          showSource: showSource,
+          showMacroLines: showMacroLines,
+          macrosSelected: macrosSelected,
+          rules: rules,
+        };
 
-      // resetCounts();
-      if (uniqueTypes) {
-        uniqueTypes.forEach((type) => {
-          badgeCount[type] = counts[type];
-        });
-      } else {
-        Object.keys(counts).forEach((type) => {
-          badgeCount[type] = counts[type];
-        });
-      }
-      // console.log(
-      //   "uniqueTypes",
-      //   uniqueTypes,
-      //   "counts",
-      //   counts,
-      //   "badgeCount",
-      //   badgeCount
-      // );
-      // const tempBadgeCount = {};
-      // if (uniqueTypes) {
-      //   uniqueTypes.forEach((type) => {
-      //     // if (counts.hasOwnProperty(type)) tempBadgeCount[type] = counts[type];
-      //     if (counts.hasOwnProperty(type)) badgeCount[type] = counts[type];
-      //   });
-      //   // setBadgeCount(tempBadgeCount);
-      // }
-      // console.log("tempBadgeCount", tempBadgeCount);
       setNLines(lines.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
-      // setLineNumberToLink(tempLineNumberToLink);
-      // console.log(tempLineNumberToLink);
 
-      const modified = html
-        .map((h, hid) => {
-          let extra = "";
-          if (showLineNumbers) extra = zeroPad(hid, 7) + "|" + h;
-          if (h !== null) return `<span id="${hid}">` + extra + h + "</span>";
-          return null;
-        })
-        .filter((element) => element != null);
-
-      // console.log(showLineNumbers);
-      // if (mode === "local") return modified.join("\n"); else
-      return modified.join("\n");
+      myWorker.postMessage(linesPackage); // hand off the processing of lines to web worker thread
     },
     selectLog = (index) => {
       console.log("> selectLog function called", index);
+      setAnalyseAgain(false);
       setWaitSelectLog(true);
       const { value } = index;
-      // resetCounts();
       if (mode !== "local") {
         // eslint-disable-next-line
         getLog(value);
@@ -452,12 +327,8 @@ function App() {
         setSelectedLog(index);
         setSelection(value);
       } else {
-        // handle selecting a local file
-        // console.log(index);
-        // document.title = value.split("/").pop();
         setSelectedLocalFile(value);
         setSelectedLog(index);
-        // setSelection(value);
       }
       setWaitSelectLog(false);
     },
@@ -499,61 +370,31 @@ function App() {
     },
     processDirectory = (dirPassed) => {
       if (mode === "local") {
-        // localFileRef.current.click();
         readLocalFiles(dirPassed || logDirectory);
       } else {
         setWaitGetDir(true);
-        // resetCounts();
         getLogWebDav(dirPassed || logDirectory);
       }
     },
     [showSource, setShowSource] = useState(true),
-    [showMacroLines, setshowMacroLines] = useState(true),
+    [showMacroLines, setShowMacroLines] = useState(true),
     [selection, setSelection] = useState(""),
     [selectedLog, setSelectedLog] = useState(null),
     [links, setLinks] = useState(null),
-    // [lineNumberToLink, setLineNumberToLink] = useState(null),
     [waitGetDir, setWaitGetDir] = useState(false),
     [waitSelectLog, setWaitSelectLog] = useState(false),
     [useMaxWidth] = useState(true),
-    // [checkWarn, setCheckWarn] = useState(true),
-    // [checkError, setCheckError] = useState(true),
-    // [checkNotice, setCheckNotice] = useState(false),
-    // [checkSerious, setCheckSerious] = useState(true),
-    // [checkJob, setCheckJob] = useState(true),
-    // [checkOther, setCheckOther] = useState(false),
-    // changeCheckWarn = (event) => {
-    //   setCheckWarn(event.target.checked);
-    // },
-    // changeCheckError = (event) => {
-    //   setCheckError(event.target.checked);
-    // },
-    // changeCheckNotice = (event) => {
-    //   setCheckNotice(event.target.checked);
-    // },
-    // changeCheckJob = (event) => {
-    //   setCheckJob(event.target.checked);
-    // },
-    // changeCheckSerious = (event) => {
-    //   setCheckSerious(event.target.checked);
-    // },
-    // changeCheckOther = (event) => {
-    //   setCheckOther(event.target.checked);
-    // },
     { href } = window.location,
     mode = href.startsWith("http://localhost") ? "local" : "remote",
-    // server = href.split("//")[1].split("/")[0],
     [rulesDirectory, setRulesDirectory] = useState(
       navigator.platform.startsWith("Win") && mode === "remote"
-        ? "/general/biostat/tools/logviewer2/rules"
+        ? "/general/biostat/apps/logviewer/rules"
         : navigator.platform.startsWith("Win") && mode === "local"
         ? "C:/github/logviewer/src"
         : "/Users/philipmason/github/logviewer/src"
     ),
     [listOfRules, setListOfRules] = useState([]),
     [openRulesMenu, setOpenRulesMenu] = useState(false),
-    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2Fgithub%2Flogviewer%2Ftests/a.log
-    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2FDocuments%2Fgithub%2Flogviewer%2Fsrc%2Flogs.json
     handleCloseRulesMenu = (item) => {
       console.log(item);
       const url =
@@ -563,16 +404,6 @@ function App() {
             "%2F" +
             item
           : item;
-      // console.log(
-      //   "webDavPrefix",
-      //   webDavPrefix,
-      //   "rulesDirectory",
-      //   rulesDirectory,
-      //   "item",
-      //   item,
-      //   "url",
-      //   url
-      // );
       fetch(url).then(function (response) {
         response.text().then(function (text) {
           const tempRules = JSON.parse(text);
@@ -596,7 +427,6 @@ function App() {
       setWaitGetDir(false);
     },
     getLogVersions = async (dir) => {
-      // const webDavPrefix = urlPrefix + "/lsaf/webdav/repo";
       await getVersions(webDavPrefix + dir, processRulesXml);
       setWaitGetDir(false);
     },
@@ -801,13 +631,13 @@ function App() {
     [submitted, setSubmitted] = useState(null),
     [submitEnd, setSubmitEnd] = useState(null),
     [analyseAgain, setAnalyseAgain] = useState(null),
-    analyseLog = () => {
+    analyseLog = (n, logText) => {
+      console.log("analyseLog - n=", n);
       // extracts info for tables in the bottom left of screen
-      const logArray = logOriginalText.split("\n"),
+      const logArray = logText.split("\n"),
         tempMprint = {},
         tempMlogic = {},
         tempSymbolgen = {};
-      // console.log("logArray", logArray);
       logArray.forEach((line, lineNumber) => {
         if (shiftLineSpaces) line = line.substring(shiftLineSpaces);
         // Inputs
@@ -818,9 +648,6 @@ function App() {
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
             link = lineNumber;
-          // link = lineNumberToLink.filter(
-          //   (link) => link.lineNumber === lineNumber
-          // )[0].id;
           tempInputs.push({
             id: lineNumber,
             libname: libname,
@@ -852,9 +679,6 @@ function App() {
             ),
             size = to1 ? long.substring(from1, to1 + from1) : "",
             link = lineNumber;
-          // link = lineNumberToLink.filter(
-          //   (link) => link.lineNumber === lineNumber
-          // )[0].id;
           tempFiles.push({
             id: lineNumber,
             type: "In",
@@ -873,9 +697,6 @@ function App() {
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
             link = lineNumber;
-          // link = lineNumberToLink.filter(
-          //   (link) => link.lineNumber === lineNumber
-          // )[0].id;
           tempOutputs.push({
             id: lineNumber,
             libname: libname,
@@ -927,9 +748,6 @@ function App() {
             libname = dset.split(".")[0],
             dataset = dset.split(".")[1],
             link = lineNumber;
-          // link = lineNumberToLink.filter(
-          //   (link) => link.lineNumber === lineNumber
-          // )[0].id;
 
           tempOutputs.push({
             id: lineNumber,
@@ -942,7 +760,6 @@ function App() {
           });
         }
         // Stats
-        // if (line.startsWith("      real time")) {
         if (/\breal time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
             len = split.length,
@@ -957,9 +774,6 @@ function App() {
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
             link = lineNumber;
-          // link = lineNumberToLink.filter(
-          //   (link) => link.lineNumber === lineNumber
-          // )[0]?.id;
           tempRealTime.push({
             id: lineNumber,
             time: time,
@@ -969,9 +783,7 @@ function App() {
             link: link,
           });
         }
-        // if (line.startsWith("      cpu time")) {
         if (/\bcpu time\b\s+\d/i.test(line)) {
-          // console.log(line, line.length, lineNumber);
           const split = line.split(" "),
             len = split.length,
             time = split[len - 2],
@@ -985,9 +797,6 @@ function App() {
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
             link = lineNumber;
-          // link = lineNumberToLink.filter(
-          //   (link) => link.lineNumber === lineNumber
-          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -997,7 +806,6 @@ function App() {
             link: link,
           });
         }
-        // if (line.startsWith("      user cpu time")) {
         if (/\buser cpu time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
             len = split.length,
@@ -1014,9 +822,6 @@ function App() {
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
             link = lineNumber;
-          // link = lineNumberToLink.filter(
-          //   (link) => link.lineNumber === lineNumber
-          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -1026,7 +831,6 @@ function App() {
             link: link,
           });
         }
-        // if (line.startsWith("      system cpu time ")) {
         if (/\bsystem time\b\s+\d/i.test(line)) {
           const split = line.split(" "),
             len = split.length,
@@ -1043,9 +847,6 @@ function App() {
                 ? +hms[0] * 60 + +hms[1]
                 : Number.parseFloat(time),
             link = lineNumber;
-          // link = lineNumberToLink.filter(
-          //   (link) => link.lineNumber === lineNumber
-          // )[0].id;
           tempCpuTime.push({
             id: lineNumber,
             time: time,
@@ -1105,12 +906,6 @@ function App() {
         id++;
         tempSymbolgen0.push({ id: id, name: name, lines: tempSymbolgen[name] });
       }
-      // const sortedRealTime = realTime.sort((a, b) =>
-      //     a.seconds < b.seconds ? 1 : -1
-      //   ),
-      //   sortedCpuTime = cpuTime.sort((a, b) =>
-      //     a.seconds < b.seconds ? 1 : -1
-      //   );
       setOutputs(tempOutputs);
       setInputs(tempInputs);
       setFiles(tempFiles);
@@ -1197,12 +992,7 @@ function App() {
             const stepInfo = realRows.filter((r) => r.step === o.step);
             const seconds = stepInfo.length > 0 ? stepInfo[0].seconds : null,
               obs = item.obs ? item.obs.toLocaleString() : null,
-              arrowLabel =
-                lineVar === "obs"
-                  ? obs
-                  : lineVar === "real"
-                  ? seconds
-                  : seconds;
+              arrowLabel = lineVar === "obs" ? obs : seconds;
             dot.push(
               item.i +
                 "([" +
@@ -1233,12 +1023,7 @@ function App() {
           (item) => item.type !== null && item.anchor
         ),
         tempUniqueTypes = [...new Set(rulesToProcess.map((item) => item.type))];
-      // tempCounts = {};
       setUniqueTypes(tempUniqueTypes);
-      // tempUniqueTypes.forEach((type) => {
-      //   tempCounts[type] = 0;
-      // });
-      // setCounts(tempCounts);
       counts = {};
       console.log("tempUniqueTypes", tempUniqueTypes);
     },
@@ -1272,8 +1057,6 @@ function App() {
           response.text().then(function (text) {
             const dirObject = JSON.parse(text);
             const { dirs, files } = dirObject;
-            // const files = dirObject,
-            //   dirs = dirObject.filter((d) => !d.includes("."));
             console.log(
               "dirObject",
               dirObject,
@@ -1288,9 +1071,6 @@ function App() {
             );
             setSelectedLog(null);
             setListOfDirs(dirs);
-            // const parsedText = JSON.parse(text);
-            // console.log("parsedText", parsedText);
-            // setLogOriginalText(parsedText.join("\n") || text);
             makeDirListing(dirs);
             setListOfLogs(
               files
@@ -1361,20 +1141,23 @@ function App() {
     setBadgeCount(tempBadgeCount);
     setCheck(tempCheck);
     setAnalyseAgain(!analyseAgain);
+    console.log("*1*");
     setLogText(logOriginalText);
     // eslint-disable-next-line
   }, [uniqueTypes]);
 
   // analyse text again using current rules, if the flag is set true
   useEffect(() => {
-    if (!logOriginalText || analyseAgain === null) return;
+    if (
+      !logOriginalText ||
+      analyseAgain === false ||
+      analyseAgain === null ||
+      mode === "local"
+    )
+      return;
     console.log("*** analyseAgain", analyseAgain, logOriginalText.length);
-    // resetCounts();
-    // Object.keys(badgeCount).forEach((key) => {
-    //   badgeCount[key] = 0;
-    // });
-    analyseLog(); // populate tables in bottom left of screen
-    setLogText(analyse(logOriginalText));
+    analyseLog(4, logOriginalText); // populate tables in bottom left of screen
+    analyse(4, logOriginalText);
     // eslint-disable-next-line
   }, [analyseAgain, logOriginalText]);
 
@@ -1382,7 +1165,7 @@ function App() {
   useEffect(() => {
     if (logOriginalText === null || showLineNumbers === null) return;
     console.log("*** showLineNumbers", showLineNumbers);
-    setLogText(analyse(logOriginalText));
+    analyse(5, logOriginalText);
     // eslint-disable-next-line
   }, [showLineNumbers]);
 
@@ -1487,7 +1270,8 @@ function App() {
       : "/Users/philipmason/github/logviewer/tests";
     setLogDirectory(defaultDirectory);
     getLogWebDav(defaultDirectory); // get the list of logs by reading directory
-    setLogText(analyse(logOriginalText));
+    analyseLog(6, logOriginalText); // populate tables in bottom left of screen
+    analyse(6, logOriginalText);
     // eslint-disable-next-line
   }, []);
 
@@ -1499,7 +1283,6 @@ function App() {
     const splitQuestionMarks = href.split("?");
     if (splitQuestionMarks.length > 1) return; // handled in href section since we have a log specified in URL
     console.log("*** local");
-    // console.log(navigator);
     const defaultDirectory = navigator.platform.startsWith("Win")
       ? "C:/github/logviewer/tests"
       : "/Users/philipmason/github/logviewer/tests";
@@ -1513,12 +1296,11 @@ function App() {
     fetch(url).then(function (response) {
       response.text().then(function (text) {
         const dirObject = JSON.parse(text);
-        // const { dirs, files } = dirObject;
         const files = dirObject,
           dirs = null;
         console.log("dirs", dirs, "files", files);
         setListOfRules(
-          files
+          files.files
             .filter((ruleFile) => {
               return ruleFile !== null && ruleFile.endsWith(".json");
             })
@@ -1546,39 +1328,54 @@ function App() {
   useEffect(() => {
     if (selectedLocalFile === "") return;
     console.log("*** selectedLocalFile", selectedLocalFile);
-    // const dir = encodeURIComponent(
-    //     "/Users/philipmason/Documents/github/logviewer/src"
-    //   ),
-    //   file = "sample.log",
-    //   url = "http://localhost:3001/getfile/" + dir + "/" + file;
     const file = selectedLocalFile.split("/").pop(),
       dir = encodeURIComponent(logDirectory),
       url = "http://localhost:3001/getfile/" + dir + "/" + file;
     console.log(url);
-    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2Fgithub%2Flogviewer%2Ftests%2Fpp.log
-    // http://localhost:3001/getfile/%2FUsers%2Fphilipmason%2Fgithub%2Flogviewer%2Ftests/pp.log
     setLocalUrl(url);
-    // console.log(
-    //   "selectedLocalFile",
-    //   selectedLocalFile,
-    //   "\nfile",
-    //   file,
-    //   "\ndir",
-    //   dir,
-    //   "\nfile",
-    //   file,
-    //   "\nurl",
-    //   url
-    // );
-    fetch(url).then(function (response) {
-      response.text().then(function (text) {
+    fetch(url).then((response) => {
+      response.text().then((text) => {
         console.log(`${text.length} characters were read from file ${url}`);
         setLogOriginalText(text);
-        setLogText(analyse(text));
+        setLogText(text);
+        analyseLog(7, text); // populate tables in bottom left of screen
+        analyse(7, text);
       });
     });
     // eslint-disable-next-line
   }, [selectedLocalFile]);
+
+  myWorker.onmessage = (m) => {
+    console.log("===================> msg from worker: ", m);
+
+    // get the info sent back from worker and display on the screen
+    const { tempLinks, progress_pct, counts, html, elapsed } = m.data;
+
+    setLinks(tempLinks);
+    setProgress(progress_pct);
+
+    if (uniqueTypes) {
+      uniqueTypes.forEach((type) => {
+        badgeCount[type] = counts[type];
+      });
+    } else {
+      Object.keys(counts).forEach((type) => {
+        badgeCount[type] = counts[type];
+      });
+    }
+
+    const modified = html
+      .map((h, hid) => {
+        let extra = "";
+        if (showLineNumbers) extra = zeroPad(hid, 7) + "|" + h;
+        if (h !== null) return `<span id="${hid}">` + extra + h + "</span>";
+        return null;
+      })
+      .filter((element) => element != null);
+    // const newText = logText + modified.join("\n");
+    setLogText((currentLogText) => currentLogText + modified.join("\n"));
+    setProcessingTime(elapsed);
+  };
 
   useEffect(() => {
     if (showSource === null && showMacroLines === null) return;
@@ -1596,13 +1393,6 @@ function App() {
     // eslint-disable-next-line
   }, [showSource, showMacroLines, selectionModel]);
 
-  // useEffect(() => {
-  //   console.log("macrosSelected changed", macrosSelected);
-  //   if (macrosSelected === null) return;
-  //   getLog(selection);
-  //   // eslint-disable-next-line
-  // }, [macrosSelected]);
-
   return (
     <Box>
       <AppBar position="static">
@@ -1618,8 +1408,6 @@ function App() {
                 mr: iconPadding,
               }}
               onClick={() => {
-                // setLeftPanelWidth(2);
-                // setRightPanelWidth(10);
                 setLeftPanelWidth(Math.max(leftPanelWidth - 3, 0));
                 setRightPanelWidth(Math.min(rightPanelWidth + 3, 12));
               }}
@@ -1648,8 +1436,6 @@ function App() {
                 mr: iconPadding,
               }}
               onClick={() => {
-                // setLeftPanelWidth(10);
-                // setRightPanelWidth(2);
                 setLeftPanelWidth(Math.min(leftPanelWidth + 3, 12));
                 setRightPanelWidth(Math.max(rightPanelWidth - 3, 0));
               }}
@@ -1721,6 +1507,7 @@ function App() {
                   onChange={() => {
                     setShowSource(!showSource);
                     setAnalyseAgain(!analyseAgain);
+                    console.log("*2*");
                   }}
                   name="source"
                   size="small"
@@ -1739,8 +1526,9 @@ function App() {
                 <Switch
                   checked={showMacroLines}
                   onChange={() => {
-                    setshowMacroLines(!showMacroLines);
+                    setShowMacroLines(!showMacroLines);
                     setAnalyseAgain(!analyseAgain);
+                    console.log("*3*");
                   }}
                   name="mprint"
                   size="small"
@@ -1760,7 +1548,7 @@ function App() {
                 <Switch
                   checked={showLineNumbers}
                   onChange={() => {
-                    setshowLineNumbers(!showLineNumbers);
+                    setShowLineNumbers(!showLineNumbers);
                   }}
                   name="mprint"
                   size="small"
@@ -1862,6 +1650,7 @@ function App() {
               }}
               onClick={(e) => {
                 setAnalyseAgain(!analyseAgain);
+                console.log("*4*");
               }}
             >
               <Refresh />
@@ -1882,7 +1671,7 @@ function App() {
               listOfRules.length > 0 &&
               listOfRules.map((rule, id) => (
                 <MenuItem
-                  key={id}
+                  key={"k" + id}
                   onClick={(e) => handleCloseRulesMenu(rule.value)}
                 >
                   {rule.label}
@@ -2072,7 +1861,7 @@ function App() {
           </Tooltip>
           <TextField
             label="Search"
-            value={search}
+            value={search ?? ""}
             size={"small"}
             inputProps={{ style: { fontSize: 10, height: "1.1em" } }}
             onChange={(event) => {
@@ -2081,7 +1870,6 @@ function App() {
             inputRef={(input) => input && setSearchField(input)}
             onKeyPress={(e) => {
               if (e.key === "Enter") {
-                // console.log("Input value", e.target.value);
                 e.preventDefault();
                 nextSearchItem();
                 setTimeout(() => {
@@ -2124,9 +1912,6 @@ function App() {
           <Tooltip title="Information about this screen">
             <IconButton
               size="small"
-              // aria-label="account of current user"
-              // aria-controls="menu-appbar"
-              // aria-haspopup="true"
               onClick={() => {
                 setOpenInfo(true);
               }}
@@ -2146,7 +1931,7 @@ function App() {
             <TextField
               id="logDirectory"
               label="Directory containing logs"
-              value={logDirectory}
+              value={logDirectory ?? ""}
               size={"small"}
               onChange={(e) => setLogDirectory(e.target.value)}
               inputProps={{ style: { fontSize: 14 } }}
@@ -2169,15 +1954,12 @@ function App() {
                   if (mode === "local") {
                     readLocalFiles(parentDir);
                     setLogText(null);
-                    // localFileRef.current.click();
                     setLogDirectory(parentDir);
                   } else {
                     setWaitGetDir(true);
-                    // resetCounts();
                     setLogDirectory(parentDir);
                     getLogWebDav(parentDir);
                   }
-                  // processDirectory();
                 }}
                 sx={{ mt: 1, color: "green" }}
               >
@@ -2230,7 +2012,7 @@ function App() {
           >
             <TextField
               label="Log Name"
-              value={selection}
+              value={selection ?? ""}
               size={"small"}
               inputProps={{ style: { fontSize: 14 } }}
               onChange={(event) => {
@@ -2255,7 +2037,6 @@ function App() {
                 size="small"
                 onClick={() => {
                   setWaitGetDir(true);
-                  // resetCounts();
                   getLogVersions(logDirectory);
                 }}
                 sx={{ mt: 1, color: "green" }}
@@ -2267,7 +2048,9 @@ function App() {
           {program && <b>Program:</b>} {program} &nbsp;{" "}
           {submitted && <b>Submitted:</b>} {submitted} &nbsp;{" "}
           {submitEnd && <b>Ended:</b>} {submitEnd} &nbsp;{" "}
-          {nLines && <b>Lines:</b>} {nLines}
+          {nLines && <b>Lines:</b>} {nLines} &nbsp;{" "}
+          {processingTime && <b>Analysed:</b>} {processingTime}
+          {progress && <LinearProgressWithLabel value={progress} />}
         </Grid>
         <Grid item xs={leftPanelWidth}>
           {uniqueTypes &&
@@ -2313,7 +2096,7 @@ function App() {
                 });
                 if (show) {
                   return (
-                    <React.Fragment key={id}>
+                    <React.Fragment key={"frag" + id}>
                       {showLineNumbers ? zeroPad(link.lineNumber, 7) + " " : ""}
                       <a
                         style={{ color: `${link.linkColor}` }}
@@ -2340,7 +2123,7 @@ function App() {
           <Tabs
             value={tabValue}
             onChange={(event, newValue) => {
-              changeTabValue(newValue);
+              setTabValue(newValue);
             }}
             variant="scrollable"
             scrollButtons="auto"
