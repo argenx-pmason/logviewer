@@ -26,11 +26,11 @@
     { href, protocol, host } = window.location,
     urlPrefix = protocol + %27//%27 + host,
     filelink=urlPrefix+%27/lsaf/webdav/%27+repo+v;
-    if (lastPart==='documents') open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/dashstudy/index.html?file=%27+v+'/meta/dashstudy.json');
-    else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+v);
-    else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/logviewer/index.html?log=%27+filelink);
-    else if (type==='json') open(urlPrefix+'/lsaf/webdav/repo/general/biostat/tools/view/index.html?lsaf='+v);
-    else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/tools/fileviewer/index.html?file=%27+filelink);})(document);
+    if (lastPart==='documents') open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/apps/dashstudy/index.html?file=%27+v+'/meta/dashstudy.json');
+    else if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/apps/fileviewer/index.html?file=%27+v);
+    else if (type===%27log%27) open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/apps/logviewer/index.html?log=%27+filelink);
+    else if (type==='json') open(urlPrefix+'/lsaf/webdav/repo/general/biostat/apps/view/index.html?lsaf='+v);
+    else open(urlPrefix+%27/lsaf/webdav/repo/general/biostat/apps/fileviewer/index.html?file=%27+filelink);})(document);
     ">LSAF🔍</a>
 <br />
 <p>Once that is done you will be able to use them:</p>
@@ -60,9 +60,9 @@
   href="javascript:(/*-- Jump to LSAF path defined in localStorage --*/ function(){const iframe=document.getElementById(%22sasLSAF_iframe%22),iWindow=iframe.contentWindow,iDocument=iWindow.document,repo=iDocument.querySelector(%27[aria-label=%22Selected, Workspace%22]%27)?%22work%22:%22repo%22,full=%22work%22===repo?%22WORKSPACE%22:%22REPOSITORY%22,qs=iDocument.getElementById(%22HLS_LSAF_%22+full+%22--navLinkInput-inner%22),w=window.open(%22%22,%22%22,%22width=800,height=200%22),links=JSON.parse(localStorage.getItem(%22lsafLinks%22)),keys=Object.keys(links),text=keys.map((e=>e+%22 = %22+links[e])).join(%22<br/>%22);w.document.write(text),w.focus(),setTimeout((function(){w.close()}),2e3),w.document.addEventListener(%22keydown%22,(e=>{links[e.key]&&(qs.value=links[e.key],qs.dispatchEvent(keyboardEvent=new KeyboardEvent(%22keydown%22,{code:%22Enter%22,key:%22Enter%22,charCode:13,keyCode:13,view:window,bubbles:!0})))})),setTimeout((()=>{const e=iDocument.querySelectorAll(%27[aria-selected=%22true%22]%27);e[e.length-1].scrollIntoViewIfNeeded()}),2e3);}());">❓</a>
 <p>You need to create an object with the links you want to use in localStorage. You can run the code to set it up by
   going into the Developers Console (cntl-shift-i) and running some code like this - here is an example:</p>
-<code>localStorage.setItem("lsafLinks",JSON.stringify({a:"/general/biostat/jobs/gadam_ongoing_studies/dev/output",b:"/general/biostat/tools/sdtm-last"}))
+<code>localStorage.setItem("lsafLinks",JSON.stringify({a:"/general/biostat/jobs/gadam_ongoing_studies/dev/output",b:"/general/biostat/apps/sdtm-last"}))
 </code><br />
-<a href="https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A///general/biostat/tools/edit-localstorage/index.html"
+<a href="https://xarprod.ondemand.sas.com/lsaf/filedownload/sdd%3A///general/biostat/apps/edit-localstorage/index.html"
   target="_blank" rel="noopener">Edit
   localStorage to add bookmarks</a>
 <h2>The following bookmarklet opens file viewer on a path from clipboard</h2>
@@ -73,9 +73,9 @@ type=lastPart.split(%27.%27).pop(),
 { href, protocol, host } = window.location,
 urlPrefix = protocol + %27//%27 + host,
 filelink=urlPrefix+%27/lsaf/filedownload/sdd%27+ encodeURIComponent(%27%3A%27)+%27//%27+v;
-if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+v);
-else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/logviewer2/index.html?log=%27+filelink);
-else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/tools/fileviewer/index.html?file=%27+filelink);
+if (lastPart.split(%27.%27).length===1) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/apps/fileviewer/index.html?file=%27+v);
+else if (type===%27log%27) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/apps/logviewer/index.html?log=%27+filelink);
+else if ([%27js%27,%27job%27,%27css%27,%27cmd%27,%27mnf%27,%27html%27,%27lst%27,%27txt%27,%27csv%27,%27sas%27,%27json%27,%27pdf%27,%27svg%27,%27jpg%27,%27png%27,%27xlsx%27].includes(type)) open(urlPrefix+%27/lsaf/filedownload/sdd%3A/general/biostat/apps/fileviewer/index.html?file=%27+filelink);
 else alert(%27Please select a file type that is supported. Or let Phil know if you would like other file types supported.%27);
 })}) (document);">Clip📋</a>
 <hr />

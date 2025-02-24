@@ -11,6 +11,16 @@
     "interesting": true
   },
   {
+    "ruleType": "startswith",
+    "startswith": "WARNING:USER",
+    "prefix": "<span style='color: #666633'>",
+    "suffix": "</span>",
+    "anchor": true,
+    "linkColor": "#666633",
+    "type": "USERWARN",
+    "interesting": true
+  },
+  {
     "ruleType": "regex",
     "caseInsensitive": true,
     "regex": "(?:^WARNING:|^WARNING\\s)(?!.*PRODUCT WITH WHICH|.*PRODUCT WITH WHICH|.*IS ASSOCIATED WILL EXPIRE|.*MPRINT|.*MLOGIC|.*SYMBOLGEN|.*IS ASSOCIATED IS SCHEDULED TO EXPIRE|.*YOUR SYSTEM IS SCHEDULED TO EXPIRE)",
@@ -24,11 +34,11 @@
   {
     "ruleType": "startswith",
     "startswith": "NOTE:USER",
-    "prefix": "<span style='color: #996633'>",
+    "prefix": "<span style='color: #aaaa33'>",
     "suffix": "</span>",
     "anchor": true,
-    "linkColor": "#996633",
-    "type": "INFO",
+    "linkColor": "#aaaa33",
+    "type": "USERNOTE",
     "interesting": true
   },
   {
@@ -247,7 +257,7 @@
   },
   {
     "ruleType": "regex",
-    "caseInsensitive": false,
+    "caseInsensitive": true,
     "regex": "(?:^\\s*FATAL(\\s+|:))",
     "prefix": "<span style='color: red'>",
     "suffix": "</span>",

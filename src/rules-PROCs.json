@@ -2,17 +2,19 @@
   {
     "description": "Procedures used",
     "ruleType": "regex",
-    "regex": "NOTE: PROCEDURE (.+) used ",
+    "caseInsensitive": true,
+    "regex": "NOTE: PROCEDURE .+ used ",
     "prefix": "<a href='https://support.sas.com/en/search.html?q={{line}}&fq=siteArea%3A%22Documentation%22' target='_blank' style='border-style: solid;color:brown;background-color: lightyellow'>",
     "suffix": "{{line}}</a>",
     "anchor": true,
     "linkColor": "brown",
     "type": "PROCS",
     "interesting": false,
-    "substitute": true
+    "substitute": false
   },
   {
     "ruleType": "regex",
+    "caseInsensitive": true,
     "regex": "(?:^ERROR:|^\\s*ERROR\\s+)(?!.*\\*\\*\\* PROBLEM: LINE|.*WITHOUT ERROR|.*MPRINT|.*MLOGIC|.*SYMBOLGEN)",
     "prefix": "<span style='color: red'>",
     "suffix": "</span>",
@@ -23,6 +25,7 @@
   },
   {
     "ruleType": "regex",
+    "caseInsensitive": true,
     "regex": "(?:^WARNING:)(?!.*PRODUCT WITH WHICH|.*PRODUCT WITH WHICH|.*IS ASSOCIATED WILL EXPIRE|.*MPRINT|.*MLOGIC|.*SYMBOLGEN|.*IS ASSOCIATED IS SCHEDULED TO EXPIRE|.*YOUR SYSTEM IS SCHEDULED TO EXPIRE)",
     "prefix": "<span style='color: green'>",
     "suffix": "</span>",
@@ -39,6 +42,86 @@
     "anchor": false,
     "linkColor": "blue",
     "type": "NOTE",
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      real time           ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      cpu time            ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      user cpu time ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      system cpu time ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      memory ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      OS Memory ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      Timestamp ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
+    "interesting": false
+  },
+  {
+    "ruleType": "startswith",
+    "startswith": "      Step Count ",
+    "prefix": "<span style='color: blue'>",
+    "suffix": "</span>",
+    "anchor": false,
+    "linkColor": "blue",
+    "type": null,
     "interesting": false
   }
 ]

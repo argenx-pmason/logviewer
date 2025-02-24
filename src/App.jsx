@@ -100,8 +100,8 @@ function App() {
     urlPrefix = window.location.protocol + "//" + window.location.host,
     filePrefix = "/lsaf/filedownload/sdd%3A//",
     webDavPrefix = urlPrefix + "/lsaf/webdav/repo",
-    [logText, setLogText] = useState(null),
-    [logOriginalText, setLogOriginalText] = useState(null),
+    [logText, setLogText] = useState(""),
+    [logOriginalText, setLogOriginalText] = useState(""),
     [showLineNumbers, setShowLineNumbers] = useState(null),
     [dirListing, setDirListing] = useState(null),
     logRef = createRef(),
@@ -434,6 +434,7 @@ function App() {
       { field: "id", headerName: "ID", width: 90, hide: true },
       { field: "type", headerName: "type", width: 80 },
       { field: "ruleType", headerName: "ruleType", width: 80 },
+      { field: "caseInsensitive", headerName: "Case Insensitive", width: 50 },
       { field: "startswith", headerName: "startswith", width: 100 },
       { field: "regex", headerName: "regex", width: 400 },
       { field: "prefix", headerName: "prefix", width: 400 },
@@ -1016,8 +1017,12 @@ function App() {
     },
     updateRules = () => {
       rules.forEach((rule) => {
-        if (rule.ruleType === "regex")
-          rule.regularExpression = new RegExp(rule.regex, "i"); //compile text regular expressions into usable ones - i means case insensitive
+        // Compile text regular expressions into usable ones
+        if (rule.ruleType === "regex") {
+          if ("caseInsensitive" in rule && rule.caseInsensitive === false)
+            rule.regularExpression = new RegExp(rule.regex);
+          else rule.regularExpression = new RegExp(rule.regex, "i"); // i means case insensitive
+        }
       });
       const rulesToProcess = rules.filter(
           (item) => item.type !== null && item.anchor
@@ -1373,7 +1378,11 @@ function App() {
       })
       .filter((element) => element != null);
     // const newText = logText + modified.join("\n");
-    setLogText((currentLogText) => currentLogText + modified.join("\n"));
+    setLogText((currentLogText) => {
+      if (currentLogText === null || currentLogText === "null")
+        modified.join("\n");
+      else return currentLogText + modified.join("\n");
+    });
     setProcessingTime(elapsed);
   };
 
@@ -1953,7 +1962,7 @@ function App() {
                     .join("/");
                   if (mode === "local") {
                     readLocalFiles(parentDir);
-                    setLogText(null);
+                    setLogText("");
                     setLogDirectory(parentDir);
                   } else {
                     setWaitGetDir(true);
