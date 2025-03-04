@@ -52,6 +52,26 @@
 </ul>
 <p>Note: it will open different files selected in different ways. most files are opened in the File Viewer, logs in the
   log viewer, JSON files in the JSON editor. This bookmarklet works on any LSAF instance (PROD, TEST, etc.)</p>
+  <h2>Run one or more jobs from a folder</h2>
+  <a alt="Job Runner" href="
+  javascript:(/*-- Open job runner on this folder --*/ function(document) {const iframe=document.getElementById('sasLSAF_iframe'),
+  iWindow = iframe.contentWindow,
+  iDocument = iWindow.document,
+  repo=iDocument.querySelector('[aria-label=%22Selected, Workspace%22]') ? 'work' : 'repo',
+  full=repo==='work'?'WORKSPACE':'REPOSITORY',
+  qs=iDocument.getElementById('HLS_LSAF_'+full+'--navLinkInput-inner'),
+  v = qs ? qs.value : null,
+  lastPart = v.split(%27/%27).pop(),
+  type=lastPart.split(%27.%27).pop(),
+  { href, protocol, host } = window.location,
+  urlPrefix = protocol + %27//%27 + host,
+  filelink=urlPrefix+%27/lsaf/webdav/%27+repo+v;
+  jobapp=urlPrefix+'/lsaf/webdav/repo/general/biostat/apps/jobrunner/index.html?path='+v;
+  console.log(urlPrefix,v,jobapp);
+  open(jobapp);
+})(document);
+  ">Run🏃‍♀️</a>
+<br />
 <h2>Switch between location in Workspace and Repository</h2>
 <a href="javascript:(/*-- Switch between LSAF Repository and Workspace locations --*/ function(){const iframe=document.getElementById(%22sasLSAF_iframe%22),iWindow=iframe.contentWindow,iDocument=iWindow.document,repo=iDocument.querySelector(%27[aria-label=%22Selected, Workspace%22]%27)?%22work%22:%22repo%22,full=%22work%22===repo?%22WORKSPACE%22:%22REPOSITORY%22,qs=iDocument.getElementById(%22HLS_LSAF_%22+full+%22--navLinkInput-inner%22),full2=%22work%22===repo?%22REPOSITORY%22:%22WORKSPACE%22,qs2=iDocument.getElementById(%22HLS_LSAF_%22+full2+%22--navLinkInput-inner%22),wrk=iDocument.getElementById(%22sasLSAF--sasLSAF_appContainer_lfn_4_icn%22),wrk2=%22true%22===iDocument.getElementById(%22sasLSAF--sasLSAF_appContainer_lfn_4%22).getAttribute(%22aria-selected%22),rp=iDocument.getElementById(%22sasLSAF--sasLSAF_appContainer_lfn_3_icn%22),rp2=%22true%22===iDocument.getElementById(%22sasLSAF--sasLSAF_appContainer_lfn_3%22).getAttribute(%22aria-selected%22),current=qs.value;wrk2&&rp.click(),rp2&&wrk.click(),qs2.value=current,qs2.dispatchEvent(keyboardEvent=new KeyboardEvent(%22keydown%22,{code:%22Enter%22,key:%22Enter%22,charCode:13,keyCode:13,view:window,bubbles:!0})),setTimeout((()=>{const e=iDocument.querySelectorAll(%27[aria-selected=%22true%22]%27);console.log(%22sel%22,e),e[2].scrollIntoViewIfNeeded()}),2e3);}());"
   ICON="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB+klEQVQ4jX2SPU8VURCGnzl7ztmzC0ZiwCB+xKCABTHU/ggrxcTSgsLSQqPewkJNtCKxM8TCmoIfYCyoKCyMhQGMsTPE3MLg9e7H3d2xAK8X8DLJVPPOk3lnRlRVGBJzz1hUeDusLrBphxUBImG9UiqBdIjkojkO8PkROwaWgHLoFIMWZl7h+cllgPJ3h7IsKTsd3Gg87Vx63RgTwkg6jci1/ZbdAxbcL05Vhk+oGht76qbGxJ7ubpcia9Mriub83NxqSEf6PQcs7I/8TkSInCNOkoFMcXEwWjf5YM+RHSjcAd3oQ9J0PxPiNKEsi1WgD5HZp3qrqWtf5jl5llPmOb0iN877BYmYGps43RbM3SLLKLOMuinmx89cmAVWAGsVWmLMvPUOV9doU6NNRdHtUuQZ1LI2fu4scZIgQNVzbD1m7dIL3puSBWuUZRVZiawjDgNGFBSlof4uIkTWEicJJi4A+PqAXWDdbLZ4g3JPRNqRc/gQ8CHBJ4E4JPSK4iOwLiIYa/Fu9MDODMBWi+UTE0xVRibF+qt7kL10cdo0hhsqrIpIdXjp/T/4sEQF/Jh+DlZc34kxhi8PaQOLV14yenKM/L+Av/FthvbstuxY5yZRRey/S2/ep3NYf/QPbtKo8kREsN4TQjgsOR4AsN3itcJtEdmQyHWPA/wBGZyw943uVMMAAAAASUVORK5CYII=">🔁</a>
